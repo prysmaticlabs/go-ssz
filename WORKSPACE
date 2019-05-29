@@ -1,4 +1,4 @@
-workspace(name = "prysmaticlabs_go_ssz")
+workspace(name = "com_github_prysmaticlabs_go_ssz")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
