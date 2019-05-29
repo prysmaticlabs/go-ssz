@@ -24,7 +24,7 @@ load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 gazelle_dependencies()
 
-load("@prysmaticlabs_go_ssz//:deps.bzl", "go_ssz_dependencies")
+load("@com_github_prysmaticlabs_go_ssz//:deps.bzl", "go_ssz_dependencies")
 
 go_ssz_dependencies()
 
