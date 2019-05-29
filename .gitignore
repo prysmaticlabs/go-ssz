@@ -1,0 +1,2 @@
+# Ignore bazel directories
+bazel-*
