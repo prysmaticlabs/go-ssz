@@ -1,4 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test", "nogo")
+load("@io_kubernetes_build//defs:run_in_workspace.bzl", "workspace_binary")
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
 # gazelle:prefix github.com/prysmaticlabs/go-ssz
@@ -41,6 +42,11 @@ nogo(
         "@org_golang_x_tools//go/analysis/passes/inspect:go_tool_library",
         "@org_golang_x_tools//go/analysis/passes/asmdecl:go_tool_library",
     ],
+)
+
+workspace_binary(
+    name = "golint",
+    cmd = "@com_github_golang_lint//golint",
 )
 
 go_library(
