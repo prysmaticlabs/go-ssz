@@ -79,10 +79,10 @@ func makeHasher(typ reflect.Type) (hasher, error) {
 		kind == reflect.Uint32 ||
 		kind == reflect.Uint64 ||
 		kind == reflect.Int32:
-		return getEncoding, nil
+		return makeBasicTypeHasher(typ)
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8 ||
 		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return hashedEncoding, nil
+		return makeByteArrayHasher(typ)
 	case kind == reflect.Slice || kind == reflect.Array:
 		if useCache {
 			return makeSliceHasherCache(typ)
@@ -123,6 +123,46 @@ func hashedEncoding(val reflect.Value) ([]byte, error) {
 	}
 	output := Hash(encoding)
 	return output[:], nil
+}
+
+func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
+	utils, err := cachedSSZUtilsNoAcquireLock(typ)
+	if err != nil {
+		return nil, err
+	}
+	hasher := func(val reflect.Value) ([]byte, error) {
+		buf := &encbuf{}
+		if err = utils.encoder(val, buf); err != nil {
+			return nil, err
+		}
+		writer := new(bytes.Buffer)
+		if err = buf.toWriter(writer); err != nil {
+			return nil, err
+		}
+		return writer.Bytes(), nil
+	}
+	return hasher, nil
+}
+
+func makeByteArrayHasher(typ reflect.Type) (hasher, error) {
+	utils, err := cachedSSZUtilsNoAcquireLock(typ)
+	if err != nil {
+		return nil, err
+	}
+	hasher := func(val reflect.Value) ([]byte, error) {
+		buf := &encbuf{}
+		if err = utils.encoder(val, buf); err != nil {
+			return nil, err
+		}
+		writer := new(bytes.Buffer)
+		if err = buf.toWriter(writer); err != nil {
+			return nil, err
+		}
+		encoding := writer.Bytes()
+		hashedEncoding := Hash(encoding)
+		return hashedEncoding[:], nil
+	}
+	return hasher, nil
 }
 
 func makeSliceHasher(typ reflect.Type) (hasher, error) {
