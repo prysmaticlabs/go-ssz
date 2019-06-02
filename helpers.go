@@ -1,5 +1,7 @@
 package ssz
 
+import "github.com/prysmaticlabs/prysm/shared/hashutil"
+
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
 // chunks, right-pad the last chunk with zero bytes, and return the chunks.
 func pack(vals []interface{}) ([][]byte, error) {
@@ -16,12 +18,12 @@ func merkleize(vals []interface{}) ([32]byte, error) {
 
 // Given a Merkle root root and a length length ("uint256" little-endian serialization)
 // return hash(root + length).
-func mixInLength(root [32]byte, length uint64) ([32]byte, error) {
-	return [32]byte{}, nil
+func mixInLength(root [32]byte, length []byte) [32]byte {
+	return hashutil.Hash(append(root[:], length...))
 }
 
 // Given a Merkle root root and a type_index type_index ("uint256" little-endian serialization)
 // return hash(root + type_index).
-func mixInType(root [32]byte, typeIndex uint64) ([32]byte, error) {
-	return [32]byte{}, nil
+func mixInType(root [32]byte, typeIndex []byte) [32]byte {
+	return hashutil.Hash(append(root[:], typeIndex...))
 }
