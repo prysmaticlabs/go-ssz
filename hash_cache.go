@@ -1,33 +1,12 @@
 package ssz
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/karlseguin/ccache"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-)
-
-var (
-	// ErrNotMerkleRoot will be returned when a cache object is not a merkle root.
-	ErrNotMerkleRoot = errors.New("object is not a merkle root")
-	// Metrics
-	hashCacheMiss = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "ssz_hash_cache_miss",
-		Help: "The number of hash requests that aren't present in the cache.",
-	})
-	hashCacheHit = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "ssz_hash_cache_hit",
-		Help: "The number of hash requests that are present in the cache.",
-	})
-	hashCacheSize = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "ssz_hash_cache_size",
-		Help: "The number of hashes in the block cache",
-	})
 )
 
 // hashCacheS struct with one queue for looking up by hash.
