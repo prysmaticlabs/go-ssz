@@ -2,7 +2,7 @@ package ssz
 
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
 // chunks, right-pad the last chunk with zero bytes, and return the chunks.
-func pack(vals []interface) ([][]byte, error) {
+func pack(vals []interface{}) ([][]byte, error) {
 	return [][]byte{}, nil
 }
 
@@ -10,7 +10,7 @@ func pack(vals []interface) ([][]byte, error) {
 // number of chunks is a power of two, Merkleize the chunks, and return the root.
 // Note that merkleize on a single chunk is simply that chunk, i.e. the identity
 // when the number of chunks is one.
-func merkleize(vals []interface) ([32]byte, error) {
+func merkleize(vals []interface{}) ([32]byte, error) {
 	return [32]byte{}, nil
 }
 
