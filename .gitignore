@@ -1,2 +1,4 @@
 # Ignore bazel directories
 bazel-*
+.idea
+.ijwb
