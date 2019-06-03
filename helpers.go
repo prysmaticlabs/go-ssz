@@ -2,19 +2,18 @@ package ssz
 
 import (
 	"bytes"
-	"github.com/prysmaticlabs/prysm/shared/ssz"
 )
 
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
 // chunks, right-pad the last chunk with zero bytes, and return the chunks.
 // Basic types are either bool, or uintN where N = {8, 16, 32, 64, 128, 256}.
 func pack(objects []interface{}) ([][]byte, error) {
-    serializedItems := make([][]byte, len(objects))
-    for i, item := range objects {
+	serializedItems := make([][]byte, len(objects))
+	for i, item := range objects {
 		// We use a bytes.Buffer as our io.Writer.
 		buffer := new(bytes.Buffer)
 		// ssz.Encode writes the encoded data to the buffer.
-		if err := ssz.Encode(buffer, item); err != nil {
+		if err := Encode(buffer, item); err != nil {
 			return nil, err
 		}
 		serializedItems[i] = buffer.Bytes()
