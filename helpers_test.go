@@ -54,6 +54,11 @@ func TestPack_OK(t *testing.T) {
 			input: [][]byte{make([]byte, BytesPerChunk/2), make([]byte, BytesPerChunk/2)},
 			output: [][]byte{make([]byte, BytesPerChunk)},
 		},
+		{
+			name: "an item with length BytesPerChunk*2 should return two chunks",
+			input: [][]byte{make([]byte, BytesPerChunk*2)},
+			output: [][]byte{make([]byte, BytesPerChunk), make([]byte, BytesPerChunk)},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -65,5 +70,27 @@ func TestPack_OK(t *testing.T) {
 				t.Errorf("pack() = %v, want %v", got, tt.output)
 			}
 		})
+	}
+}
+
+func TestIsPowerTwo(t *testing.T) {
+	tests := []struct {
+		input    int
+		output    bool
+	}{
+		{input: 4, output: true},
+		{input: 5, output: false},
+		{input: 1, output: true},
+		{input: 0, output: false},
+		{input: 2, output: true},
+		{input: 256, output: true},
+		{input: 1024, output: true},
+		{input: 1000000, output: false},
+	}
+	for _, tt := range tests {
+		got := isPowerTwo(tt.input)
+		if got != tt.output {
+			t.Errorf("isPowerTwo() = %v, want %v", got, tt.output)
+		}
 	}
 }

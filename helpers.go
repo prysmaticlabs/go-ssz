@@ -91,6 +91,10 @@ func mixInType(root [32]byte, typeIndex []byte) [32]byte {
 
 // fast verification to check if an number if a power of two.
 func isPowerTwo(num int) bool {
+	// log base 2 of 0 is undefined, so we return false.
+	if num == 0 {
+		return false
+	}
 	elem := math.Log2(float64(num))
 	return math.Floor(elem) == math.Ceil(elem)
 }
