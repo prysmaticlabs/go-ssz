@@ -53,6 +53,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "bytes.go",
+        "config.go",
         "decode.go",
         "doc.go",
         "encode.go",
