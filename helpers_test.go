@@ -40,9 +40,19 @@ func TestPack_OK(t *testing.T) {
 		output    [][]byte
 	}{
         {
-        	name: "no items should return an empty chunk",
-        	input: [][]byte{},
-        	output: make([][]byte, BytesPerChunk),
+        	name: "an item having less than BytesPerChunk should return a padded chunk",
+        	input: [][]byte{make([]byte, BytesPerChunk-4)},
+			output: [][]byte{make([]byte, BytesPerChunk)},
+		},
+		{
+			name: "two items having less than BytesPerChunk should return two chunks",
+			input: [][]byte{make([]byte, BytesPerChunk-5), make([]byte, BytesPerChunk-5)},
+			output: [][]byte{make([]byte, BytesPerChunk), make([]byte, BytesPerChunk)},
+		},
+		{
+			name: "two items with length BytesPerChunk/2 should return one chunk",
+			input: [][]byte{make([]byte, BytesPerChunk/2), make([]byte, BytesPerChunk/2)},
+			output: [][]byte{make([]byte, BytesPerChunk)},
 		},
 	}
 	for _, tt := range tests {

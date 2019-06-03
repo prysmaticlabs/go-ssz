@@ -11,32 +11,39 @@ import (
 // Important: due to limitations in Go generics, we will assume the input is already
 // a list of SSZ-encoded objects of the same type.
 func pack(serializedItems [][]byte) ([][]byte, error) {
-	chunks := [][]byte{}
-	numItems := len(serializedItems)
 	// If there are no items, we return an empty chunk.
-	if numItems == 0 {
+	if len(serializedItems) == 0 {
 		emptyChunk := make([]byte, BytesPerChunk)
 		return [][]byte{emptyChunk}, nil
 	// If each item has exactly BYTES_PER_CHUNK length, we return the list of serialized items.
 	} else if len(serializedItems[0]) == BytesPerChunk {
 		return serializedItems, nil
 	}
-	itemsPerChunk := sszChunkSize / len(serializedItems[0])
-	for i := 0; i < numItems; i += itemsPerChunk {
-		chunk := make([]byte, BytesPerChunk)
-		j := i + itemsPerChunk
+	// We flatten the list in order to pack its items into byte chunks correctly.
+	orderedItems := []byte{}
+	for _, item := range serializedItems {
+		orderedItems = append(orderedItems, item...)
+	}
+	numItems := len(orderedItems)
+	chunks := [][]byte{}
+	for i := 0; i < numItems; i += BytesPerChunk {
+		j := i + BytesPerChunk
 		// We create our upper bound index of the chunk, if it is greater than numItems,
 		// we set it as numItems itself.
 		if j > numItems {
 			j = numItems
 		}
-		// We create chunks from the list of serialized items based on the indices
-		// determined above.
-		for _, item := range serializedItems[i:j] {
-			chunk = append(chunk, item...)
-		}
-		chunks = append(chunks, chunk)
+		// We create chunks from the list of serialized items based on the
+		// indices determined above.
+		chunks = append(chunks, orderedItems[i:j])
 	}
+	// Right-pad the last chunk with zero bytes if it does not
+	// have length BytesPerChunk.
+	lastChunk := chunks[len(chunks)-1]
+	for len(lastChunk) < BytesPerChunk {
+		lastChunk = append(lastChunk, 0)
+	}
+	chunks[len(chunks)-1] = lastChunk
 	return chunks, nil
 }
 
@@ -45,6 +52,11 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 // Note that merkleize on a single chunk is simply that chunk, i.e. the identity
 // when the number of chunks is one.
 func merkleize(chunks [][]byte) ([32]byte, error) {
+	if len(chunks) == 1 {
+		var root [32]byte
+		copy(root[:], chunks[0])
+		return root, nil
+	}
 	for !isPowerTwo(len(chunks)) {
 		chunks = append(chunks, make([]byte, BytesPerChunk))
 	}
