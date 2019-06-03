@@ -30,7 +30,7 @@ func pack(objects []interface{}) ([][]byte, error) {
 	}
 	itemsPerChunk := sszChunkSize / len(serializedItems[0])
 	for i := 0; i < numItems; i += itemsPerChunk {
-		chunk := make([]byte, 0)
+		chunk := make([]byte, BytesPerChunk)
 		j := i + itemsPerChunk
 		if j > numItems {
 			j = numItems
