@@ -1,6 +1,7 @@
 package ssz
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -14,7 +15,7 @@ import (
 var (
 	// ErrNotMerkleRoot when a cached item is not root.
 	ErrNotMerkleRoot = errors.New("object is not a Merkle root")
-	hashCacheMiss = promauto.NewCounter(prometheus.CounterOpts{
+	hashCacheMiss    = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "ssz_hash_cache_miss",
 		Help: "The number of hash requests that aren't present in the cache.",
 	})
