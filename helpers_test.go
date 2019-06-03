@@ -149,7 +149,7 @@ func BenchmarkPack(b *testing.B) {
 }
 
 func BenchmarkMerkleize(b *testing.B) {
-	input := make([][]byte, 1000)
+	input := make([][]byte, 8000)
 	for i := 0; i < len(input); i++ {
 		input[i] = make([]byte, BytesPerChunk)
 	}
