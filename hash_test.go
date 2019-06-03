@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -16,6 +17,17 @@ type hashTest struct {
 type merkleHashTest struct {
 	val           [][]byte
 	output, error string
+}
+
+type signatureRootTest struct {
+	val           interface{}
+	output, error string
+}
+
+type blockHeader struct {
+	Slot              uint64
+	PreviousBlockRoot []byte
+	Signature         []byte
 }
 
 // Notice: spaces in the output string will be ignored.
@@ -163,6 +175,35 @@ var merkleHashTests = []merkleHashTest{
 	}, output: "55DC6699E7B5713DD9102224C302996F931836C6DAE9A4EC6AB49C966F394685"},
 }
 
+var signatureRootTests = []signatureRootTest{
+	{val: &blockHeader{Slot: 20, Signature: []byte{'A', 'B'}},
+		output: "306668100C5F50254D29B42DFAA98043593DB85D52A3A490C04A5B4BB12B026C"},
+	{val: &blockHeader{Slot: 20, Signature: []byte("TESTING")},
+		output: "306668100C5F50254D29B42DFAA98043593DB85D52A3A490C04A5B4BB12B026C"},
+	{val: &blockHeader{
+		Slot:              10,
+		PreviousBlockRoot: []byte{'a', 'b'},
+		Signature:         []byte("TESTINGDIFF")},
+		output: "55218C1BFA60FC47418AF6886A341966D513368E98D6D441AAABA4A6BCDE274E"},
+	{val: blockHeader{
+		Slot:              10,
+		PreviousBlockRoot: []byte{'a', 'b'},
+		Signature:         []byte("TESTING23")},
+		output: "55218C1BFA60FC47418AF6886A341966D513368E98D6D441AAABA4A6BCDE274E"},
+	{val: blockHeader{Slot: 50, Signature: []byte("THIS")},
+		output: "BE5A48ACF14277E012D0037A515A2F9435515231BFE1658F30F535762CB5FD7A"},
+	{val: blockHeader{Slot: 50, Signature: []byte("DOESNT")},
+		output: "BE5A48ACF14277E012D0037A515A2F9435515231BFE1658F30F535762CB5FD7A"},
+	{val: blockHeader{Signature: []byte("MATTER")},
+		output: "66912C53B9927EC7DF3239028F8026C7079595052A59DFE8F8DF53273BE7EB5F"},
+	{val: blockHeader{Signature: []byte("TESTING")},
+		output: "66912C53B9927EC7DF3239028F8026C7079595052A59DFE8F8DF53273BE7EB5F"},
+	{val: 2, error: "given object is neither a struct or a pointer"},
+	{val: []byte{'a'}, error: "given object is neither a struct or a pointer"},
+	{val: nil, error: "given object is neither a struct or a pointer"},
+	{val: (*[]uint8)(nil), error: "nil pointer given"},
+}
+
 func runHashTests(t *testing.T, hash func(val interface{}) ([32]byte, error)) {
 	for i, test := range hashTests {
 		output, err := hash(test.val)
@@ -209,9 +250,38 @@ func runMerkleHashTests(t *testing.T, merkleHash func([][]byte) ([]byte, error))
 	}
 }
 
+func runSignedRootTests(t *testing.T, signedRoot func(val interface{}) ([32]byte, error)) {
+	for i, test := range signatureRootTests {
+		output, err := signedRoot(test.val)
+		// Check unexpected error
+		if test.error == "" && err != nil {
+			t.Errorf("test %d: unexpected error: %v\nvalue %#v\ntype %T",
+				i, err, test.val, test.val)
+			continue
+		}
+		// Check expected error
+		if test.error != "" && !strings.Contains(fmt.Sprint(err), test.error) {
+			t.Errorf("test %d: error mismatch\ngot   %v\nwant  %v\nvalue %#v\ntype  %T",
+				i, err, test.error, test.val, test.val)
+			continue
+		}
+		// Check expected output
+		if err == nil && !bytes.Equal(output[:], unhex(test.output)) {
+			t.Errorf("test %d: output mismatch:\ngot   %X\nwant  %s\nvalue %#v\ntype  %T",
+				i, output, stripSpace(test.output), test.val, test.val)
+		}
+	}
+}
+
 func TestHash(t *testing.T) {
 	runHashTests(t, func(val interface{}) ([32]byte, error) {
 		return TreeHash(val)
+	})
+}
+
+func TestSigningRoot(t *testing.T) {
+	runSignedRootTests(t, func(val interface{}) ([32]byte, error) {
+		return SigningRoot(val)
 	})
 }
 

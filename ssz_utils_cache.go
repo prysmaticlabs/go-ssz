@@ -95,6 +95,22 @@ type field struct {
 	sszUtils *sszUtils
 }
 
+func truncateLast(typ reflect.Type) (fields []field, err error) {
+	for i := 0; i < typ.NumField()-1; i++ {
+		f := typ.Field(i)
+		if strings.Contains(f.Name, "XXX") {
+			continue
+		}
+		utils, err := cachedSSZUtilsNoAcquireLock(f.Type)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
+		}
+		name := f.Name
+		fields = append(fields, field{i, name, utils})
+	}
+	return fields, nil
+}
+
 func structFields(typ reflect.Type) (fields []field, err error) {
 	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)

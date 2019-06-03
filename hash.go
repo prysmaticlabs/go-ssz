@@ -47,8 +47,21 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 
 	switch {
 	case kind == reflect.Struct:
-		truncated := truncateLast(valObj)
-		return TreeHash(truncated)
+		truncated, err := truncateLast(valObj.Type())
+		if err != nil {
+			return [32]byte{}, newHashError(fmt.Sprint(err), valObj.Type())
+		}
+		hasher, err := makeFieldsHasher(truncated)
+		if err != nil {
+			return [32]byte{}, newHashError(fmt.Sprint(err), valObj.Type())
+		}
+		output, err := hasher(valObj)
+		if err != nil {
+			return [32]byte{}, newHashError(fmt.Sprint(err), valObj.Type())
+		}
+		// Right-pad with 0 to make 32 bytes long, if necessary
+		paddedOutput := ToBytes32(output)
+		return paddedOutput, nil
 	case kind == reflect.Ptr:
 		if valObj.IsNil() {
 			return [32]byte{}, errors.New("nil pointer given")
@@ -57,16 +70,24 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 		if deRefVal.Kind() != reflect.Struct {
 			return [32]byte{}, errors.New("invalid type")
 		}
-		truncated := truncateLast(deRefVal)
-		return TreeHash(truncated)
+		truncated, err := truncateLast(deRefVal.Type())
+		if err != nil {
+			return [32]byte{}, newHashError(fmt.Sprint(err), deRefVal.Type())
+		}
+		hasher, err := makeFieldsHasher(truncated)
+		if err != nil {
+			return [32]byte{}, newHashError(fmt.Sprint(err), deRefVal.Type())
+		}
+		output, err := hasher(deRefVal)
+		if err != nil {
+			return [32]byte{}, newHashError(fmt.Sprint(err), deRefVal.Type())
+		}
+		// Right-pad with 0 to make 32 bytes long, if necessary
+		paddedOutput := ToBytes32(output)
+		return paddedOutput, nil
 	default:
 		return [32]byte{}, fmt.Errorf("given object is neither a struct or a pointer but is %v", kind)
 	}
-}
-
-func truncateLast(val reflect.Value) reflect.Value {
-	val.Field(val.NumField() - 1).SetBytes([]byte{})
-	return val
 }
 
 // Hash defines a function that returns the
@@ -224,6 +245,10 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, err
 	}
+	return makeFieldsHasher(fields)
+}
+
+func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value) ([]byte, error) {
 		concatElemHash := make([]byte, 0)
 		for _, f := range fields {
