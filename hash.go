@@ -47,21 +47,7 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 
 	switch {
 	case kind == reflect.Struct:
-		truncated, err := truncateLast(valObj.Type())
-		if err != nil {
-			return [32]byte{}, newHashError(fmt.Sprint(err), valObj.Type())
-		}
-		hasher, err := makeFieldsHasher(truncated)
-		if err != nil {
-			return [32]byte{}, newHashError(fmt.Sprint(err), valObj.Type())
-		}
-		output, err := hasher(valObj)
-		if err != nil {
-			return [32]byte{}, newHashError(fmt.Sprint(err), valObj.Type())
-		}
-		// Right-pad with 0 to make 32 bytes long, if necessary
-		paddedOutput := ToBytes32(output)
-		return paddedOutput, nil
+		return truncateAndHash(valObj)
 	case kind == reflect.Ptr:
 		if valObj.IsNil() {
 			return [32]byte{}, errors.New("nil pointer given")
@@ -70,21 +56,7 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 		if deRefVal.Kind() != reflect.Struct {
 			return [32]byte{}, errors.New("invalid type")
 		}
-		truncated, err := truncateLast(deRefVal.Type())
-		if err != nil {
-			return [32]byte{}, newHashError(fmt.Sprint(err), deRefVal.Type())
-		}
-		hasher, err := makeFieldsHasher(truncated)
-		if err != nil {
-			return [32]byte{}, newHashError(fmt.Sprint(err), deRefVal.Type())
-		}
-		output, err := hasher(deRefVal)
-		if err != nil {
-			return [32]byte{}, newHashError(fmt.Sprint(err), deRefVal.Type())
-		}
-		// Right-pad with 0 to make 32 bytes long, if necessary
-		paddedOutput := ToBytes32(output)
-		return paddedOutput, nil
+		return truncateAndHash(deRefVal)
 	default:
 		return [32]byte{}, fmt.Errorf("given object is neither a struct or a pointer but is %v", kind)
 	}
@@ -282,6 +254,24 @@ func makePtrHasher(typ reflect.Type) (hasher, error) {
 		return elemSSZUtils.hasher(val.Elem())
 	}
 	return hasher, nil
+}
+
+func truncateAndHash(val reflect.Value) ([32]byte, error) {
+	truncated, err := truncateLast(val.Type())
+	if err != nil {
+		return [32]byte{}, newHashError(fmt.Sprint(err), val.Type())
+	}
+	hasher, err := makeFieldsHasher(truncated)
+	if err != nil {
+		return [32]byte{}, newHashError(fmt.Sprint(err), val.Type())
+	}
+	output, err := hasher(val)
+	if err != nil {
+		return [32]byte{}, newHashError(fmt.Sprint(err), val.Type())
+	}
+	// Right-pad with 0 to make 32 bytes long, if necessary
+	paddedOutput := ToBytes32(output)
+	return paddedOutput, nil
 }
 
 // merkelHash implements a merkle-tree style hash algorithm.

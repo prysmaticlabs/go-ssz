@@ -96,7 +96,7 @@ type field struct {
 }
 
 func truncateLast(typ reflect.Type) (fields []field, err error) {
-	for i := 0; i < typ.NumField()-1; i++ {
+	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)
 		if strings.Contains(f.Name, "XXX") {
 			continue
@@ -108,7 +108,7 @@ func truncateLast(typ reflect.Type) (fields []field, err error) {
 		name := f.Name
 		fields = append(fields, field{i, name, utils})
 	}
-	return fields, nil
+	return fields[:len(fields)-1], nil
 }
 
 func structFields(typ reflect.Type) (fields []field, err error) {
@@ -125,24 +125,4 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 		fields = append(fields, field{i, name, utils})
 	}
 	return fields, nil
-}
-
-func structFieldMap(typ reflect.Type) (fieldMap map[string]field, err error) {
-	if typ.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("wrong object type, expecting struct got: %v", typ.Kind())
-	}
-	fieldMap = make(map[string]field)
-	for i := 0; i < typ.NumField(); i++ {
-		f := typ.Field(i)
-		if strings.Contains(f.Name, "XXX") {
-			continue
-		}
-		utils, err := cachedSSZUtilsNoAcquireLock(f.Type)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
-		}
-		name := f.Name
-		fieldMap[name] = field{i, name, utils}
-	}
-	return fieldMap, nil
 }

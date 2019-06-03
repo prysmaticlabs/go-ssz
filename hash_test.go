@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 )
@@ -20,14 +19,20 @@ type merkleHashTest struct {
 }
 
 type signatureRootTest struct {
-	val           interface{}
-	output, error string
+	val1 interface{}
+	val2 interface{}
 }
 
 type blockHeader struct {
 	Slot              uint64
 	PreviousBlockRoot []byte
 	Signature         []byte
+}
+
+type truncateTestStruct struct {
+	Slot              uint64
+	StateRoot         []byte
+	PreviousBlockRoot []byte
 }
 
 // Notice: spaces in the output string will be ignored.
@@ -176,32 +181,28 @@ var merkleHashTests = []merkleHashTest{
 }
 
 var signatureRootTests = []signatureRootTest{
-	{val: &blockHeader{Slot: 20, Signature: []byte{'A', 'B'}},
-		output: "306668100C5F50254D29B42DFAA98043593DB85D52A3A490C04A5B4BB12B026C"},
-	{val: &blockHeader{Slot: 20, Signature: []byte("TESTING")},
-		output: "306668100C5F50254D29B42DFAA98043593DB85D52A3A490C04A5B4BB12B026C"},
-	{val: &blockHeader{
-		Slot:              10,
-		PreviousBlockRoot: []byte{'a', 'b'},
-		Signature:         []byte("TESTINGDIFF")},
-		output: "55218C1BFA60FC47418AF6886A341966D513368E98D6D441AAABA4A6BCDE274E"},
-	{val: blockHeader{
-		Slot:              10,
-		PreviousBlockRoot: []byte{'a', 'b'},
-		Signature:         []byte("TESTING23")},
-		output: "55218C1BFA60FC47418AF6886A341966D513368E98D6D441AAABA4A6BCDE274E"},
-	{val: blockHeader{Slot: 50, Signature: []byte("THIS")},
-		output: "BE5A48ACF14277E012D0037A515A2F9435515231BFE1658F30F535762CB5FD7A"},
-	{val: blockHeader{Slot: 50, Signature: []byte("DOESNT")},
-		output: "BE5A48ACF14277E012D0037A515A2F9435515231BFE1658F30F535762CB5FD7A"},
-	{val: blockHeader{Signature: []byte("MATTER")},
-		output: "66912C53B9927EC7DF3239028F8026C7079595052A59DFE8F8DF53273BE7EB5F"},
-	{val: blockHeader{Signature: []byte("TESTING")},
-		output: "66912C53B9927EC7DF3239028F8026C7079595052A59DFE8F8DF53273BE7EB5F"},
-	{val: 2, error: "given object is neither a struct or a pointer"},
-	{val: []byte{'a'}, error: "given object is neither a struct or a pointer"},
-	{val: nil, error: "given object is neither a struct or a pointer"},
-	{val: (*[]uint8)(nil), error: "nil pointer given"},
+	{
+		val1: &blockHeader{Slot: 20, Signature: []byte{'A', 'B'}},
+		val2: &blockHeader{Slot: 20, Signature: []byte("TESTING")},
+	},
+	{
+		val1: &blockHeader{
+			Slot:              10,
+			PreviousBlockRoot: []byte{'a', 'b'},
+			Signature:         []byte("TESTINGDIFF")},
+		val2: &blockHeader{
+			Slot:              10,
+			PreviousBlockRoot: []byte{'a', 'b'},
+			Signature:         []byte("TESTING23")},
+	},
+	{
+		val1: blockHeader{Slot: 50, Signature: []byte("THIS")},
+		val2: blockHeader{Slot: 50, Signature: []byte("DOESNT")},
+	},
+	{
+		val1: blockHeader{Signature: []byte("MATTER")},
+		val2: blockHeader{Signature: []byte("TESTING")},
+	},
 }
 
 func runHashTests(t *testing.T, hash func(val interface{}) ([32]byte, error)) {
@@ -252,23 +253,11 @@ func runMerkleHashTests(t *testing.T, merkleHash func([][]byte) ([]byte, error))
 
 func runSigningRootTests(t *testing.T, signingRoot func(val interface{}) ([32]byte, error)) {
 	for i, test := range signatureRootTests {
-		output, err := signingRoot(test.val)
-		// Check unexpected error
-		if test.error == "" && err != nil {
-			t.Errorf("test %d: unexpected error: %v\nvalue %#v\ntype %T",
-				i, err, test.val, test.val)
-			continue
-		}
-		// Check expected error
-		if test.error != "" && !strings.Contains(fmt.Sprint(err), test.error) {
-			t.Errorf("test %d: error mismatch\ngot   %v\nwant  %v\nvalue %#v\ntype  %T",
-				i, err, test.error, test.val, test.val)
-			continue
-		}
-		// Check expected output
-		if err == nil && !bytes.Equal(output[:], unhex(test.output)) {
-			t.Errorf("test %d: output mismatch:\ngot   %X\nwant  %s\nvalue %#v\ntype  %T",
-				i, output, stripSpace(test.output), test.val, test.val)
+		output1, err := signingRoot(test.val1)
+		output2, err := signingRoot(test.val2)
+		// Check values have same result hash
+		if err == nil && !bytes.Equal(output1[:], output2[:]) {
+			t.Errorf("test %d: hash mismatch: %X\n != %X", i, output1, output2)
 		}
 	}
 }
