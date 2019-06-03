@@ -125,6 +125,7 @@ func TestIsPowerTwo(t *testing.T) {
 		{input: 5, output: false},
 		{input: 1, output: true},
 		{input: 0, output: false},
+		{input: -50, output: false},
 		{input: 2, output: true},
 		{input: 256, output: true},
 		{input: 1024, output: true},
