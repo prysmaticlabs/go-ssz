@@ -15,8 +15,8 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 	if len(serializedItems) == 0 {
 		emptyChunk := make([]byte, BytesPerChunk)
 		return [][]byte{emptyChunk}, nil
-		// If each item has exactly BYTES_PER_CHUNK length, we return the list of serialized items.
 	} else if len(serializedItems[0]) == BytesPerChunk {
+		// If each item has exactly BYTES_PER_CHUNK length, we return the list of serialized items.
 		return serializedItems, nil
 	}
 	// We flatten the list in order to pack its items into byte chunks correctly.

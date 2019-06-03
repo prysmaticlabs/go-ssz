@@ -82,6 +82,7 @@ go_test(
         "example_encode_test.go",
         "hash_cache_test.go",
         "hash_test.go",
+        "helpers_test.go",
     ],
     embed = [":go_default_library"],
 )
