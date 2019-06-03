@@ -203,6 +203,30 @@ var signatureRootTests = []signatureRootTest{
 		val1: blockHeader{Signature: []byte("MATTER")},
 		val2: blockHeader{Signature: []byte("TESTING")},
 	},
+	{
+		val1: truncateTestStruct{
+			Slot:              5,
+			StateRoot:         []byte("MATTERS"),
+			PreviousBlockRoot: []byte("DOESNT MATTER"),
+		},
+		val2: truncateTestStruct{
+			Slot:              5,
+			StateRoot:         []byte("MATTERS"),
+			PreviousBlockRoot: []byte("SHOULDNT MATTER"),
+		},
+	},
+	{
+		val1: truncateTestStruct{
+			Slot:              550,
+			StateRoot:         []byte("SHOULD"),
+			PreviousBlockRoot: []byte("DOESNT"),
+		},
+		val2: truncateTestStruct{
+			Slot:              550,
+			StateRoot:         []byte("SHOULD"),
+			PreviousBlockRoot: []byte("SHOULDNT"),
+		},
+	},
 }
 
 func runHashTests(t *testing.T, hash func(val interface{}) ([32]byte, error)) {
