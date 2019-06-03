@@ -2,6 +2,7 @@ package ssz
 
 import (
 	"bytes"
+	"math"
 )
 
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
@@ -32,9 +33,13 @@ func pack(objects []interface{}) ([][]byte, error) {
 	for i := 0; i < numItems; i += itemsPerChunk {
 		chunk := make([]byte, BytesPerChunk)
 		j := i + itemsPerChunk
+		// We create our upper bound index of the chunk, if it is greater than numItems,
+		// we set it as numItems itself.
 		if j > numItems {
 			j = numItems
 		}
+		// We create chunks from the list of serialized items based on the indices
+		// determined above.
 		for _, item := range serializedItems[i:j] {
 			chunk = append(chunk, item...)
 		}
@@ -48,6 +53,9 @@ func pack(objects []interface{}) ([][]byte, error) {
 // Note that merkleize on a single chunk is simply that chunk, i.e. the identity
 // when the number of chunks is one.
 func merkleize(chunks [][]byte) ([32]byte, error) {
+	for !isPowerTwo(len(chunks)) {
+		chunks = append(chunks, make([]byte, BytesPerChunk))
+	}
 	return [32]byte{}, nil
 }
 
@@ -61,4 +69,10 @@ func mixInLength(root [32]byte, length []byte) [32]byte {
 // return hash(root + type_index).
 func mixInType(root [32]byte, typeIndex []byte) [32]byte {
 	return Hash(append(root[:], typeIndex...))
+}
+
+// fast verification to check if an number if a power of two.
+func isPowerTwo(num int) bool {
+	elem := math.Log2(float64(num))
+	return math.Floor(elem) == math.Ceil(elem)
 }
