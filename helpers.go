@@ -56,7 +56,21 @@ func merkleize(chunks [][]byte) ([32]byte, error) {
 	for !isPowerTwo(len(chunks)) {
 		chunks = append(chunks, make([]byte, BytesPerChunk))
 	}
-	return [32]byte{}, nil
+	hashLayer := make([][32]byte, len(chunks))
+	// We keep track of the hash layers of a Merkle trie until we reach
+	// the top layer of length 1, which contains the single root element.
+	//        [Root]      -> Top layer has length 1.
+	//    [E]       [F]   -> This layer has length 2.
+	// [A]  [B]  [C]  [D] -> The bottom layer has length 4 (needs to be a power of two.
+	for len(hashLayer) > 1 {
+		layer := [][32]byte{}
+		for i := 0; i < len(hashLayer); i += 2 {
+			hashedChunk := Hash(append(chunks[i], chunks[i+1]...))
+			layer = append(layer, hashedChunk)
+		}
+		hashLayer = layer
+	}
+	return hashLayer[0], nil
 }
 
 // Given a Merkle root root and a length length ("uint256" little-endian serialization)
