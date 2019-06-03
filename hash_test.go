@@ -250,9 +250,9 @@ func runMerkleHashTests(t *testing.T, merkleHash func([][]byte) ([]byte, error))
 	}
 }
 
-func runSignedRootTests(t *testing.T, signedRoot func(val interface{}) ([32]byte, error)) {
+func runSigningRootTests(t *testing.T, signingRoot func(val interface{}) ([32]byte, error)) {
 	for i, test := range signatureRootTests {
-		output, err := signedRoot(test.val)
+		output, err := signingRoot(test.val)
 		// Check unexpected error
 		if test.error == "" && err != nil {
 			t.Errorf("test %d: unexpected error: %v\nvalue %#v\ntype %T",
@@ -280,7 +280,7 @@ func TestHash(t *testing.T) {
 }
 
 func TestSigningRoot(t *testing.T) {
-	runSignedRootTests(t, func(val interface{}) ([32]byte, error) {
+	runSigningRootTests(t, func(val interface{}) ([32]byte, error) {
 		return SigningRoot(val)
 	})
 }
