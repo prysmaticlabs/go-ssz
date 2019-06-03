@@ -20,9 +20,11 @@ func pack(objects []interface{}) ([][]byte, error) {
 	}
 	chunks := [][]byte{}
 	numItems := len(serializedItems)
+	// If there are no items, we return an empty chunk.
 	if numItems == 0 {
 		emptyChunk := make([]byte, BytesPerChunk)
 		return [][]byte{emptyChunk}, nil
+	// If each item has exactly BYTES_PER_CHUNK length, we return the list of serialized items.
 	} else if len(serializedItems[0]) == BytesPerChunk {
 		return serializedItems, nil
 	}
