@@ -18,21 +18,21 @@ type merkleHashTest struct {
 	output, error string
 }
 
-type signatureRootTest struct {
+type selfSignedRootTest struct {
 	val1 interface{}
 	val2 interface{}
 }
 
-type blockHeader struct {
-	Slot              uint64
-	PreviousBlockRoot []byte
-	Signature         []byte
+type truncateSignatureCase struct {
+	slot              uint64
+	previousBlockRoot []byte
+	signature         []byte
 }
 
-type truncateTestStruct struct {
-	Slot              uint64
-	StateRoot         []byte
-	PreviousBlockRoot []byte
+type truncateLastCase struct {
+	slot           uint64
+	stateRoot      []byte
+	truncatedField []byte
 }
 
 // Notice: spaces in the output string will be ignored.
@@ -180,51 +180,51 @@ var merkleHashTests = []merkleHashTest{
 	}, output: "55DC6699E7B5713DD9102224C302996F931836C6DAE9A4EC6AB49C966F394685"},
 }
 
-var signatureRootTests = []signatureRootTest{
+var selfSignedRootTests = []selfSignedRootTest{
 	{
-		val1: &blockHeader{Slot: 20, Signature: []byte{'A', 'B'}},
-		val2: &blockHeader{Slot: 20, Signature: []byte("TESTING")},
+		val1: &truncateSignatureCase{slot: 20, signature: []byte{'A', 'B'}},
+		val2: &truncateSignatureCase{slot: 20, signature: []byte("TESTING")},
 	},
 	{
-		val1: &blockHeader{
-			Slot:              10,
-			PreviousBlockRoot: []byte{'a', 'b'},
-			Signature:         []byte("TESTINGDIFF")},
-		val2: &blockHeader{
-			Slot:              10,
-			PreviousBlockRoot: []byte{'a', 'b'},
-			Signature:         []byte("TESTING23")},
+		val1: &truncateSignatureCase{
+			slot:              10,
+			previousBlockRoot: []byte{'a', 'b'},
+			signature:         []byte("TESTINGDIFF")},
+		val2: &truncateSignatureCase{
+			slot:              10,
+			previousBlockRoot: []byte{'a', 'b'},
+			signature:         []byte("TESTING23")},
 	},
 	{
-		val1: blockHeader{Slot: 50, Signature: []byte("THIS")},
-		val2: blockHeader{Slot: 50, Signature: []byte("DOESNT")},
+		val1: truncateSignatureCase{slot: 50, signature: []byte("THIS")},
+		val2: truncateSignatureCase{slot: 50, signature: []byte("DOESNT")},
 	},
 	{
-		val1: blockHeader{Signature: []byte("MATTER")},
-		val2: blockHeader{Signature: []byte("TESTING")},
+		val1: truncateSignatureCase{signature: []byte("MATTER")},
+		val2: truncateSignatureCase{signature: []byte("TESTING")},
 	},
 	{
-		val1: truncateTestStruct{
-			Slot:              5,
-			StateRoot:         []byte("MATTERS"),
-			PreviousBlockRoot: []byte("DOESNT MATTER"),
+		val1: truncateLastCase{
+			slot:           5,
+			stateRoot:      []byte("MATTERS"),
+			truncatedField: []byte("DOESNT MATTER"),
 		},
-		val2: truncateTestStruct{
-			Slot:              5,
-			StateRoot:         []byte("MATTERS"),
-			PreviousBlockRoot: []byte("SHOULDNT MATTER"),
+		val2: truncateLastCase{
+			slot:           5,
+			stateRoot:      []byte("MATTERS"),
+			truncatedField: []byte("SHOULDNT MATTER"),
 		},
 	},
 	{
-		val1: truncateTestStruct{
-			Slot:              550,
-			StateRoot:         []byte("SHOULD"),
-			PreviousBlockRoot: []byte("DOESNT"),
+		val1: truncateLastCase{
+			slot:           550,
+			stateRoot:      []byte("SHOULD"),
+			truncatedField: []byte("DOESNT"),
 		},
-		val2: truncateTestStruct{
-			Slot:              550,
-			StateRoot:         []byte("SHOULD"),
-			PreviousBlockRoot: []byte("SHOULDNT"),
+		val2: truncateLastCase{
+			slot:           550,
+			stateRoot:      []byte("SHOULD"),
+			truncatedField: []byte("SHOULDNT"),
 		},
 	},
 }
@@ -276,9 +276,15 @@ func runMerkleHashTests(t *testing.T, merkleHash func([][]byte) ([]byte, error))
 }
 
 func runSigningRootTests(t *testing.T, signingRoot func(val interface{}) ([32]byte, error)) {
-	for i, test := range signatureRootTests {
+	for i, test := range selfSignedRootTests {
 		output1, err := signingRoot(test.val1)
+		if err != nil {
+			t.Fatalf("could not get the signing root of test %d, value 1 %v", i, err)
+		}
 		output2, err := signingRoot(test.val2)
+		if err != nil {
+			t.Fatalf("could not get the signing root of test %d, value 2 %v", i, err)
+		}
 		// Check values have same result hash
 		if err == nil && !bytes.Equal(output1[:], output2[:]) {
 			t.Errorf("test %d: hash mismatch: %X\n != %X", i, output1, output2)

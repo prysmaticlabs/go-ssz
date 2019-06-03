@@ -95,6 +95,8 @@ type field struct {
 	sszUtils *sszUtils
 }
 
+// truncateLast removes the last value of a struct, usually the signature,
+// in order to hash only the data the signature field is intended to represent.
 func truncateLast(typ reflect.Type) (fields []field, err error) {
 	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)

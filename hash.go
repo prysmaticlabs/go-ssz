@@ -39,8 +39,9 @@ func TreeHash(val interface{}) ([32]byte, error) {
 	return paddedOutput, nil
 }
 
-// SigningRoot returns the signed message for the value passed after truncating
-// the `signature` field.
+// SigningRoot truncates the last prop of the struct passed in
+// and returns its tree hash. This is done because the last prop
+// usually contains the signature that which this data is the root for.
 func SigningRoot(val interface{}) ([32]byte, error) {
 	valObj := reflect.ValueOf(val)
 	kind := valObj.Kind()
