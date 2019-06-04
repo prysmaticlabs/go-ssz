@@ -209,18 +209,6 @@ func runMerkleHashTests(t *testing.T, merkleHash func([][]byte) ([]byte, error))
 	}
 }
 
-func TestHash(t *testing.T) {
-	runHashTests(t, func(val interface{}) ([32]byte, error) {
-		return TreeHash(val)
-	})
-}
-
-func TestMerkleHash(t *testing.T) {
-	runMerkleHashTests(t, func(val [][]byte) ([]byte, error) {
-		return merkleHash(val)
-	})
-}
-
 type concurrentHashStruct struct {
 	a uint64
 	b uint64
@@ -239,7 +227,7 @@ func TestConcurrentHash(t *testing.T) {
 			select {
 			case <-ctx.Done():
 			default:
-				TreeHash(concurrentHashStruct{
+				HashTreeRoot(concurrentHashStruct{
 					a: 0,
 					b: 1,
 					c: "test",
@@ -252,7 +240,7 @@ func TestConcurrentHash(t *testing.T) {
 			select {
 			case <-ctx.Done():
 			default:
-				TreeHash(concurrentHashStruct2{
+				HashTreeRoot(concurrentHashStruct2{
 					a: 0,
 					b: 1,
 				})

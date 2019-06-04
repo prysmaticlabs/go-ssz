@@ -79,7 +79,7 @@ func (b *hashCacheS) TrieRootCached(val interface{}) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
 	}
-	exists, fetchedInfo, err := b.RootByEncodedHash(ToBytes32(hs))
+	exists, fetchedInfo, err := b.RootByEncodedHash(hs)
 	if err != nil {
 		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
 	}
@@ -95,9 +95,7 @@ func (b *hashCacheS) TrieRootCached(val interface{}) ([32]byte, error) {
 		if err != nil {
 			return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
 		}
-		// Right-pad with 0 to make 32 bytes long, if necessary.
-		paddedOutput = ToBytes32(output)
-		err = b.AddRoot(ToBytes32(hs), paddedOutput[:])
+		err = b.AddRoot(hs, output[:])
 		if err != nil {
 			return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
 		}
@@ -109,31 +107,28 @@ func (b *hashCacheS) TrieRootCached(val interface{}) ([32]byte, error) {
 // least recently added root info if the cache size has reached the max cache
 // size limit.
 func (b *hashCacheS) MerkleHashCached(byteSlice [][]byte) ([]byte, error) {
-	mh := []byte{}
 	hs, err := hashedEncoding(reflect.ValueOf(byteSlice))
 	if err != nil {
-		return mh, newHashError(fmt.Sprint(err), reflect.TypeOf(byteSlice))
+		return nil, newHashError(fmt.Sprint(err), reflect.TypeOf(byteSlice))
 	}
-	exists, fetchedInfo, err := b.RootByEncodedHash(ToBytes32(hs))
+	exists, fetchedInfo, err := b.RootByEncodedHash(hs)
 	if err != nil {
-		return mh, newHashError(fmt.Sprint(err), reflect.TypeOf(byteSlice))
+		return nil, newHashError(fmt.Sprint(err), reflect.TypeOf(byteSlice))
 	}
+	mh := [32]byte{}
 	if exists {
-		mh = fetchedInfo.MerkleRoot
+		mh = ToBytes32(fetchedInfo.MerkleRoot)
 	} else {
-		mh, err = merkleHash(byteSlice)
-		if err != nil {
-			return nil, err
-		}
+		mh = merkleize(byteSlice)
 		mr := &root{
-			Hash:       ToBytes32(hs),
-			MerkleRoot: mh,
+			Hash:       hs,
+			MerkleRoot: mh[:],
 		}
 		b.hashCache.Set(mr.Hash.Hex(), mr, time.Hour)
 		hashCacheSize.Set(float64(b.hashCache.ItemCount()))
 	}
 
-	return mh, nil
+	return mh[:], nil
 }
 
 // AddRoot adds an encodedhash of the object as key and a rootHash object to the cache.
@@ -155,14 +150,14 @@ func makeSliceHasherCache(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
-	hasher := func(val reflect.Value) ([]byte, error) {
+	hasher := func(val reflect.Value) ([32]byte, error) {
 		hs, err := hashedEncoding(val)
 		if err != nil {
-			return nil, fmt.Errorf("failed to encode element of slice/array: %v", err)
+			return [32]byte{}, fmt.Errorf("failed to encode element of slice/array: %v", err)
 		}
-		exists, fetchedInfo, err := hashCache.RootByEncodedHash(ToBytes32(hs))
+		exists, fetchedInfo, err := hashCache.RootByEncodedHash(hs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to encode element of slice/array: %v", err)
+			return [32]byte{}, fmt.Errorf("failed to encode element of slice/array: %v", err)
 		}
 		var output []byte
 		if exists {
@@ -172,23 +167,21 @@ func makeSliceHasherCache(typ reflect.Type) (hasher, error) {
 			for i := 0; i < val.Len(); i++ {
 				elemHash, err := elemSSZUtils.hasher(val.Index(i))
 				if err != nil {
-					return nil, fmt.Errorf("failed to hash element of slice/array: %v", err)
+					return [32]byte{}, fmt.Errorf("failed to hash element of slice/array: %v", err)
 				}
-				elemHashList = append(elemHashList, elemHash)
+				elemHashList = append(elemHashList, elemHash[:])
 			}
 			output, err = hashCache.MerkleHashCached(elemHashList)
 			if err != nil {
-				return nil, fmt.Errorf("failed to calculate merkle hash of element hash list: %v", err)
+				return [32]byte{}, fmt.Errorf("failed to calculate merkle hash of element hash list: %v", err)
 			}
-			err := hashCache.AddRoot(ToBytes32(hs), output)
+			err := hashCache.AddRoot(hs, output)
 			if err != nil {
-				return nil, fmt.Errorf("failed to add root to cache: %v", err)
+				return [32]byte{}, fmt.Errorf("failed to add root to cache: %v", err)
 			}
 			hashCacheSize.Set(float64(hashCache.hashCache.ItemCount()))
-
 		}
-
-		return output, nil
+		return ToBytes32(output), nil
 	}
 	return hasher, nil
 }
@@ -198,30 +191,27 @@ func makeStructHasherCache(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, err
 	}
-	hasher := func(val reflect.Value) ([]byte, error) {
+	hasher := func(val reflect.Value) ([32]byte, error) {
 		hs, err := hashedEncoding(val)
 		if err != nil {
-			return nil, fmt.Errorf("failed to encode element of slice/array: %v", err)
+			return hs, fmt.Errorf("failed to encode element of slice/array: %v", err)
 		}
-		exists, fetchedInfo, err := hashCache.RootByEncodedHash(ToBytes32(hs))
+		exists, fetchedInfo, err := hashCache.RootByEncodedHash(hs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to encode element of slice/array: %v", err)
+			return hs, fmt.Errorf("failed to encode element of slice/array: %v", err)
 		}
-		var result [32]byte
 		if exists {
-			result = ToBytes32(fetchedInfo.MerkleRoot)
-			return result[:], nil
+			return ToBytes32(fetchedInfo.MerkleRoot), nil
 		}
-		concatElemHash := make([]byte, 0)
+		roots := [][]byte{}
 		for _, f := range fields {
-			elemHash, err := f.sszUtils.hasher(val.Field(f.index))
+			root, err := f.sszUtils.hasher(val.Field(f.index))
 			if err != nil {
-				return nil, fmt.Errorf("failed to hash field of struct: %v", err)
+				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
 			}
-			concatElemHash = append(concatElemHash, elemHash...)
+			roots = append(roots, root[:])
 		}
-		result = Hash(concatElemHash)
-		return result[:], nil
+		return merkleize(roots), nil
 	}
 	return hasher, nil
 }

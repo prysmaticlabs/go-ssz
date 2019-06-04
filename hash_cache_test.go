@@ -44,15 +44,12 @@ func generateJunkObject(size uint64) []*junkObject {
 func TestObjCache_byHash(t *testing.T) {
 	cache := newHashCache(100000)
 	byteSl := [][]byte{{0, 0}, {1, 1}}
-	mr, err := merkleHash(byteSl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	mr := merkleize(byteSl)
 	hs, err := hashedEncoding(reflect.ValueOf(byteSl))
 	if err != nil {
 		t.Fatal(err)
 	}
-	exists, _, err := cache.RootByEncodedHash(ToBytes32(hs))
+	exists, _, err := cache.RootByEncodedHash(hs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,21 +59,21 @@ func TestObjCache_byHash(t *testing.T) {
 	if _, err := cache.MerkleHashCached(byteSl); err != nil {
 		t.Fatal(err)
 	}
-	exists, fetchedInfo, err := cache.RootByEncodedHash(ToBytes32(hs))
+	exists, fetchedInfo, err := cache.RootByEncodedHash(hs)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !exists {
 		t.Error("Expected blockInfo to exist")
 	}
-	if !bytes.Equal(mr, fetchedInfo.MerkleRoot) {
+	if !bytes.Equal(mr[:], fetchedInfo.MerkleRoot) {
 		t.Errorf(
 			"Expected fetched info number to be %v, got %v",
 			mr,
 			fetchedInfo.MerkleRoot,
 		)
 	}
-	if fetchedInfo.Hash != ToBytes32(hs) {
+	if fetchedInfo.Hash != hs {
 		t.Errorf(
 			"Expected fetched info hash to be %v, got %v",
 			hs,
@@ -85,26 +82,12 @@ func TestObjCache_byHash(t *testing.T) {
 	}
 }
 
-func TestMerkleHashWithCache(t *testing.T) {
-	cache := newHashCache(100000)
-	for i := 0; i < 200; i++ {
-		runMerkleHashTests(t, func(val [][]byte) ([]byte, error) {
-			return merkleHash(val)
-		})
-	}
-	for i := 0; i < 200; i++ {
-		runMerkleHashTests(t, func(val [][]byte) ([]byte, error) {
-			return cache.MerkleHashCached(val)
-		})
-	}
-}
-
 func BenchmarkHashWithoutCache(b *testing.B) {
 	useCache = false
 	First := generateJunkObject(100)
-	TreeHash(&tree{First: First, Second: First})
+	HashTreeRoot(&tree{First: First, Second: First})
 	for n := 0; n < b.N; n++ {
-		TreeHash(&tree{First: First, Second: First})
+		HashTreeRoot(&tree{First: First, Second: First})
 	}
 }
 
@@ -115,9 +98,9 @@ func BenchmarkHashWithCache(b *testing.B) {
 		First  []*junkObject
 		Second []*junkObject
 	}
-	TreeHash(&tree{First: First, Second: First})
+	HashTreeRoot(&tree{First: First, Second: First})
 	for n := 0; n < b.N; n++ {
-		TreeHash(&tree{First: First, Second: First})
+		HashTreeRoot(&tree{First: First, Second: First})
 	}
 }
 
