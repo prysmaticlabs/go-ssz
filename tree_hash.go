@@ -244,10 +244,10 @@ func hashedEncoding(val reflect.Value) ([32]byte, error) {
 
 func isBasicType(kind reflect.Kind) bool {
 	return kind == reflect.Bool ||
-	kind == reflect.Uint8 ||
-	kind == reflect.Uint16 ||
-	kind == reflect.Uint32 ||
-	kind == reflect.Uint64
+		kind == reflect.Uint8 ||
+		kind == reflect.Uint16 ||
+		kind == reflect.Uint32 ||
+		kind == reflect.Uint64
 }
 
 func isBasicTypeArray(typ reflect.Type, kind reflect.Kind) bool {

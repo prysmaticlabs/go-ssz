@@ -52,15 +52,15 @@ workspace_binary(
 go_library(
     name = "go_default_library",
     srcs = [
-        "bytes.go",
         "config.go",
         "decode.go",
         "doc.go",
         "encode.go",
-        "hash.go",
         "hash_cache.go",
         "helpers.go",
         "ssz_utils_cache.go",
+        "tree_hash.go",
+        "utils.go",
     ],
     importpath = "github.com/prysmaticlabs/go-ssz",
     visibility = ["//visibility:public"],
@@ -78,11 +78,9 @@ go_test(
     srcs = [
         "decode_test.go",
         "encode_test.go",
-        "example_and_test.go",
-        "example_encode_test.go",
         "hash_cache_test.go",
-        "hash_test.go",
         "helpers_test.go",
+        "tree_hash_test.go",
     ],
     embed = [":go_default_library"],
 )
