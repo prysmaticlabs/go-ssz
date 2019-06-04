@@ -103,7 +103,7 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
@@ -112,7 +112,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		// We encode every serialized value into a list of byte slices.
 		for i := 0; i < val.Len(); i++ {
 			buf := &encbuf{}
-			if err = elemSSZUtils.encoder(val.Index(i), buf); err != nil {
+			if err = utils.encoder(val.Index(i), buf); err != nil {
 				return [32]byte{}, err
 			}
 			writer := new(bytes.Buffer)
@@ -133,10 +133,14 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
+	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	if err != nil {
+		return nil, err
+	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		roots := [][]byte{}
 		for i := 0; i < val.Len(); i++ {
-			root, err := HashTreeRoot(val.Index(i))
+			root, err := utils.hasher(val.Index(i))
 			if err != nil {
 				return [32]byte{}, err
 			}
@@ -154,10 +158,14 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
+	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	if err != nil {
+		return nil, err
+	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		roots := [][]byte{}
 		for i := 0; i < val.Len(); i++ {
-			root, err := HashTreeRoot(val.Index(i))
+			root, err := utils.hasher(val.Index(i))
 			if err != nil {
 				return [32]byte{}, err
 			}
@@ -177,18 +185,16 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, err
 	}
-	hasher := func(val reflect.Value) ([]byte, error) {
-		concatElemHash := make([]byte, 0)
+	hasher := func(val reflect.Value) ([32]byte, error) {
+		roots := [][]byte{}
 		for _, f := range fields {
-			elemHash, err := f.sszUtils.hasher(val.Field(f.index))
+			root, err := f.sszUtils.hasher(val.Field(f.index))
 			if err != nil {
-				return nil, fmt.Errorf("failed to hash field of struct: %v", err)
+				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
 			}
-			concatElemHash = append(concatElemHash, elemHash...)
+			roots = append(roots, root[:])
 		}
-		result := Hash(concatElemHash)
-		return result[:], nil
-		// merkleize([hash_tree_root(element) for element in value]).
+		return merkleize(roots), nil
 	}
 	return hasher, nil
 }
@@ -203,8 +209,7 @@ func makePtrHasher(typ reflect.Type) (hasher, error) {
 	// After considered the use case in Prysm, we've decided that:
 	// - We assume we will only tree-hash pointer of array, slice or struct.
 	// - The tree-hash for nil pointer shall be 0x00000000.
-
-	hasher := func(val reflect.Value) ([]byte, error) {
+	hasher := func(val reflect.Value) ([32]byte, error) {
 		if val.IsNil() {
 			return hashedEncoding(val)
 		}
@@ -229,13 +234,12 @@ func getEncoding(val reflect.Value) ([]byte, error) {
 	return writer.Bytes(), nil
 }
 
-func hashedEncoding(val reflect.Value) ([]byte, error) {
+func hashedEncoding(val reflect.Value) ([32]byte, error) {
 	encoding, err := getEncoding(val)
 	if err != nil {
-		return nil, err
+		return [32]byte{}, err
 	}
-	output := Hash(encoding)
-	return output[:], nil
+	return Hash(encoding), nil
 }
 
 func isBasicType(kind reflect.Kind) bool {
