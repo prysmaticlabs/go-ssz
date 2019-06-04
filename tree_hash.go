@@ -188,6 +188,7 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 		}
 		result := Hash(concatElemHash)
 		return result[:], nil
+		// merkleize([hash_tree_root(element) for element in value]).
 	}
 	return hasher, nil
 }
