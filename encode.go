@@ -1,6 +1,7 @@
 package ssz
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -9,12 +10,6 @@ import (
 )
 
 const lengthBytes = 4
-
-// Encodable defines the interface for support ssz encoding.
-type Encodable interface {
-	EncodeSSZ(io.Writer) error
-	EncodeSSZSize() (uint32, error)
-}
 
 // Encode encodes val and output the result into w.
 func Encode(w io.Writer, val interface{}) error {
@@ -84,16 +79,10 @@ func makeEncoder(typ reflect.Type) (encoder, encodeSizer, error) {
 		return encodeUint16, func(reflect.Value) (uint32, error) { return 2, nil }, nil
 	case kind == reflect.Uint32:
 		return encodeUint32, func(reflect.Value) (uint32, error) { return 4, nil }, nil
-	case kind == reflect.Int32:
-		return encodeInt32, func(reflect.Value) (uint32, error) { return 4, nil }, nil
 	case kind == reflect.Uint64:
 		return encodeUint64, func(reflect.Value) (uint32, error) { return 8, nil }, nil
-	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
-		return makeBytesEncoder()
 	case kind == reflect.Slice:
 		return makeSliceEncoder(typ)
-	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return makeByteArrayEncoder()
 	case kind == reflect.Array:
 		return makeSliceEncoder(typ)
 	case kind == reflect.Struct:
@@ -136,14 +125,6 @@ func encodeUint32(val reflect.Value, w *encbuf) error {
 	return nil
 }
 
-func encodeInt32(val reflect.Value, w *encbuf) error {
-	v := val.Int()
-	b := make([]byte, 4)
-	binary.LittleEndian.PutUint32(b, uint32(v))
-	w.str = append(w.str, b...)
-	return nil
-}
-
 func encodeUint64(val reflect.Value, w *encbuf) error {
 	v := val.Uint()
 	b := make([]byte, 8)
@@ -152,85 +133,84 @@ func encodeUint64(val reflect.Value, w *encbuf) error {
 	return nil
 }
 
-func makeBytesEncoder() (encoder, encodeSizer, error) {
-	encoder := func(val reflect.Value, w *encbuf) error {
-		b := val.Bytes()
-		sizeEnc := make([]byte, lengthBytes)
-		if len(val.Bytes()) >= 2<<32 {
-			return errors.New("bytes oversize")
-		}
-		binary.LittleEndian.PutUint32(sizeEnc, uint32(len(b)))
-		w.str = append(w.str, sizeEnc...)
-		w.str = append(w.str, val.Bytes()...)
-		return nil
-	}
-	encodeSizer := func(val reflect.Value) (uint32, error) {
-		if len(val.Bytes()) >= 2<<32 {
-			return 0, errors.New("bytes oversize")
-		}
-		return lengthBytes + uint32(len(val.Bytes())), nil
-	}
-	return encoder, encodeSizer, nil
-}
-
-func makeByteArrayEncoder() (encoder, encodeSizer, error) {
-	encoder := func(val reflect.Value, w *encbuf) error {
-		if !val.CanAddr() {
-			// Slice requires the value to be addressable.
-			// Make it addressable by copying.
-			copyVal := reflect.New(val.Type()).Elem()
-			copyVal.Set(val)
-			val = copyVal
-		}
-		sizeEnc := make([]byte, lengthBytes)
-		if val.Len() >= 2<<32 {
-			return errors.New("bytes oversize")
-		}
-		binary.LittleEndian.PutUint32(sizeEnc, uint32(val.Len()))
-		w.str = append(w.str, sizeEnc...)
-		w.str = append(w.str, val.Slice(0, val.Len()).Bytes()...)
-		return nil
-	}
-	encodeSizer := func(val reflect.Value) (uint32, error) {
-		if val.Len() >= 2<<32 {
-			return 0, errors.New("bytes oversize")
-		}
-		return lengthBytes + uint32(val.Len()), nil
-	}
-	return encoder, encodeSizer, nil
-}
-
 func makeSliceEncoder(typ reflect.Type) (encoder, encodeSizer, error) {
 	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
 	encoder := func(val reflect.Value, w *encbuf) error {
-		origBufSize := len(w.str)
-		totalSizeEnc := make([]byte, lengthBytes)
-		w.str = append(w.str, totalSizeEnc...)
+		fixedParts := [][]byte{}
+		variableParts := [][]byte{}
 		for i := 0; i < val.Len(); i++ {
-			if err := elemSSZUtils.encoder(val.Index(i), w); err != nil {
-				return fmt.Errorf("failed to encode element of slice/array: %v", err)
+            // Determine the fixed parts of the element.
+			if isBasicType(typ.Elem().Kind()) || typ.Elem().Kind() == reflect.Array {
+				elemBuf := &encbuf{}
+				if err := elemSSZUtils.encoder(val.Index(i), elemBuf); err != nil {
+					return fmt.Errorf("failed to encode element of slice/array: %v", err)
+				}
+				fixedParts = append(fixedParts, elemBuf.str)
+			} else {
+				elemBuf := &encbuf{}
+				if err := elemSSZUtils.encoder(val.Index(i), elemBuf); err != nil {
+					return fmt.Errorf("failed to encode element of slice/array: %v", err)
+				}
+				variableParts = append(variableParts, elemBuf.str)
+				fixedParts = append(fixedParts, []byte{})
 			}
 		}
-		totalSize := len(w.str) - lengthBytes - origBufSize
-		if totalSize >= 2<<32 {
-			return errors.New("slice oversize")
+		fixedLengths := []int{}
+		variableLengths := []int{}
+		for _, item := range fixedParts {
+			if !bytes.Equal(item, []byte{}) {
+				fixedLengths = append(fixedLengths, len(item))
+			} else {
+				fixedLengths = append(fixedLengths, BytesPerLengthOffset)
+			}
 		}
-		binary.LittleEndian.PutUint32(totalSizeEnc, uint32(totalSize))
-		copy(w.str[origBufSize:origBufSize+lengthBytes], totalSizeEnc)
+		for _, item := range variableParts {
+			variableLengths = append(variableLengths, len(item))
+		}
+        sum := 0
+        for _, item := range append(fixedLengths, variableLengths...) {
+        	sum += item
+		}
+        if sum >= 1<<uint64(BytesPerLengthOffset*BitsPerByte) {
+        	return fmt.Errorf(
+        		"expected sum(fixed_length + variable_length) < 2**(BytesPerLengthOffset*BitsPerByte), received %d >= %d",
+        		sum,
+        		1<<uint64(BytesPerLengthOffset*BitsPerByte),
+        	)
+		}
+        variableOffsets := [][]byte{}
+        for i := 0; i < val.Len(); i++ {
+        	sum = 0
+        	for _, item := range append(fixedLengths, variableLengths[:i]...) {
+        		sum += item
+			}
+			b := make([]byte, 8)
+			binary.LittleEndian.PutUint64(b, uint64(sum))
+			variableOffsets = append(variableOffsets, b)
+		}
+        offsetParts := [][]byte{}
+        for idx, item := range fixedParts {
+        	if !bytes.Equal(item, []byte{}) {
+        		offsetParts = append(offsetParts, item)
+			} else {
+				offsetParts = append(offsetParts, variableOffsets[idx])
+			}
+		}
+        fixedParts = offsetParts
+		concat := append(fixedParts, variableParts...)
+       	finalSerialization := []byte{}
+       	// We flatten the final serialized slice.
+       	for _, item := range concat {
+       		finalSerialization = append(finalSerialization, item...)
+		}
+		w.str = append(w.str, finalSerialization...)
 		return nil
 	}
 	encodeSizer := func(val reflect.Value) (uint32, error) {
-		if val.Len() == 0 {
-			return lengthBytes, nil
-		}
-		elemSize, err := elemSSZUtils.encodeSizer(val.Index(0))
-		if err != nil {
-			return 0, errors.New("failed to get encode size of element of slice/array")
-		}
-		return lengthBytes + elemSize*uint32(val.Len()), nil
+		return 0, nil
 	}
 	return encoder, encodeSizer, nil
 }
@@ -311,4 +291,12 @@ func newEncodeError(msg string, typ reflect.Type) *encodeError {
 
 func (err *encodeError) Error() string {
 	return fmt.Sprintf("encode error: %s for input type %v", err.msg, err.typ)
+}
+
+func isBasicType(kind reflect.Kind) bool {
+	return kind == reflect.Bool ||
+		kind == reflect.Uint8 ||
+		kind == reflect.Uint16 ||
+		kind == reflect.Uint32 ||
+		kind == reflect.Uint64
 }
