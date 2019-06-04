@@ -1,9 +1,5 @@
 package ssz
 
-import (
-	"math"
-)
-
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
 // chunks, right-pad the last chunk with zero bytes, and return the chunks.
 // Basic types are either bool, or uintN where N = {8, 16, 32, 64, 128, 256}.
@@ -92,11 +88,6 @@ func mixInType(root [32]byte, typeIndex []byte) [32]byte {
 }
 
 // fast verification to check if an number if a power of two.
-func isPowerTwo(num int) bool {
-	// log of numbers <= 0 is undefined, so we return false.
-	if num <= 0 {
-		return false
-	}
-	elem := math.Log2(float64(num))
-	return math.Floor(elem) == math.Ceil(elem)
+func isPowerTwo(n int) bool {
+	return n != 0 && (n&(n-1)) == 0
 }
