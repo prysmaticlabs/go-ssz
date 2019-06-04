@@ -18,7 +18,7 @@ type merkleHashTest struct {
 	output, error string
 }
 
-type selfSignedRootTest struct {
+type signingRootTest struct {
 	val1 interface{}
 	val2 interface{}
 }
@@ -180,7 +180,7 @@ var merkleHashTests = []merkleHashTest{
 	}, output: "55DC6699E7B5713DD9102224C302996F931836C6DAE9A4EC6AB49C966F394685"},
 }
 
-var selfSignedRootTests = []selfSignedRootTest{
+var signingRootTests = []signingRootTest{
 	{
 		val1: &truncateSignatureCase{slot: 20, signature: []byte{'A', 'B'}},
 		val2: &truncateSignatureCase{slot: 20, signature: []byte("TESTING")},
@@ -276,7 +276,7 @@ func runMerkleHashTests(t *testing.T, merkleHash func([][]byte) ([]byte, error))
 }
 
 func runSigningRootTests(t *testing.T, signingRoot func(val interface{}) ([32]byte, error)) {
-	for i, test := range selfSignedRootTests {
+	for i, test := range signingRootTests {
 		output1, err := signingRoot(test.val1)
 		if err != nil {
 			t.Fatalf("could not get the signing root of test %d, value 1 %v", i, err)
@@ -286,7 +286,7 @@ func runSigningRootTests(t *testing.T, signingRoot func(val interface{}) ([32]by
 			t.Fatalf("could not get the signing root of test %d, value 2 %v", i, err)
 		}
 		// Check values have same result hash
-		if err == nil && !bytes.Equal(output1[:], output2[:]) {
+		if !bytes.Equal(output1[:], output2[:]) {
 			t.Errorf("test %d: hash mismatch: %X\n != %X", i, output1, output2)
 		}
 	}
