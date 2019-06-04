@@ -62,7 +62,7 @@ func makeHasher(typ reflect.Type) (hasher, error) {
 		return makeCompositeSliceHasher(typ)
 	// If the value is an array of composite objects, we apply the hasher
 	// defined by merkleize([hash_tree_root(element) for element in value]).
-	case kind == reflect.Array || !isBasicTypeArray(typ, kind):
+	case kind == reflect.Array && !isBasicTypeArray(typ, kind):
 		return makeCompositeArrayHasher(typ)
 	// If the value is a container (a struct), we apply the struct hasher which is defined
 	// by using the struct fields as merkleize([hash_tree_root(element) for element in value]).
