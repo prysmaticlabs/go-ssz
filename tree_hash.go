@@ -39,38 +39,36 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
 	}
-	return ToBytes32(output), nil
+	return output, nil
 }
 
 func makeHasher(typ reflect.Type) (hasher, error) {
 	kind := typ.Kind()
 	switch {
-	case kind == reflect.Bool ||
-		kind == reflect.Uint8 ||
-		kind == reflect.Uint16 ||
-		kind == reflect.Uint32 ||
-		kind == reflect.Uint64 ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Bool ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8 ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint16 ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint32 ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint64:
+	// if the value is a basic object or an array of basic objects, we apply the basic
+	// type hasher defined by merkleize(pack(value)).
+	case isBasicType(kind) || isBasicTypeArray(typ, kind):
 		return makeBasicTypeHasher(typ)
-	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8 ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return makeByteArrayHasher(typ)
-	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Bool ||
-		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8 ||
-		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint16 ||
-		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint32 ||
-		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint64:
+	// If the value is a slice of basic objects (dynamic length), we apply the basic slice
+	// hasher defined by mix_in_length(merkleize(pack(value)), len(value)). Otherwise,
+	// we apply mix_in_length(merkleize([hash_tree_root(element) for element in value]), len(value)).
+	case kind == reflect.Slice:
 		if useCache {
-			return makeBasicSliceHasherCache(typ)
+			// TODO(#3): Revise tree hash cache for latest updates.
 		}
-		return makeBasicSliceHasher(typ)
+		if isBasicTypeSlice(typ, kind) {
+			return makeBasicSliceHasher(typ)
+		}
+		return makeCompositeSliceHasher(typ)
+	// If the value is an array of composite objects, we apply the hasher
+	// defined by merkleize([hash_tree_root(element) for element in value]).
+	case kind == reflect.Array || !isBasicTypeArray(typ, kind):
+		return makeCompositeArrayHasher(typ)
+	// If the value is a container (a struct), we apply the struct hasher which is defined
+	// by using the struct fields as merkleize([hash_tree_root(element) for element in value]).
 	case kind == reflect.Struct:
 		if useCache {
-			return makeStructHasherCache(typ)
+			// TODO(#3): Revise tree hash cache for latest updates.
 		}
 		return makeStructHasher(typ)
 	case kind == reflect.Ptr:
@@ -111,6 +109,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		var serializedValues [][]byte
+		// We encode every serialized value into a list of byte slices.
 		for i := 0; i < val.Len(); i++ {
 			buf := &encbuf{}
 			if err = elemSSZUtils.encoder(val.Index(i), buf); err != nil {
@@ -129,6 +128,46 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		b := make([]byte, 32)
 		binary.LittleEndian.PutUint64(b, uint64(val.Len()))
 		return mixInLength(merkleize(chunks), b), nil
+	}
+	return hasher, nil
+}
+
+func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
+	hasher := func(val reflect.Value) ([32]byte, error) {
+		roots := [][]byte{}
+		for i := 0; i < val.Len(); i++ {
+			root, err := HashTreeRoot(val.Index(i))
+			if err != nil {
+				return [32]byte{}, err
+			}
+			roots = append(roots, root[:])
+		}
+		chunks, err := pack(roots)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		b := make([]byte, 32)
+		binary.LittleEndian.PutUint64(b, uint64(val.Len()))
+		return mixInLength(merkleize(chunks), b), nil
+	}
+	return hasher, nil
+}
+
+func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
+	hasher := func(val reflect.Value) ([32]byte, error) {
+		roots := [][]byte{}
+		for i := 0; i < val.Len(); i++ {
+			root, err := HashTreeRoot(val.Index(i))
+			if err != nil {
+				return [32]byte{}, err
+			}
+			roots = append(roots, root[:])
+		}
+		chunks, err := pack(roots)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		return merkleize(chunks), nil
 	}
 	return hasher, nil
 }
@@ -196,4 +235,28 @@ func hashedEncoding(val reflect.Value) ([]byte, error) {
 	}
 	output := Hash(encoding)
 	return output[:], nil
+}
+
+func isBasicType(kind reflect.Kind) bool {
+	return kind == reflect.Bool ||
+	kind == reflect.Uint8 ||
+	kind == reflect.Uint16 ||
+	kind == reflect.Uint32 ||
+	kind == reflect.Uint64
+}
+
+func isBasicTypeArray(typ reflect.Type, kind reflect.Kind) bool {
+	return kind == reflect.Array && typ.Elem().Kind() == reflect.Bool ||
+		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8 ||
+		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint16 ||
+		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint32 ||
+		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint64
+}
+
+func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
+	return kind == reflect.Slice && typ.Elem().Kind() == reflect.Bool ||
+		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8 ||
+		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint16 ||
+		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint32 ||
+		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint64
 }
