@@ -180,55 +180,6 @@ var merkleHashTests = []merkleHashTest{
 	}, output: "55DC6699E7B5713DD9102224C302996F931836C6DAE9A4EC6AB49C966F394685"},
 }
 
-var signingRootTests = []signingRootTest{
-	{
-		val1: &truncateSignatureCase{slot: 20, signature: []byte{'A', 'B'}},
-		val2: &truncateSignatureCase{slot: 20, signature: []byte("TESTING")},
-	},
-	{
-		val1: &truncateSignatureCase{
-			slot:              10,
-			previousBlockRoot: []byte{'a', 'b'},
-			signature:         []byte("TESTINGDIFF")},
-		val2: &truncateSignatureCase{
-			slot:              10,
-			previousBlockRoot: []byte{'a', 'b'},
-			signature:         []byte("TESTING23")},
-	},
-	{
-		val1: truncateSignatureCase{slot: 50, signature: []byte("THIS")},
-		val2: truncateSignatureCase{slot: 50, signature: []byte("DOESNT")},
-	},
-	{
-		val1: truncateSignatureCase{signature: []byte("MATTER")},
-		val2: truncateSignatureCase{signature: []byte("TESTING")},
-	},
-	{
-		val1: truncateLastCase{
-			slot:           5,
-			stateRoot:      []byte("MATTERS"),
-			truncatedField: []byte("DOESNT MATTER"),
-		},
-		val2: truncateLastCase{
-			slot:           5,
-			stateRoot:      []byte("MATTERS"),
-			truncatedField: []byte("SHOULDNT MATTER"),
-		},
-	},
-	{
-		val1: truncateLastCase{
-			slot:           550,
-			stateRoot:      []byte("SHOULD"),
-			truncatedField: []byte("DOESNT"),
-		},
-		val2: truncateLastCase{
-			slot:           550,
-			stateRoot:      []byte("SHOULD"),
-			truncatedField: []byte("SHOULDNT"),
-		},
-	},
-}
-
 func runHashTests(t *testing.T, hash func(val interface{}) ([32]byte, error)) {
 	for i, test := range hashTests {
 		output, err := hash(test.val)
@@ -275,13 +226,68 @@ func runMerkleHashTests(t *testing.T, merkleHash func([][]byte) ([]byte, error))
 	}
 }
 
-func runSigningRootTests(t *testing.T, signingRoot func(val interface{}) ([32]byte, error)) {
+func TestHash(t *testing.T) {
+	runHashTests(t, func(val interface{}) ([32]byte, error) {
+		return TreeHash(val)
+	})
+}
+
+func TestSigningRoot(t *testing.T) {
+	var signingRootTests = []signingRootTest{
+		{
+			val1: &truncateSignatureCase{slot: 20, signature: []byte{'A', 'B'}},
+			val2: &truncateSignatureCase{slot: 20, signature: []byte("TESTING")},
+		},
+		{
+			val1: &truncateSignatureCase{
+				slot:              10,
+				previousBlockRoot: []byte{'a', 'b'},
+				signature:         []byte("TESTINGDIFF")},
+			val2: &truncateSignatureCase{
+				slot:              10,
+				previousBlockRoot: []byte{'a', 'b'},
+				signature:         []byte("TESTING23")},
+		},
+		{
+			val1: truncateSignatureCase{slot: 50, signature: []byte("THIS")},
+			val2: truncateSignatureCase{slot: 50, signature: []byte("DOESNT")},
+		},
+		{
+			val1: truncateSignatureCase{signature: []byte("MATTER")},
+			val2: truncateSignatureCase{signature: []byte("TESTING")},
+		},
+		{
+			val1: truncateLastCase{
+				slot:           5,
+				stateRoot:      []byte("MATTERS"),
+				truncatedField: []byte("DOESNT MATTER"),
+			},
+			val2: truncateLastCase{
+				slot:           5,
+				stateRoot:      []byte("MATTERS"),
+				truncatedField: []byte("SHOULDNT MATTER"),
+			},
+		},
+		{
+			val1: truncateLastCase{
+				slot:           550,
+				stateRoot:      []byte("SHOULD"),
+				truncatedField: []byte("DOESNT"),
+			},
+			val2: truncateLastCase{
+				slot:           550,
+				stateRoot:      []byte("SHOULD"),
+				truncatedField: []byte("SHOULDNT"),
+			},
+		},
+	}
+
 	for i, test := range signingRootTests {
-		output1, err := signingRoot(test.val1)
+		output1, err := SigningRoot(test.val1)
 		if err != nil {
 			t.Fatalf("could not get the signing root of test %d, value 1 %v", i, err)
 		}
-		output2, err := signingRoot(test.val2)
+		output2, err := SigningRoot(test.val2)
 		if err != nil {
 			t.Fatalf("could not get the signing root of test %d, value 2 %v", i, err)
 		}
@@ -290,18 +296,6 @@ func runSigningRootTests(t *testing.T, signingRoot func(val interface{}) ([32]by
 			t.Errorf("test %d: hash mismatch: %X\n != %X", i, output1, output2)
 		}
 	}
-}
-
-func TestHash(t *testing.T) {
-	runHashTests(t, func(val interface{}) ([32]byte, error) {
-		return TreeHash(val)
-	})
-}
-
-func TestSigningRoot(t *testing.T) {
-	runSigningRootTests(t, func(val interface{}) ([32]byte, error) {
-		return SigningRoot(val)
-	})
 }
 
 func TestMerkleHash(t *testing.T) {
