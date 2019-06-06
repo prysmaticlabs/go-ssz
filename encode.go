@@ -57,7 +57,6 @@ func (w *encbuf) toWriter(out io.Writer) error {
 
 func makeEncoder(typ reflect.Type) (encoder, error) {
 	kind := typ.Kind()
-	fmt.Println(kind)
 	switch {
 	case kind == reflect.Bool:
 		return encodeBool, nil
@@ -165,7 +164,6 @@ func makeStructEncoder(typ reflect.Type) (encoder, error) {
 		for _, f := range fields {
 			item := val.Field(f.index)
 			// Determine the fixed parts of the element.
-			fmt.Println(item.Kind())
 			if isBasicType(item.Kind()) || item.Kind() == reflect.Array {
 				elemBuf := &encbuf{}
 				if err := f.sszUtils.encoder(item, w); err != nil {
@@ -221,10 +219,6 @@ func serializeFromParts(fixedParts [][]byte, variableParts [][]byte, numElements
 	for _, item := range variableParts {
 		variableLengths = append(variableLengths, len(item))
 	}
-	fmt.Println("---fixed length---")
-	fmt.Println(fixedLengths)
-	fmt.Println("---variable length---")
-	fmt.Println(variableLengths)
 	sum := 0
 	for _, item := range append(fixedLengths, variableLengths...) {
 		sum += item
@@ -237,23 +231,27 @@ func serializeFromParts(fixedParts [][]byte, variableParts [][]byte, numElements
 		)
 	}
 	variableOffsets := [][]byte{}
-	if len(variableLengths) > 0 {
-		for i := 0; i < numElements; i++ {
-			sum = 0
-			for _, item := range append(fixedLengths, variableLengths[:i]...) {
-				sum += item
-			}
-			b := make([]byte, 8)
-			binary.LittleEndian.PutUint64(b, uint64(sum))
-			variableOffsets = append(variableOffsets, b)
+	upperBound := numElements
+	if len(variableLengths) < upperBound {
+		upperBound = len(variableLengths)
+	}
+	for i := 0; i < upperBound; i++ {
+		sum = 0
+		for _, item := range append(fixedLengths, variableLengths[:i]...) {
+			sum += item
 		}
+		b := make([]byte, 8)
+		binary.LittleEndian.PutUint64(b, uint64(sum))
+		variableOffsets = append(variableOffsets, b)
 	}
 	offsetParts := [][]byte{}
 	for idx, item := range fixedParts {
 		if !bytes.Equal(item, []byte{}) {
 			offsetParts = append(offsetParts, item)
 		} else {
-			offsetParts = append(offsetParts, variableOffsets[idx])
+			if idx < len(variableOffsets) {
+				offsetParts = append(offsetParts, variableOffsets[idx])
+			}
 		}
 	}
 	fixedParts = offsetParts
