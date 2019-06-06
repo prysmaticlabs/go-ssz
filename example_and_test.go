@@ -18,10 +18,6 @@ func (e *exampleStruct1) EncodeSSZ(w io.Writer) error {
 	return Encode(w, *e)
 }
 
-func (e *exampleStruct1) EncodeSSZSize() (uint32, error) {
-	return EncodeSize(*e)
-}
-
 func (e *exampleStruct1) DecodeSSZ(r io.Reader) error {
 	// Need to pass pointer of struct for Decode function
 	return Decode(r, e)
@@ -43,12 +39,6 @@ type exampleStruct2Export struct {
 
 func (e *exampleStruct2) EncodeSSZ(w io.Writer) error {
 	return Encode(w, exampleStruct2Export{
-		e.Field2,
-	})
-}
-
-func (e *exampleStruct2) EncodeSSZSize() (uint32, error) {
-	return EncodeSize(exampleStruct2Export{
 		e.Field2,
 	})
 }
@@ -90,14 +80,6 @@ func TestEncodeDecode_Struct1(t *testing.T) {
 		t.Error("encode/decode algorithm don't match")
 	}
 
-	encodeSize := uint32(0)
-	if encodeSize, err = e1.EncodeSSZSize(); err != nil {
-		t.Errorf("failed to get encode size: %v", err)
-	}
-	if encodeSize != 13 {
-		t.Error("wrong encode size calculation result")
-	}
-
 	hash, err := e1.TreeHashSSZ()
 	if err != nil {
 		t.Fatalf("failed to hash: %v", err)
@@ -127,14 +109,6 @@ func TestEncodeDecode_Struct2(t *testing.T) {
 
 	if !reflect.DeepEqual(e1.Field2, e2.Field2) {
 		t.Error("encode/decode algorithm don't match")
-	}
-
-	encodeSize := uint32(0)
-	if encodeSize, err = e1.EncodeSSZSize(); err != nil {
-		t.Errorf("failed to get encode size: %v", err)
-	}
-	if encodeSize != 12 {
-		t.Error("wrong encode size calculation result")
 	}
 
 	hash, err := e1.TreeHashSSZ()

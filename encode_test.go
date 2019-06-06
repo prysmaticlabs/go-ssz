@@ -281,13 +281,6 @@ func TestEncode(t *testing.T) {
 	})
 }
 
-func TestEncodeSize(t *testing.T) {
-	runEncSizeTests(t, func(val interface{}) (uint32, error) {
-		size, err := EncodeSize(val)
-		return size, err
-	})
-}
-
 // unhex converts a hex string to byte array.
 func unhex(str string) []byte {
 	b, err := hex.DecodeString(stripSpace(str))
