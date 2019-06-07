@@ -76,11 +76,9 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
-        "decode_test.go",
         "encode_test.go",
         "hash_cache_test.go",
         "helpers_test.go",
-        "tree_hash_test.go",
     ],
     embed = [":go_default_library"],
 )

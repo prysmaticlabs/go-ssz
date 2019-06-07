@@ -7,4 +7,6 @@ var (
 	BytesPerLengthOffset = 4
 	// BitsPerByte as a useful constant.
 	BitsPerByte = 8
+	// MaxByteOffset allowed in serialization.
+	MaxByteOffset = 1 << uint64(BytesPerLengthOffset*BitsPerByte)
 )

@@ -21,7 +21,6 @@ type hasher func(reflect.Value) ([32]byte, error)
 
 type sszUtils struct {
 	encoder
-	encodeSizer
 	decoder
 	hasher
 }
@@ -77,7 +76,7 @@ func cachedSSZUtilsNoAcquireLock(typ reflect.Type) (*sszUtils, error) {
 
 func generateSSZUtilsForType(typ reflect.Type) (utils *sszUtils, err error) {
 	utils = new(sszUtils)
-	if utils.encoder, utils.encodeSizer, err = makeEncoder(typ); err != nil {
+	if utils.encoder, err = makeEncoder(typ); err != nil {
 		return nil, err
 	}
 	if utils.decoder, err = makeDecoder(typ); err != nil {
