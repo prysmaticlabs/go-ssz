@@ -7,9 +7,6 @@ import (
 	"reflect"
 )
 
-const hashLengthBytes = 32
-const sszChunkSize = 128
-
 var useCache bool
 
 type hashError struct {
@@ -204,11 +201,6 @@ func makePtrHasher(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO(1461): The tree-hash of nil pointer isn't defined in the spec.
-	// After considered the use case in Prysm, we've decided that:
-	// - We assume we will only tree-hash pointer of array, slice or struct.
-	// - The tree-hash for nil pointer shall be 0x00000000.
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		if val.IsNil() {
 			return hashedEncoding(val)
