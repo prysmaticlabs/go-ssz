@@ -34,14 +34,19 @@ func TestEncode(t *testing.T) {
 		t.Errorf("encode() = %v, want %v", encodedBytes, want)
 	}
 	prevRoot, err := hex.DecodeString("e8933c7bb4e15a6476373346d2334d8f845bc3c0c93d5d5acf3fd0fba9d7e8d9")
+	if err != nil {
+		t.Fatal(err)
+	}
 	root, err := hex.DecodeString("0f9e7e66592424d43d7d6109182b6519c0b748e6eb33cbccc1527aae78dc889f")
+	if err != nil {
+		t.Fatal(err)
+	}
 	cross := &crosslink{
 		PreviousCrosslinkRoot: prevRoot,
 		CrosslinkDataRoot:     root,
 		Epoch:                 19993510755097755,
 	}
 	want, _ = hex.DecodeString("9bdc5efafd074700e8933c7bb4e15a6476373346d2334d8f845bc3c0c93d5d5acf3fd0fba9d7e8d90f9e7e66592424d43d7d6109182b6519c0b748e6eb33cbccc1527aae78dc889f")
-	t.Log(err)
 	buffer = new(bytes.Buffer)
 	if err := Encode(buffer, cross); err != nil {
 		panic(err)

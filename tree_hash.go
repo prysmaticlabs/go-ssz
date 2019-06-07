@@ -105,19 +105,17 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
-		var serializedValues [][]byte
 		// We encode every serialized value into a list of byte slices.
-		for i := 0; i < val.Len(); i++ {
-			buf := &encbuf{}
-			if err = utils.encoder(val.Index(i), buf); err != nil {
-				return [32]byte{}, err
-			}
-			writer := new(bytes.Buffer)
-			if err = buf.toWriter(writer); err != nil {
-				return [32]byte{}, err
-			}
-			serializedValues = append(serializedValues, writer.Bytes())
+		fmt.Println("Basic slice hashing")
+		buf := &encbuf{}
+		if err = utils.encoder(val, buf); err != nil {
+			return [32]byte{}, err
 		}
+		writer := new(bytes.Buffer)
+		if err = buf.toWriter(writer); err != nil {
+			return [32]byte{}, err
+		}
+		serializedValues := [][]byte{writer.Bytes()}
 		chunks, err := pack(serializedValues)
 		if err != nil {
 			return [32]byte{}, err

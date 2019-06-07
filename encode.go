@@ -69,6 +69,7 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 	case kind == reflect.Uint64:
 		return encodeUint64, nil
 	case kind == reflect.Slice || kind == reflect.Array:
+		fmt.Println("Making slice encoder")
 		return makeSliceEncoder(typ)
 	case kind == reflect.Struct:
 		return makeStructEncoder(typ)
