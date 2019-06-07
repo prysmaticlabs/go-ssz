@@ -15,13 +15,10 @@ type encoder func(reflect.Value, *encbuf) error
 // instead. This makes our implementation look cleaner.
 type decoder func(io.Reader, reflect.Value) (uint32, error)
 
-type encodeSizer func(reflect.Value) (uint32, error)
-
 type hasher func(reflect.Value) ([]byte, error)
 
 type sszUtils struct {
 	encoder
-	encodeSizer
 	decoder
 	hasher
 }
@@ -77,7 +74,7 @@ func cachedSSZUtilsNoAcquireLock(typ reflect.Type) (*sszUtils, error) {
 
 func generateSSZUtilsForType(typ reflect.Type) (utils *sszUtils, err error) {
 	utils = new(sszUtils)
-	if utils.encoder, utils.encodeSizer, err = makeEncoder(typ); err != nil {
+	if utils.encoder, err = makeEncoder(typ); err != nil {
 		return nil, err
 	}
 	if utils.decoder, err = makeDecoder(typ); err != nil {

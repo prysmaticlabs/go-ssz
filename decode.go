@@ -8,6 +8,8 @@ import (
 	"reflect"
 )
 
+const lengthBytes = 4
+
 // Decodable defines the interface for support ssz decoding.
 type Decodable interface {
 	DecodeSSZ(io.Reader) error
