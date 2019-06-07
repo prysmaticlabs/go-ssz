@@ -100,13 +100,11 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
-	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	utils, err := cachedSSZUtilsNoAcquireLock(typ)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
-		// We encode every serialized value into a list of byte slices.
-		fmt.Println("Basic slice hashing")
 		buf := &encbuf{}
 		if err = utils.encoder(val, buf); err != nil {
 			return [32]byte{}, err
@@ -120,6 +118,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
+		// We marshal the length into little-endian, 256-bit byte slice.
 		b := make([]byte, 32)
 		binary.LittleEndian.PutUint64(b, uint64(val.Len()))
 		return mixInLength(merkleize(chunks), b), nil
