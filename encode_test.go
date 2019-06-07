@@ -13,15 +13,15 @@ type crosslink struct {
 }
 
 type fork struct {
-	PreviousVersion []byte
-	CurrentVersion  []byte
-	Epoch           uint64
+	PreviousVersion [4]byte
+	CurrentVersion [4]byte
+	Epoch uint64
 }
 
 func TestEncode(t *testing.T) {
 	fork := &fork{
-		PreviousVersion: []byte{159, 65, 189, 91},
-		CurrentVersion:  []byte{203, 176, 241, 215},
+		PreviousVersion: [4]byte{159, 65, 189, 91},
+		CurrentVersion:  [4]byte{203, 176, 241, 215},
 		Epoch:           11971467576204192310,
 	}
 	want := []byte{159, 65, 189, 91, 203, 176, 241, 215, 54, 234, 193, 63, 85, 50, 35, 166}

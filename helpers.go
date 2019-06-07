@@ -1,5 +1,7 @@
 package ssz
 
+import "bytes"
+
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
 // chunks, right-pad the last chunk with zero bytes, and return the chunks.
 // Basic types are either bool, or uintN where N = {8, 16, 32, 64, 128, 256}.
@@ -7,8 +9,14 @@ package ssz
 // Important: due to limitations in Go generics, we will assume the input is already
 // a list of SSZ-encoded objects of the same type.
 func pack(serializedItems [][]byte) ([][]byte, error) {
+	areAllEmpty := true
+	for _, item := range serializedItems {
+		if !bytes.Equal(item, []byte{}) {
+			areAllEmpty = false
+		}
+	}
 	// If there are no items, we return an empty chunk.
-	if len(serializedItems) == 0 {
+	if len(serializedItems) == 0 || areAllEmpty {
 		emptyChunk := make([]byte, BytesPerChunk)
 		return [][]byte{emptyChunk}, nil
 	} else if len(serializedItems[0]) == BytesPerChunk {
