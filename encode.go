@@ -226,11 +226,11 @@ func serializeFromParts(fixedParts [][]byte, variableParts [][]byte, numElements
 	for _, item := range append(fixedLengths, variableLengths...) {
 		sum += item
 	}
-	if sum >= 1<<uint64(BytesPerLengthOffset*BitsPerByte) {
+	if sum >= MaxByteOffset {
 		return nil, fmt.Errorf(
 			"expected sum(fixed_length + variable_length) < 2**(BytesPerLengthOffset*BitsPerByte), received %d >= %d",
 			sum,
-			1<<uint64(BytesPerLengthOffset*BitsPerByte),
+			MaxByteOffset,
 		)
 	}
 	variableOffsets := [][]byte{}
