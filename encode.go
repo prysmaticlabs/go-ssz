@@ -217,6 +217,9 @@ func serializeFromParts(fixedParts [][]byte, variableParts [][]byte, numElements
 		}
 	}
 	for _, item := range variableParts {
+		if len(item) == 0 {
+			continue
+		}
 		variableLengths = append(variableLengths, len(item))
 	}
 	sum := 0
