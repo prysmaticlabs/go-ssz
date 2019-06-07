@@ -1,9 +1,9 @@
 package ssz
 
 import (
-"bytes"
-"encoding/hex"
-"testing"
+	"bytes"
+	"encoding/hex"
+	"testing"
 )
 
 func TestTreeHash(t *testing.T) {

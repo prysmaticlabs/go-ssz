@@ -69,7 +69,6 @@ go_library(
         "@com_github_karlseguin_ccache//:go_default_library",
         "@com_github_prometheus_client_golang//prometheus:go_default_library",
         "@com_github_prometheus_client_golang//prometheus/promauto:go_default_library",
-        "@org_golang_x_crypto//sha3:go_default_library",
     ],
 )
 
@@ -79,6 +78,7 @@ go_test(
         "encode_test.go",
         "hash_cache_test.go",
         "helpers_test.go",
+        "tree_hash_test.go",
     ],
     embed = [":go_default_library"],
 )
