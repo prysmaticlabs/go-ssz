@@ -14,8 +14,8 @@ type crosslink struct {
 
 type fork struct {
 	PreviousVersion [4]byte
-	CurrentVersion [4]byte
-	Epoch uint64
+	CurrentVersion  [4]byte
+	Epoch           uint64
 }
 
 func TestEncode(t *testing.T) {

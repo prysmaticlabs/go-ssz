@@ -3,9 +3,10 @@ package ssz
 import (
 	"bytes"
 	"encoding/hex"
+	"testing"
+
 	pb "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 	"github.com/prysmaticlabs/prysm/shared/params"
-	"testing"
 )
 
 func TestHashTreeRoot(t *testing.T) {

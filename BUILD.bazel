@@ -76,9 +76,12 @@ go_test(
     name = "go_default_test",
     srcs = [
         "encode_test.go",
-        "hash_cache_test.go",
         "helpers_test.go",
         "tree_hash_test.go",
     ],
     embed = [":go_default_library"],
+    deps = [
+        "@com_github_prysmaticlabs_prysm//proto/beacon/p2p/v1:go_default_library",
+        "@com_github_prysmaticlabs_prysm//shared/params:go_default_library",
+    ],
 )
