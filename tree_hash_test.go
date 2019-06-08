@@ -26,13 +26,13 @@ func TestHashTreeRoot(t *testing.T) {
 }
 
 func BenchmarkHashTreeRoot(b *testing.B) {
-	fork := &fork{
+	frk := &fork{
 		PreviousVersion: [4]byte{159, 65, 189, 91},
 		CurrentVersion:  [4]byte{203, 176, 241, 215},
 		Epoch:           11971467576204192310,
 	}
 	for n := 0; n < b.N; n++ {
-		if _, err := HashTreeRoot(blk); err != nil {
+		if _, err := HashTreeRoot(frk); err != nil {
 			b.Fatal(err)
 		}
 	}
