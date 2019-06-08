@@ -80,8 +80,4 @@ go_test(
         "tree_hash_test.go",
     ],
     embed = [":go_default_library"],
-    deps = [
-        "@com_github_prysmaticlabs_prysm//proto/beacon/p2p/v1:go_default_library",
-        "@com_github_prysmaticlabs_prysm//shared/params:go_default_library",
-    ],
 )
