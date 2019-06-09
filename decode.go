@@ -10,17 +10,8 @@ import (
 
 const lengthBytes = 4
 
-// Decodable defines the interface for support ssz decoding.
-type Decodable interface {
-	DecodeSSZ(io.Reader) error
-}
-
 // Decode decodes data read from r and output it into the object pointed by pointer val.
 func Decode(r io.Reader, val interface{}) error {
-	return decode(r, val)
-}
-
-func decode(r io.Reader, val interface{}) error {
 	if val == nil {
 		return newDecodeError("cannot decode into nil", nil)
 	}
@@ -92,11 +83,11 @@ func decodeBool(r io.Reader, val reflect.Value) (uint32, error) {
 }
 
 func decodeUint8(r io.Reader, val reflect.Value) (uint32, error) {
-	b := make([]byte, 1)
-	if err := readBytes(r, 1, b); err != nil {
+	buf := []byte{}
+	if _, err := r.Read(buf); err != nil {
 		return 0, err
 	}
-	val.SetUint(uint64(b[0]))
+	val.SetUint(uint64(buf[0]))
 	return 1, nil
 }
 
@@ -119,11 +110,11 @@ func decodeUint32(r io.Reader, val reflect.Value) (uint32, error) {
 }
 
 func decodeUint64(r io.Reader, val reflect.Value) (uint32, error) {
-	b := make([]byte, 8)
-	if err := readBytes(r, 8, b); err != nil {
+	buf := make([]byte, 8)
+	if _, err := r.Read(buf); err != nil {
 		return 0, err
 	}
-	val.SetUint(uint64(binary.LittleEndian.Uint64(b)))
+	val.SetUint(binary.LittleEndian.Uint64(buf))
 	return 8, nil
 }
 
