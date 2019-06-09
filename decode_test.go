@@ -27,6 +27,9 @@ func TestDecode(t *testing.T) {
 		// Uint64 test cases.
 		{ input: uint64(5), ptr: new(uint64) },
 		{ input: uint64(23929309), ptr: new(uint64) },
+		// Byte slice, byte array test cases.
+		{ input: [8]byte{1, 2, 3, 4, 5, 6, 7, 8}, ptr: new([8]byte) },
+		{ input: []byte{9, 8, 9, 8}, ptr: new([]byte) },
 	}
 	for _, tt := range tests {
 		buffer := new(bytes.Buffer)

@@ -64,9 +64,9 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 	case kind == reflect.Uint64:
 		return decodeUint64, nil
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
-		return decodeBytes, nil
+		return decodeByteSlice, nil
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return decodeBytes, nil
+		return decodeByteArray, nil
 	case kind == reflect.Slice:
 		return makeSliceDecoder(typ)
 	case kind == reflect.Array:
@@ -132,8 +132,8 @@ func decodeUint64(r io.Reader, val reflect.Value) (int, error) {
 	return 8, nil
 }
 
-func decodeBytes(r io.Reader, val reflect.Value) (int, error) {
-	buf := make([]byte, val.Len())
+func decodeByteSlice(r io.Reader, val reflect.Value) (int, error) {
+	buf := make([]byte, 256)
 	size, err := r.Read(buf)
 	if err != nil {
 		return 0, err
@@ -142,8 +142,20 @@ func decodeBytes(r io.Reader, val reflect.Value) (int, error) {
 		val.SetBytes([]byte{})
 		return 0, nil
 	}
-	val.SetBytes(buf)
-	return len(buf), nil
+	val.SetBytes(buf[:size])
+	return size, nil
+}
+
+func decodeByteArray(r io.Reader, val reflect.Value) (int, error) {
+	slice := val.Slice(0, val.Len()).Interface().([]byte)
+	size, err := r.Read(slice)
+	if err != nil {
+		return 0, err
+	}
+	if size != val.Len() {
+		return 0, fmt.Errorf("expected to read %d bytes, read %d", val.Len(), size)
+	}
+	return size, nil
 }
 
 func makeSliceDecoder(typ reflect.Type) (decoder, error) {
