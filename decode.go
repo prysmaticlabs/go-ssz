@@ -10,6 +10,20 @@ import (
 
 const lengthBytes = 4
 
+// decodeError is what gets reported to the decoder user in error case.
+type decodeError struct {
+	msg string
+	typ reflect.Type
+}
+
+func newDecodeError(msg string, typ reflect.Type) *decodeError {
+	return &decodeError{msg, typ}
+}
+
+func (err *decodeError) Error() string {
+	return fmt.Sprintf("decode error: %s for output type %v", err.msg, err.typ)
+}
+
 // Decode decodes data read from r and output it into the object pointed by pointer val.
 func Decode(r io.Reader, val interface{}) error {
 	if val == nil {
@@ -51,10 +65,10 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 		return decodeUint64, nil
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return decodeBytes, nil
+	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
+		return decodeBytes, nil
 	case kind == reflect.Slice:
 		return makeSliceDecoder(typ)
-	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return decodeByteArray, nil
 	case kind == reflect.Array:
 		return makeArrayDecoder(typ)
 	case kind == reflect.Struct:
@@ -66,12 +80,12 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 	}
 }
 
-func decodeBool(r io.Reader, val reflect.Value) (uint32, error) {
-	b := make([]byte, 1)
-	if err := readBytes(r, 1, b); err != nil {
+func decodeBool(r io.Reader, val reflect.Value) (int, error) {
+	buf := make([]byte, 1)
+	if _, err := r.Read(buf); err != nil {
 		return 0, err
 	}
-	v := uint8(b[0])
+	v := uint8(buf[0])
 	if v == 0 {
 		val.SetBool(false)
 	} else if v == 1 {
@@ -82,8 +96,8 @@ func decodeBool(r io.Reader, val reflect.Value) (uint32, error) {
 	return 1, nil
 }
 
-func decodeUint8(r io.Reader, val reflect.Value) (uint32, error) {
-	buf := []byte{}
+func decodeUint8(r io.Reader, val reflect.Value) (int, error) {
+	buf := make([]byte, 1)
 	if _, err := r.Read(buf); err != nil {
 		return 0, err
 	}
@@ -91,25 +105,25 @@ func decodeUint8(r io.Reader, val reflect.Value) (uint32, error) {
 	return 1, nil
 }
 
-func decodeUint16(r io.Reader, val reflect.Value) (uint32, error) {
-	b := make([]byte, 2)
-	if err := readBytes(r, 2, b); err != nil {
+func decodeUint16(r io.Reader, val reflect.Value) (int, error) {
+	buf := make([]byte, 2)
+	if _, err := r.Read(buf); err != nil {
 		return 0, err
 	}
-	val.SetUint(uint64(binary.LittleEndian.Uint16(b)))
+	val.SetUint(uint64(binary.LittleEndian.Uint16(buf)))
 	return 2, nil
 }
 
-func decodeUint32(r io.Reader, val reflect.Value) (uint32, error) {
-	b := make([]byte, 4)
-	if err := readBytes(r, 4, b); err != nil {
+func decodeUint32(r io.Reader, val reflect.Value) (int, error) {
+	buf := make([]byte, 4)
+	if _, err := r.Read(buf); err != nil {
 		return 0, err
 	}
-	val.SetUint(uint64(binary.LittleEndian.Uint32(b)))
+	val.SetUint(uint64(binary.LittleEndian.Uint32(buf)))
 	return 4, nil
 }
 
-func decodeUint64(r io.Reader, val reflect.Value) (uint32, error) {
+func decodeUint64(r io.Reader, val reflect.Value) (int, error) {
 	buf := make([]byte, 8)
 	if _, err := r.Read(buf); err != nil {
 		return 0, err
@@ -118,42 +132,18 @@ func decodeUint64(r io.Reader, val reflect.Value) (uint32, error) {
 	return 8, nil
 }
 
-func decodeBytes(r io.Reader, val reflect.Value) (uint32, error) {
-	sizeEnc := make([]byte, lengthBytes)
-	if err := readBytes(r, lengthBytes, sizeEnc); err != nil {
+func decodeBytes(r io.Reader, val reflect.Value) (int, error) {
+	buf := make([]byte, val.Len())
+	size, err := r.Read(buf)
+	if err != nil {
 		return 0, err
 	}
-	size := binary.LittleEndian.Uint32(sizeEnc)
-
 	if size == 0 {
 		val.SetBytes([]byte{})
-		return lengthBytes, nil
+		return 0, nil
 	}
-
-	b := make([]byte, size)
-	if err := readBytes(r, int(size), b); err != nil {
-		return 0, err
-	}
-	val.SetBytes(b)
-	return lengthBytes + size, nil
-}
-
-func decodeByteArray(r io.Reader, val reflect.Value) (uint32, error) {
-	sizeEnc := make([]byte, lengthBytes)
-	if err := readBytes(r, lengthBytes, sizeEnc); err != nil {
-		return 0, err
-	}
-	size := binary.LittleEndian.Uint32(sizeEnc)
-
-	if size != uint32(val.Len()) {
-		return 0, fmt.Errorf("input byte array size (%d) isn't euqal to output array size (%d)", size, val.Len())
-	}
-
-	slice := val.Slice(0, val.Len()).Interface().([]byte)
-	if err := readBytes(r, int(size), slice); err != nil {
-		return 0, err
-	}
-	return lengthBytes + size, nil
+	val.SetBytes(buf)
+	return len(buf), nil
 }
 
 func makeSliceDecoder(typ reflect.Type) (decoder, error) {
@@ -162,19 +152,18 @@ func makeSliceDecoder(typ reflect.Type) (decoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	decoder := func(r io.Reader, val reflect.Value) (uint32, error) {
-		sizeEnc := make([]byte, lengthBytes)
-		if err := readBytes(r, lengthBytes, sizeEnc); err != nil {
-			return 0, fmt.Errorf("failed to decode header of slice: %v", err)
+	decoder := func(r io.Reader, val reflect.Value) (int, error) {
+		buf := []byte{}
+		if _, err := r.Read(buf); err != nil {
+			return 0, err
 		}
-		size := binary.LittleEndian.Uint32(sizeEnc)
-
+		size := binary.LittleEndian.Uint64(buf)
 		if size == 0 {
 			// We prefer decode into nil, not empty slice
 			return lengthBytes, nil
 		}
 
-		for i, decodeSize := 0, uint32(0); decodeSize < size; i++ {
+		for i, decodeSize := 0, uint64(0); decodeSize < size; i++ {
 			// Grow slice's capacity if necessary
 			if i >= val.Cap() {
 				newCap := val.Cap() * 2
@@ -197,9 +186,9 @@ func makeSliceDecoder(typ reflect.Type) (decoder, error) {
 			if err != nil {
 				return 0, fmt.Errorf("failed to decode element of slice: %v", err)
 			}
-			decodeSize += elemDecodeSize
+			decodeSize += uint64(elemDecodeSize)
 		}
-		return lengthBytes + size, nil
+		return int(lengthBytes + size), nil
 	}
 	return decoder, nil
 }
@@ -210,20 +199,20 @@ func makeArrayDecoder(typ reflect.Type) (decoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	decoder := func(r io.Reader, val reflect.Value) (uint32, error) {
-		sizeEnc := make([]byte, lengthBytes)
-		if err := readBytes(r, lengthBytes, sizeEnc); err != nil {
-			return 0, fmt.Errorf("failed to decode header of slice: %v", err)
+	decoder := func(r io.Reader, val reflect.Value) (int, error) {
+		buf := []byte{}
+		if _, err := r.Read(buf); err != nil {
+			return 0, err
 		}
-		size := binary.LittleEndian.Uint32(sizeEnc)
+		size := binary.LittleEndian.Uint64(buf)
 
-		i, decodeSize := 0, uint32(0)
+		i, decodeSize := 0, uint64(0)
 		for ; i < val.Len() && decodeSize < size; i++ {
 			elemDecodeSize, err := elemSSZUtils.decoder(r, val.Index(i))
 			if err != nil {
 				return 0, fmt.Errorf("failed to decode element of slice: %v", err)
 			}
-			decodeSize += elemDecodeSize
+			decodeSize += uint64(elemDecodeSize)
 		}
 		if i < val.Len() {
 			return 0, errors.New("input is too short")
@@ -231,7 +220,7 @@ func makeArrayDecoder(typ reflect.Type) (decoder, error) {
 		if decodeSize < size {
 			return 0, errors.New("input is too long")
 		}
-		return lengthBytes + size, nil
+		return int(lengthBytes + size), nil
 	}
 	return decoder, nil
 }
@@ -241,25 +230,25 @@ func makeStructDecoder(typ reflect.Type) (decoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	decoder := func(r io.Reader, val reflect.Value) (uint32, error) {
-		sizeEnc := make([]byte, lengthBytes)
-		if err := readBytes(r, lengthBytes, sizeEnc); err != nil {
-			return 0, fmt.Errorf("failed to decode header of struct: %v", err)
+	decoder := func(r io.Reader, val reflect.Value) (int, error) {
+		buf := []byte{}
+		if _, err := r.Read(buf); err != nil {
+			return 0, err
 		}
-		size := binary.LittleEndian.Uint32(sizeEnc)
+		size := binary.LittleEndian.Uint64(buf)
 
 		if size == 0 {
 			return lengthBytes, nil
 		}
 
-		i, decodeSize := 0, uint32(0)
+		i, decodeSize := 0, uint64(0)
 		for ; i < len(fields) && decodeSize < size; i++ {
 			f := fields[i]
 			fieldDecodeSize, err := f.sszUtils.decoder(r, val.Field(f.index))
 			if err != nil {
 				return 0, fmt.Errorf("failed to decode field of slice: %v", err)
 			}
-			decodeSize += fieldDecodeSize
+			decodeSize += uint64(fieldDecodeSize)
 		}
 		if i < len(fields) {
 			return 0, errors.New("input is too short")
@@ -267,7 +256,7 @@ func makeStructDecoder(typ reflect.Type) (decoder, error) {
 		if decodeSize < size {
 			return 0, errors.New("input is too long")
 		}
-		return lengthBytes + size, nil
+		return int(lengthBytes + size), nil
 	}
 	return decoder, nil
 }
@@ -283,7 +272,7 @@ func makePtrDecoder(typ reflect.Type) (decoder, error) {
 	// - We assume we will only encode/decode pointer of array, slice or struct.
 	// - The encoding for nil pointer shall be 0x00000000.
 
-	decoder := func(r io.Reader, val reflect.Value) (uint32, error) {
+	decoder := func(r io.Reader, val reflect.Value) (int, error) {
 		newVal := reflect.New(elemType)
 		elemDecodeSize, err := elemSSZUtils.decoder(r, newVal.Elem())
 		if err != nil {
@@ -297,30 +286,3 @@ func makePtrDecoder(typ reflect.Type) (decoder, error) {
 	return decoder, nil
 }
 
-func readBytes(r io.Reader, size int, b []byte) error {
-	if size != len(b) {
-		return fmt.Errorf("output buffer size is %d while expected read size is %d", len(b), size)
-	}
-	readLen, err := r.Read(b)
-	if readLen != size {
-		return fmt.Errorf("can only read %d bytes while expected to read %d bytes", readLen, size)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to read from input: %v", err)
-	}
-	return nil
-}
-
-// decodeError is what gets reported to the decoder user in error case.
-type decodeError struct {
-	msg string
-	typ reflect.Type
-}
-
-func newDecodeError(msg string, typ reflect.Type) *decodeError {
-	return &decodeError{msg, typ}
-}
-
-func (err *decodeError) Error() string {
-	return fmt.Sprintf("decode error: %s for output type %v", err.msg, err.typ)
-}
