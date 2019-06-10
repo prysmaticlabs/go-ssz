@@ -76,6 +76,7 @@ go_test(
     name = "go_default_test",
     srcs = [
         "encode_test.go",
+        "hash_test.go",
         "hash_tree_root_test.go",
         "helpers_test.go",
     ],
