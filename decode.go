@@ -288,20 +288,3 @@ func makePtrDecoder(typ reflect.Type) (decoder, error) {
 	}
 	return decoder, nil
 }
-
-func basicElementSize(kind reflect.Kind) int {
-	switch kind {
-		case reflect.Bool:
-			return 1
-		case reflect.Uint8:
-			return 1
-		case reflect.Uint16:
-			return 2
-		case reflect.Uint32:
-			return 4
-		case reflect.Uint64:
-			return 8
-	default:
-		return 0
-	}
-}
