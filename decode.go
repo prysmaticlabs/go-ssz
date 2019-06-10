@@ -65,9 +65,9 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 	case kind == reflect.Uint64:
 		return decodeUint64, nil
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
-		return decodeByteSlice, nil
+		return decodeBytes, nil
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return decodeByteArray, nil
+		return decodeBytes, nil
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
 		return makeBasicSliceDecoder(typ)
 	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
@@ -121,31 +121,9 @@ func decodeUint64(input []byte, val reflect.Value) (int, error) {
 	return 8, nil
 }
 
-func decodeByteSlice(r io.Reader, val reflect.Value) (int, error) {
-	// TODO: Determine better approach.
-	buf := make([]byte, 256)
-	size, err := r.Read(buf)
-	if err != nil {
-		return 0, err
-	}
-	if size == 0 {
-		val.SetBytes([]byte{})
-		return 0, nil
-	}
-	val.SetBytes(buf[:size])
-	return size, nil
-}
-
-func decodeByteArray(r io.Reader, val reflect.Value) (int, error) {
-	slice := val.Slice(0, val.Len()).Interface().([]byte)
-	size, err := r.Read(slice)
-	if err != nil {
-		return 0, err
-	}
-	if size != val.Len() {
-		return 0, fmt.Errorf("expected to read %d bytes, read %d", val.Len(), size)
-	}
-	return size, nil
+func decodeBytes(input []byte, val reflect.Value) (int, error) {
+	val.SetBytes(input)
+	return len(input), nil
 }
 
 func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
