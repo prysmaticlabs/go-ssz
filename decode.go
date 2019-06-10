@@ -174,7 +174,6 @@ func makeSliceDecoder(typ reflect.Type) (decoder, error) {
 			// We prefer decode into nil, not empty slice
 			return lengthBytes, nil
 		}
-
 		for i, decodeSize := 0, uint64(0); decodeSize < size; i++ {
 			// Grow slice's capacity if necessary
 			if i >= val.Cap() {
@@ -212,27 +211,19 @@ func makeArrayDecoder(typ reflect.Type) (decoder, error) {
 		return nil, err
 	}
 	decoder := func(r io.Reader, val reflect.Value) (int, error) {
-		buf := []byte{}
-		if _, err := r.Read(buf); err != nil {
-			return 0, err
-		}
-		size := binary.LittleEndian.Uint64(buf)
-
+		size := uint64(val.Len())
 		i, decodeSize := 0, uint64(0)
-		for ; i < val.Len() && decodeSize < size; i++ {
+		for ; i < val.Len(); i++ {
 			elemDecodeSize, err := elemSSZUtils.decoder(r, val.Index(i))
 			if err != nil {
 				return 0, fmt.Errorf("failed to decode element of slice: %v", err)
 			}
 			decodeSize += uint64(elemDecodeSize)
 		}
-		if i < val.Len() {
-			return 0, errors.New("input is too short")
-		}
 		if decodeSize < size {
 			return 0, errors.New("input is too long")
 		}
-		return int(lengthBytes + size), nil
+		return int(decodeSize), nil
 	}
 	return decoder, nil
 }
@@ -298,3 +289,19 @@ func makePtrDecoder(typ reflect.Type) (decoder, error) {
 	return decoder, nil
 }
 
+func basicElementSize(kind reflect.Kind) int {
+	switch kind {
+		case reflect.Bool:
+			return 1
+		case reflect.Uint8:
+			return 1
+		case reflect.Uint16:
+			return 2
+		case reflect.Uint32:
+			return 4
+		case reflect.Uint64:
+			return 8
+	default:
+		return 0
+	}
+}
