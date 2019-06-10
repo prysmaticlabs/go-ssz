@@ -63,9 +63,9 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 	case kind == reflect.Uint64:
 		return decodeUint64, nil
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
-		return decodeBytes, nil
+		return decodeByteSlice, nil
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return decodeBytes, nil
+		return decodeByteArray, nil
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
 		return makeBasicSliceDecoder(typ)
 	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
@@ -119,7 +119,13 @@ func decodeUint64(input []byte, val reflect.Value) (int, error) {
 	return 8, nil
 }
 
-func decodeBytes(input []byte, val reflect.Value) (int, error) {
+func decodeByteArray(input []byte, val reflect.Value) (int, error) {
+	slice := val.Slice(0, val.Len()).Interface().([]byte)
+	copy(slice, input)
+	return len(input), nil
+}
+
+func decodeByteSlice(input []byte, val reflect.Value) (int, error) {
 	val.SetBytes(input)
 	return len(input), nil
 }
@@ -165,19 +171,22 @@ func makeArrayDecoder(typ reflect.Type) (decoder, error) {
 		return nil, err
 	}
 	decoder := func(input []byte, val reflect.Value) (int, error) {
-		size := uint64(val.Len())
-		i, decodeSize := 0, uint64(0)
-		for ; i < val.Len(); i++ {
-			elemDecodeSize, err := elemSSZUtils.decoder(input, val.Index(i))
+		size := val.Len()
+		i, decodeSize := 0, 0
+        offsetIndex := 0
+		elemSize := basicElementSize(typ.Elem().Kind())
+		for ; i < size; i++ {
+			elemDecodeSize, err := elemSSZUtils.decoder(input[offsetIndex:offsetIndex+elemSize], val.Index(i))
 			if err != nil {
 				return 0, fmt.Errorf("failed to decode element of slice: %v", err)
 			}
-			decodeSize += uint64(elemDecodeSize)
+			decodeSize += elemDecodeSize
+			offsetIndex += elemSize
 		}
 		if decodeSize < size {
 			return 0, errors.New("input is too long")
 		}
-		return int(decodeSize), nil
+		return decodeSize, nil
 	}
 	return decoder, nil
 }
@@ -194,14 +203,17 @@ func makeStructDecoder(typ reflect.Type) (decoder, error) {
 			return lengthBytes, nil
 		}
 
+		elemSize := basicElementSize(val.Field(fields[0].index).Kind())
+		offsetIndex := 0
 		i, decodeSize := 0, uint64(0)
 		for ; i < len(fields); i++ {
 			f := fields[i]
-			fieldDecodeSize, err := f.sszUtils.decoder(input, val.Field(f.index))
+			fieldDecodeSize, err := f.sszUtils.decoder(input[offsetIndex:offsetIndex+elemSize], val.Field(f.index))
 			if err != nil {
 				return 0, fmt.Errorf("failed to decode field of slice: %v", err)
 			}
 			decodeSize += uint64(fieldDecodeSize)
+			offsetIndex += fieldDecodeSize
 		}
 		if i < len(fields) {
 			return 0, errors.New("input is too short")
