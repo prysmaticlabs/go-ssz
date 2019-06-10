@@ -59,6 +59,7 @@ go_library(
         "hash_cache.go",
         "hash_tree_root.go",
         "helpers.go",
+        "signing_root.go",
         "ssz_utils_cache.go",
         "utils.go",
     ],
@@ -76,9 +77,9 @@ go_test(
     name = "go_default_test",
     srcs = [
         "encode_test.go",
-        "hash_test.go",
         "hash_tree_root_test.go",
         "helpers_test.go",
+        "signing_root_test.go",
     ],
     embed = [":go_default_library"],
 )

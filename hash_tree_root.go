@@ -179,6 +179,10 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, err
 	}
+	return makeFieldsHasher(fields)
+}
+
+func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		roots := [][]byte{}
 		for _, f := range fields {
