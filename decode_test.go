@@ -38,6 +38,8 @@ func TestDecode(t *testing.T) {
 		//Basic type slice test cases.
 		{input: []uint64{1, 2, 3}, ptr: new([]uint64)},
 		{input: []bool{true, false, true, true, true}, ptr: new([]bool)},
+		{input: []uint32{0, 0, 0}, ptr: new([]uint32)},
+		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
 	}
 	for _, tt := range tests {
 		buffer := new(bytes.Buffer)
