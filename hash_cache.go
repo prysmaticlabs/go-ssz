@@ -106,14 +106,14 @@ func (b *hashCacheS) TrieRootCached(val interface{}) ([32]byte, error) {
 // MerkleHashCached adds a merkle object to the cache. This method also trims the
 // least recently added root info if the cache size has reached the max cache
 // size limit.
-func (b *hashCacheS) MerkleHashCached(byteSlice [][]byte) ([]byte, error) {
+func (b *hashCacheS) MerkleHashCached(byteSlice [][]byte) ([32]byte, error) {
 	hs, err := hashedEncoding(reflect.ValueOf(byteSlice))
 	if err != nil {
-		return nil, newHashError(fmt.Sprint(err), reflect.TypeOf(byteSlice))
+		return [32]byte{}, newHashError(fmt.Sprint(err), reflect.TypeOf(byteSlice))
 	}
 	exists, fetchedInfo, err := b.RootByEncodedHash(hs)
 	if err != nil {
-		return nil, newHashError(fmt.Sprint(err), reflect.TypeOf(byteSlice))
+		return [32]byte{}, newHashError(fmt.Sprint(err), reflect.TypeOf(byteSlice))
 	}
 	mh := [32]byte{}
 	if exists {
@@ -128,7 +128,7 @@ func (b *hashCacheS) MerkleHashCached(byteSlice [][]byte) ([]byte, error) {
 		hashCacheSize.Set(float64(b.hashCache.ItemCount()))
 	}
 
-	return mh[:], nil
+	return mh, nil
 }
 
 // AddRoot adds an encodedhash of the object as key and a rootHash object to the cache.
@@ -159,9 +159,9 @@ func makeSliceHasherCache(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, fmt.Errorf("failed to encode element of slice/array: %v", err)
 		}
-		var output []byte
+		var output [32]byte
 		if exists {
-			output = fetchedInfo.MerkleRoot
+			output = ToBytes32(fetchedInfo.MerkleRoot)
 		} else {
 			var elemHashList [][]byte
 			for i := 0; i < val.Len(); i++ {
@@ -175,13 +175,13 @@ func makeSliceHasherCache(typ reflect.Type) (hasher, error) {
 			if err != nil {
 				return [32]byte{}, fmt.Errorf("failed to calculate merkle hash of element hash list: %v", err)
 			}
-			err := hashCache.AddRoot(hs, output)
+			err := hashCache.AddRoot(hs, output[:])
 			if err != nil {
 				return [32]byte{}, fmt.Errorf("failed to add root to cache: %v", err)
 			}
 			hashCacheSize.Set(float64(hashCache.hashCache.ItemCount()))
 		}
-		return ToBytes32(output), nil
+		return output, nil
 	}
 	return hasher, nil
 }

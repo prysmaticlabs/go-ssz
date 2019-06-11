@@ -13,6 +13,7 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 	for _, item := range serializedItems {
 		if !bytes.Equal(item, []byte{}) {
 			areAllEmpty = false
+			break
 		}
 	}
 	// If there are no items, we return an empty chunk.

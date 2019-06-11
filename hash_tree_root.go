@@ -179,6 +179,10 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, err
 	}
+	return makeFieldsHasher(fields)
+}
+
+func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		roots := [][]byte{}
 		for _, f := range fields {
@@ -240,19 +244,11 @@ func isBasicType(kind reflect.Kind) bool {
 }
 
 func isBasicTypeArray(typ reflect.Type, kind reflect.Kind) bool {
-	return kind == reflect.Array && typ.Elem().Kind() == reflect.Bool ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8 ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint16 ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint32 ||
-		kind == reflect.Array && typ.Elem().Kind() == reflect.Uint64
+	return kind == reflect.Array && isBasicType(typ.Elem().Kind())
 }
 
 func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
-	return kind == reflect.Slice && typ.Elem().Kind() == reflect.Bool ||
-		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8 ||
-		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint16 ||
-		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint32 ||
-		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint64
+	return kind == reflect.Slice && isBasicType(typ.Elem().Kind())
 }
 
 func basicElementSize(typ reflect.Type, kind reflect.Kind) int {
