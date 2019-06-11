@@ -7,8 +7,6 @@ import (
 	"reflect"
 )
 
-const lengthBytes = 4
-
 // decodeError is what gets reported to the decoder user in error case.
 type decodeError struct {
 	msg string
@@ -137,7 +135,7 @@ func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
 		return nil, err
 	}
 	decoder := func(input []byte, val reflect.Value) (int, error) {
-		elemSize := basicElementSize(typ.Elem().Kind())
+		elemSize := basicElementSize(typ.Elem(), typ.Elem().Kind())
 		size := len(input) / elemSize
 		newVal := reflect.MakeSlice(val.Type(), size, size)
 		reflect.Copy(newVal, val)
@@ -174,7 +172,7 @@ func makeArrayDecoder(typ reflect.Type) (decoder, error) {
 		size := val.Len()
 		i, decodeSize := 0, 0
         offsetIndex := 0
-		elemSize := basicElementSize(typ.Elem().Kind())
+		elemSize := basicElementSize(typ, typ.Elem().Kind())
 		for ; i < size; i++ {
 			elemDecodeSize, err := elemSSZUtils.decoder(input[offsetIndex:offsetIndex+elemSize], val.Index(i))
 			if err != nil {
@@ -200,28 +198,26 @@ func makeStructDecoder(typ reflect.Type) (decoder, error) {
 		size := len(input)
 
 		if size == 0 {
-			return lengthBytes, nil
+			return 0, nil
 		}
 
-		elemSize := basicElementSize(val.Field(fields[0].index).Kind())
+		i := 0
 		offsetIndex := 0
-		i, decodeSize := 0, uint64(0)
 		for ; i < len(fields); i++ {
+			// Track the offset index verifying if a field is variable-size or fixed-size, and then proceed.
 			f := fields[i]
+			// TODO: Handle is variadic.
+			elemSize := basicElementSize(val.Field(f.index).Type(), val.Field(f.index).Kind())
 			fieldDecodeSize, err := f.sszUtils.decoder(input[offsetIndex:offsetIndex+elemSize], val.Field(f.index))
 			if err != nil {
 				return 0, fmt.Errorf("failed to decode field of slice: %v", err)
 			}
-			decodeSize += uint64(fieldDecodeSize)
 			offsetIndex += fieldDecodeSize
 		}
 		if i < len(fields) {
 			return 0, errors.New("input is too short")
 		}
-		if decodeSize < uint64(size) {
-			return 0, errors.New("input is too long")
-		}
-		return int(lengthBytes + size), nil
+		return offsetIndex, nil
 	}
 	return decoder, nil
 }
@@ -232,20 +228,12 @@ func makePtrDecoder(typ reflect.Type) (decoder, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// After considered the use case in Prysm, we've decided that:
-	// - We assume we will only encode/decode pointer of array, slice or struct.
-	// - The encoding for nil pointer shall be 0x00000000.
-
 	decoder := func(input []byte, val reflect.Value) (int, error) {
 		newVal := reflect.New(elemType)
 		elemDecodeSize, err := elemSSZUtils.decoder(input, newVal.Elem())
 		if err != nil {
 			return 0, fmt.Errorf("failed to decode to object pointed by pointer: %v", err)
 		}
-		if elemDecodeSize > lengthBytes {
-			val.Set(newVal)
-		} // Else we leave val to its default value which is nil.
 		return elemDecodeSize, nil
 	}
 	return decoder, nil

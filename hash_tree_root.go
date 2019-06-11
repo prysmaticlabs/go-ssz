@@ -255,18 +255,20 @@ func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
 		kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint64
 }
 
-func basicElementSize(kind reflect.Kind) int {
-	switch kind {
-	case reflect.Bool:
+func basicElementSize(typ reflect.Type, kind reflect.Kind) int {
+	switch {
+	case kind == reflect.Bool:
 		return 1
-	case reflect.Uint8:
+	case kind == reflect.Uint8:
 		return 1
-	case reflect.Uint16:
+	case kind == reflect.Uint16:
 		return 2
-	case reflect.Uint32:
+	case kind == reflect.Uint32:
 		return 4
-	case reflect.Uint64:
+	case kind == reflect.Uint64:
 		return 8
+	case isBasicTypeArray(typ, kind):
+		return typ.Len()
 	default:
 		return 0
 	}

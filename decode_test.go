@@ -41,7 +41,7 @@ func TestDecode(t *testing.T) {
 		{input: []uint32{0, 0, 0}, ptr: new([]uint32)},
 		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
 		// Struct decoding test cases.
-		//{input: &fork{PreviousVersion: [4]byte{1}, CurrentVersion: [4]byte{2}, Epoch: 100}, ptr: &fork{}},
+		{input: fork{PreviousVersion: [4]byte{1}, CurrentVersion: [4]byte{2}, Epoch: 100}, ptr: &fork{}},
 	}
 	for _, tt := range tests {
 		buffer := new(bytes.Buffer)
