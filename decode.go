@@ -159,7 +159,33 @@ func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
 }
 
 func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
-	return nil, nil
+	elemType := typ.Elem()
+	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
+	if err != nil {
+		return nil, err
+	}
+	decoder := func(input []byte, val reflect.Value) (int, error) {
+		elemSize := BytesPerLengthOffset
+		size := len(input) / elemSize
+		newVal := reflect.MakeSlice(val.Type(), size, size)
+		reflect.Copy(newVal, val)
+		val.Set(newVal)
+		i, decodeSize := 0, uint64(0)
+		offsetIndex := 0
+		for ; i < len(input); i++ {
+			elemDecodeSize, err := elemSSZUtils.decoder(input[offsetIndex:offsetIndex+BytesPerLengthOffset], val.Index(i))
+			if err != nil {
+				return 0, fmt.Errorf("failed to decode element of slice: %v", err)
+			}
+            offsetIndex += BytesPerLengthOffset
+			decodeSize += uint64(elemDecodeSize)
+		}
+		if decodeSize < uint64(size) {
+			return 0, errors.New("input is too long")
+		}
+		return size, nil
+	}
+	return decoder, nil
 }
 
 func makeArrayDecoder(typ reflect.Type) (decoder, error) {
