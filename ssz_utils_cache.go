@@ -15,7 +15,9 @@ type encoder func(reflect.Value, *encbuf) error
 // instead. This makes our implementation look cleaner.
 type decoder func(io.Reader, reflect.Value) (uint32, error)
 
-type hasher func(reflect.Value) ([]byte, error)
+type encodeSizer func(reflect.Value) (uint32, error)
+
+type hasher func(reflect.Value) ([32]byte, error)
 
 type sszUtils struct {
 	encoder

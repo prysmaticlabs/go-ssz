@@ -266,11 +266,3 @@ func serializeFromParts(fixedParts [][]byte, variableParts [][]byte, numElements
 	}
 	return finalSerialization, nil
 }
-
-func isBasicType(kind reflect.Kind) bool {
-	return kind == reflect.Bool ||
-		kind == reflect.Uint8 ||
-		kind == reflect.Uint16 ||
-		kind == reflect.Uint32 ||
-		kind == reflect.Uint64
-}
