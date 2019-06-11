@@ -170,19 +170,22 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 		newVal := reflect.MakeSlice(val.Type(), size, size)
 		reflect.Copy(newVal, val)
 		val.Set(newVal)
-		i, decodeSize := 0, uint64(0)
-		offsetIndex := 0
-		for ; i < len(input); i++ {
-			elemDecodeSize, err := elemSSZUtils.decoder(input[offsetIndex:offsetIndex+BytesPerLengthOffset], val.Index(i))
-			if err != nil {
-				return 0, fmt.Errorf("failed to decode element of slice: %v", err)
+
+		// Keep track of first offsets, current index, and iterate through the items.
+		currentIndex := uint64(0)
+		nextIndex := 0
+		var firstOffset uint64
+		if _, err := elemSSZUtils.decoder(input[:BytesPerLengthOffset], firstOffset); err != nil {
+			return 0, err
+		}
+        currentOffset := firstOffset
+        nextOffset := currentOffset
+        for currentIndex < firstOffset {
+        	if currentOffset > len(input) {
+        		return 0, errors.New("offset out of bounds")
 			}
-            offsetIndex += BytesPerLengthOffset
-			decodeSize += uint64(elemDecodeSize)
 		}
-		if decodeSize < uint64(size) {
-			return 0, errors.New("input is too long")
-		}
+
 		return size, nil
 	}
 	return decoder, nil
