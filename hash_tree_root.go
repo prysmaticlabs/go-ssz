@@ -32,7 +32,12 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
 	}
-	output, err := sszUtils.hasher(rval)
+	var output [32]byte
+	if useCache {
+		output, err = hashCache.chacheLookup(rval, sszUtils.hasher)
+	} else {
+		output, err = sszUtils.hasher(rval)
+	}
 	if err != nil {
 		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
 	}
@@ -50,9 +55,6 @@ func makeHasher(typ reflect.Type) (hasher, error) {
 	// hasher defined by mix_in_length(merkleize(pack(value)), len(value)). Otherwise,
 	// we apply mix_in_length(merkleize([hash_tree_root(element) for element in value]), len(value)).
 	case kind == reflect.Slice:
-		if useCache {
-			// TODO(#3): Revise tree hash cache for latest updates.
-		}
 		if isBasicTypeSlice(typ, kind) {
 			return makeBasicSliceHasher(typ)
 		}
@@ -64,9 +66,6 @@ func makeHasher(typ reflect.Type) (hasher, error) {
 	// If the value is a container (a struct), we apply the struct hasher which is defined
 	// by using the struct fields as merkleize([hash_tree_root(element) for element in value]).
 	case kind == reflect.Struct:
-		if useCache {
-			// TODO(#3): Revise tree hash cache for latest updates.
-		}
 		return makeStructHasher(typ)
 	case kind == reflect.Ptr:
 		return makePtrHasher(typ)
@@ -134,11 +133,16 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		roots := [][]byte{}
 		for i := 0; i < val.Len(); i++ {
-			root, err := utils.hasher(val.Index(i))
+			var r [32]byte
+			if useCache {
+				r, err = hashCache.chacheLookup(val.Index(i), utils.hasher)
+			} else {
+				r, err = utils.hasher(val.Index(i))
+			}
 			if err != nil {
 				return [32]byte{}, err
 			}
-			roots = append(roots, root[:])
+			roots = append(roots, r[:])
 		}
 		chunks, err := pack(roots)
 		if err != nil {
@@ -159,11 +163,16 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		roots := [][]byte{}
 		for i := 0; i < val.Len(); i++ {
-			root, err := utils.hasher(val.Index(i))
+			var r [32]byte
+			if useCache {
+				r, err = hashCache.chacheLookup(val.Index(i), utils.hasher)
+			} else {
+				r, err = utils.hasher(val.Index(i))
+			}
 			if err != nil {
 				return [32]byte{}, err
 			}
-			roots = append(roots, root[:])
+			roots = append(roots, r[:])
 		}
 		chunks, err := pack(roots)
 		if err != nil {
@@ -186,11 +195,17 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		roots := [][]byte{}
 		for _, f := range fields {
-			root, err := f.sszUtils.hasher(val.Field(f.index))
+			var r [32]byte
+			var err error
+			if useCache {
+				r, err = hashCache.chacheLookup(val.Field(f.index), f.sszUtils.hasher)
+			} else {
+				r, err = f.sszUtils.hasher(val.Field(f.index))
+			}
 			if err != nil {
 				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
 			}
-			roots = append(roots, root[:])
+			roots = append(roots, r[:])
 		}
 		return merkleize(roots), nil
 	}
