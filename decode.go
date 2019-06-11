@@ -113,6 +113,7 @@ func decodeUint32(input []byte, val reflect.Value) (int, error) {
 func decodeUint64(input []byte, val reflect.Value) (int, error) {
 	buf := make([]byte, 8)
 	copy(buf, input)
+	fmt.Println(buf)
 	val.SetUint(binary.LittleEndian.Uint64(buf))
 	return 8, nil
 }
@@ -164,6 +165,10 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 	if err != nil {
 		return nil, err
 	}
+	uintElemSSZUtils, err := cachedSSZUtilsNoAcquireLock(reflect.TypeOf(uint64(0)))
+	if err != nil {
+		return nil, err
+	}
 	decoder := func(input []byte, val reflect.Value) (int, error) {
 		elemSize := BytesPerLengthOffset
 		size := len(input) / elemSize
@@ -173,20 +178,41 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 
 		// Keep track of first offsets, current index, and iterate through the items.
 		currentIndex := uint64(0)
-		nextIndex := 0
+		nextIndex := uint64(0)
 		var firstOffset uint64
-		if _, err := elemSSZUtils.decoder(input[:BytesPerLengthOffset], firstOffset); err != nil {
+		firstOffsetVal := reflect.ValueOf(&firstOffset)
+		if _, err := uintElemSSZUtils.decoder(input[:BytesPerLengthOffset], firstOffsetVal); err != nil {
 			return 0, err
 		}
         currentOffset := firstOffset
         nextOffset := currentOffset
+        i := 0
         for currentIndex < firstOffset {
-        	if currentOffset > len(input) {
+        	if currentOffset > uint64(len(input)) {
         		return 0, errors.New("offset out of bounds")
 			}
+        	if nextIndex == firstOffset {
+        		nextOffset = uint64(len(input))
+			} else {
+				var nextOffsetTemp uint64
+				nextOffsetVal := reflect.ValueOf(&nextOffsetTemp)
+				if _, err := uintElemSSZUtils.decoder(input[nextIndex:nextIndex+uint64(BytesPerLengthOffset)], nextOffsetVal); err != nil {
+					return 0, err
+				}
+				nextOffset = nextOffsetTemp
+			}
+        	if currentOffset > nextOffset {
+        		return 0, errors.New("offset must be increasing")
+			}
+			if _, err := elemSSZUtils.decoder(input[currentOffset:currentOffset+nextOffset], val.Index(i)); err != nil {
+				return 0, fmt.Errorf("failed to decode element of slice: %v", err)
+			}
+			currentIndex = nextIndex
+			currentOffset = nextOffset
+			i++
 		}
 
-		return size, nil
+		return len(input), nil
 	}
 	return decoder, nil
 }
