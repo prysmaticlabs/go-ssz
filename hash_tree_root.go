@@ -34,7 +34,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	}
 	var output [32]byte
 	if useCache {
-		output, err = hashCache.chacheLookup(rval, sszUtils.hasher)
+		output, err = hashCache.cacheLookup(rval, sszUtils.hasher)
 	} else {
 		output, err = sszUtils.hasher(rval)
 	}
@@ -135,7 +135,7 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
-				r, err = hashCache.chacheLookup(val.Index(i), utils.hasher)
+				r, err = hashCache.cacheLookup(val.Index(i), utils.hasher)
 			} else {
 				r, err = utils.hasher(val.Index(i))
 			}
@@ -165,7 +165,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
-				r, err = hashCache.chacheLookup(val.Index(i), utils.hasher)
+				r, err = hashCache.cacheLookup(val.Index(i), utils.hasher)
 			} else {
 				r, err = utils.hasher(val.Index(i))
 			}
@@ -198,7 +198,7 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			var r [32]byte
 			var err error
 			if useCache {
-				r, err = hashCache.chacheLookup(val.Field(f.index), f.sszUtils.hasher)
+				r, err = hashCache.cacheLookup(val.Field(f.index), f.sszUtils.hasher)
 			} else {
 				r, err = f.sszUtils.hasher(val.Field(f.index))
 			}

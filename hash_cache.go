@@ -66,7 +66,7 @@ func (b *hashCacheS) RootByEncodedHash(h common.Hash) (bool, *root, error) {
 	return true, hInfo, nil
 }
 
-func (b *hashCacheS) chacheLookup(rval reflect.Value, hasher hasher) ([32]byte, error) {
+func (b *hashCacheS) cacheLookup(rval reflect.Value, hasher hasher) ([32]byte, error) {
 	hs, err := hashedEncoding(rval)
 	if err != nil {
 		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
