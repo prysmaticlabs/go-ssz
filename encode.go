@@ -68,6 +68,9 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 		return encodeUint32, nil
 	case kind == reflect.Uint64:
 		return encodeUint64, nil
+	case (kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8) ||
+			(kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8):
+				return encodeBytes, nil
 	case kind == reflect.Slice || kind == reflect.Array:
 		return makeSliceEncoder(typ)
 	case kind == reflect.Struct:
@@ -91,7 +94,7 @@ func encodeBool(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error
 func encodeUint8(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	w.str = append(w.str, uint8(v))
-	return startOffset + 1, nil
+	return startOffset + 1 , nil
 }
 
 func encodeUint16(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
@@ -116,6 +119,11 @@ func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	binary.LittleEndian.PutUint64(b, uint64(v))
 	w.str = append(w.str, b...)
 	return startOffset+8, nil
+}
+
+func encodeBytes(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+	w.str = append(w.str, val.Bytes()...)
+	return startOffset+uint64(val.Len()), nil
 }
 
 func makeSliceEncoder(typ reflect.Type) (encoder, error) {
