@@ -44,7 +44,7 @@ func (w *encbuf) encode(val interface{}) error {
 	if err != nil {
 		return newEncodeError(fmt.Sprint(err), rval.Type())
 	}
-	if err = sszUtils.encoder(rval, w); err != nil {
+	if _, err = sszUtils.encoder(rval, w, 0 /* start offset */); err != nil {
 		return newEncodeError(fmt.Sprint(err), rval.Type())
 	}
 	return nil
@@ -79,19 +79,19 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 	}
 }
 
-func encodeBool(val reflect.Value, w *encbuf) error {
+func encodeBool(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	if val.Bool() {
 		w.str = append(w.str, uint8(1))
 	} else {
 		w.str = append(w.str, uint8(0))
 	}
-	return nil
+	return startOffset + 1, nil
 }
 
-func encodeUint8(val reflect.Value, w *encbuf) error {
+func encodeUint8(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	w.str = append(w.str, uint8(v))
-	return nil
+	return startOffset + 1, nil
 }
 
 func encodeUint16(val reflect.Value, w *encbuf) error {
@@ -228,7 +228,7 @@ func serializeFromParts(fixedParts [][]byte, variableParts [][]byte, numElements
 	}
 	if sum >= MaxByteOffset {
 		return nil, fmt.Errorf(
-			"expected sum(fixed_length + variable_length) < 2**(BytesPerLengthOffset*BitsPerByte), received %d >= %d",
+			"expected sum(fixed_length + variable_length) < MaxByteOffset, received %d >= %d",
 			sum,
 			MaxByteOffset,
 		)
