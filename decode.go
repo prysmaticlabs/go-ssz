@@ -165,9 +165,7 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 		return nil, err
 	}
 	decoder := func(input []byte, val reflect.Value) (int, error) {
-		elemSize := BytesPerLengthOffset
-		size := len(input) / elemSize
-		newVal := reflect.MakeSlice(val.Type(), size, size)
+		newVal := reflect.MakeSlice(val.Type(), len(input), len(input))
 		reflect.Copy(newVal, val)
 		val.Set(newVal)
 
@@ -183,9 +181,19 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
         nextOffset := currentOffset
         i := 0
         for currentIndex < firstOffset {
+        	fmt.Printf("iter %d --------------------\n", i)
+        	fmt.Printf("Current index: %v\n", currentIndex)
+			fmt.Printf("Current offset: %v\n", currentOffset)
+			fmt.Printf("First index: %v\n", nextIndex)
+			fmt.Printf("First offset: %v\n", firstOffset)
+			fmt.Printf("Next index: %v\n", nextIndex)
+			fmt.Printf("Next offset: %v\n", nextOffset)
+			fmt.Printf("iter %d --------------------\n", i)
+
         	if currentOffset > uint64(len(input)) {
         		return 0, errors.New("offset out of bounds")
 			}
+        	nextIndex = currentIndex + uint64(BytesPerLengthOffset)
         	if nextIndex == firstOffset {
         		nextOffset = uint64(len(input))
 			} else {
@@ -194,6 +202,8 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 				if _, err := decodeUint64(input[nextIndex:nextIndex+uint64(BytesPerLengthOffset)], nextOffsetVal); err != nil {
 					return 0, err
 				}
+				fmt.Println("IN NEXT OFFSET TEMP")
+				fmt.Println(nextOffsetTemp)
 				nextOffset = nextOffsetTemp
 			}
         	if currentOffset > nextOffset {
