@@ -2,7 +2,6 @@ package ssz
 
 import (
 	"bytes"
-	"encoding/binary"
 	"log"
 	"reflect"
 	"testing"
@@ -41,7 +40,7 @@ func generateJunkObject(size uint64) []*junkObject {
 	return object
 }
 
-func TestObjCache_byHash(t *testing.T) {
+func TestCache_byHash(t *testing.T) {
 	byteSl := [][]byte{{0, 0}, {1, 1}}
 	useCache = false
 	mr, err := HashTreeRoot(byteSl)
@@ -131,11 +130,4 @@ func TestBlockCache_maxSize(t *testing.T) {
 			cache.hashCache.ItemCount(),
 		)
 	}
-}
-
-// Bytes4 returns integer x to bytes in little-endian format, x.to_bytes(4, 'big').
-func Bytes4(x uint64) []byte {
-	bytes := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bytes, x)
-	return bytes[:4]
 }
