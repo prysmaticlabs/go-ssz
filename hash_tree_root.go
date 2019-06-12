@@ -234,19 +234,3 @@ func hashedEncoding(val reflect.Value) ([32]byte, error) {
 	}
 	return Hash(encoding), nil
 }
-
-func isBasicType(kind reflect.Kind) bool {
-	return kind == reflect.Bool ||
-		kind == reflect.Uint8 ||
-		kind == reflect.Uint16 ||
-		kind == reflect.Uint32 ||
-		kind == reflect.Uint64
-}
-
-func isBasicTypeArray(typ reflect.Type, kind reflect.Kind) bool {
-	return kind == reflect.Array && isBasicType(typ.Elem().Kind())
-}
-
-func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
-	return kind == reflect.Slice && isBasicType(typ.Elem().Kind())
-}

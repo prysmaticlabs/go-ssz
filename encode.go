@@ -28,6 +28,7 @@ func (err *encodeError) Error() string {
 // Encode encodes val and output the result into w.
 func Encode(w io.Writer, val interface{}) error {
 	eb := &encbuf{}
+	// Need to preallocate
 	if err := eb.encode(val); err != nil {
 		return err
 	}
@@ -39,6 +40,9 @@ func (w *encbuf) encode(val interface{}) error {
 		return newEncodeError("untyped nil is not supported", nil)
 	}
 	rval := reflect.ValueOf(val)
+	// We preallocate a buffer-size depending on the value's size:
+	valueSize := 0
+	w.str = make([]byte, valueSize)
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
 		return newEncodeError(fmt.Sprint(err), rval.Type())
