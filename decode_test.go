@@ -8,11 +8,11 @@ import (
 )
 
 func TestDecode(t *testing.T) {
-	forkExample := fork{
-		PreviousVersion: [4]byte{2, 3, 4, 1},
-		CurrentVersion: [4]byte{},
-		Epoch: 10923910294,
-	}
+	//forkExample := fork{
+	//	PreviousVersion: [4]byte{2, 3, 4, 1},
+	//	CurrentVersion: [4]byte{},
+	//	Epoch: 10923910294,
+	//}
 	tests := []struct {
 		input interface{}
 		ptr   interface{}
@@ -48,7 +48,8 @@ func TestDecode(t *testing.T) {
 		// Struct decoding test cases.
 		//{input: forkExample, ptr: &fork{}},
 		// Non-basic type slice/array test cases.
-		{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
+		//{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
+		{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
 		//{input: [4]fork{forkExample, forkExample, forkExample}, ptr: new([4]fork)},
 	}
 	for _, tt := range tests {

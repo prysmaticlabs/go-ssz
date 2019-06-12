@@ -203,6 +203,8 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 					return 0, err
 				}
 				fmt.Println("IN NEXT OFFSET TEMP")
+				fmt.Println(nextIndex)
+				fmt.Println(input[nextIndex:nextIndex+uint64(BytesPerLengthOffset)])
 				fmt.Println(nextOffsetTemp)
 				nextOffset = nextOffsetTemp
 			}
