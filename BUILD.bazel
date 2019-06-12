@@ -60,6 +60,7 @@ go_library(
         "hash_tree_root.go",
         "helpers.go",
         "signing_root.go",
+        "size.go",
         "ssz_utils_cache.go",
         "utils.go",
     ],

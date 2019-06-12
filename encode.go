@@ -234,4 +234,3 @@ func makePtrEncoder(typ reflect.Type) (encoder, error) {
 
 	return encoder, nil
 }
-
