@@ -113,7 +113,6 @@ func decodeUint32(input []byte, val reflect.Value) (int, error) {
 func decodeUint64(input []byte, val reflect.Value) (int, error) {
 	buf := make([]byte, 8)
 	copy(buf, input)
-	fmt.Println(buf)
 	val.SetUint(binary.LittleEndian.Uint64(buf))
 	return 8, nil
 }
@@ -165,10 +164,6 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	uintElemSSZUtils, err := cachedSSZUtilsNoAcquireLock(reflect.TypeOf(uint64(0)))
-	if err != nil {
-		return nil, err
-	}
 	decoder := func(input []byte, val reflect.Value) (int, error) {
 		elemSize := BytesPerLengthOffset
 		size := len(input) / elemSize
@@ -180,8 +175,8 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 		currentIndex := uint64(0)
 		nextIndex := uint64(0)
 		var firstOffset uint64
-		firstOffsetVal := reflect.ValueOf(&firstOffset)
-		if _, err := uintElemSSZUtils.decoder(input[:BytesPerLengthOffset], firstOffsetVal); err != nil {
+		firstOffsetVal := reflect.ValueOf(&firstOffset).Elem()
+		if _, err := decodeUint64(input[:BytesPerLengthOffset], firstOffsetVal); err != nil {
 			return 0, err
 		}
         currentOffset := firstOffset
@@ -195,8 +190,8 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
         		nextOffset = uint64(len(input))
 			} else {
 				var nextOffsetTemp uint64
-				nextOffsetVal := reflect.ValueOf(&nextOffsetTemp)
-				if _, err := uintElemSSZUtils.decoder(input[nextIndex:nextIndex+uint64(BytesPerLengthOffset)], nextOffsetVal); err != nil {
+				nextOffsetVal := reflect.ValueOf(&nextOffsetTemp).Elem()
+				if _, err := decodeUint64(input[nextIndex:nextIndex+uint64(BytesPerLengthOffset)], nextOffsetVal); err != nil {
 					return 0, err
 				}
 				nextOffset = nextOffsetTemp
