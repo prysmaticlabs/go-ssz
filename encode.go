@@ -41,8 +41,7 @@ func (w *encbuf) encode(val interface{}) error {
 	}
 	rval := reflect.ValueOf(val)
 	// We preallocate a buffer-size depending on the value's size:
-	valueSize := 0
-	w.str = make([]byte, valueSize)
+	w.str = make([]byte, determineSize(rval))
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
 		return newEncodeError(fmt.Sprint(err), rval.Type())
@@ -87,16 +86,16 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 
 func encodeBool(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	if val.Bool() {
-		w.str = append(w.str, uint8(1))
+		w.str[startOffset] = uint8(1)
 	} else {
-		w.str = append(w.str, uint8(0))
+		w.str[startOffset] = uint8(0)
 	}
 	return startOffset + 1, nil
 }
 
 func encodeUint8(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
-	w.str = append(w.str, uint8(v))
+	w.str[startOffset] = uint8(v)
 	return startOffset + 1, nil
 }
 
@@ -104,7 +103,7 @@ func encodeUint16(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	v := val.Uint()
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(v))
-	w.str = append(w.str, b...)
+	w.str[startOffset:startOffset+2] = b
 	return startOffset + 2, nil
 }
 
@@ -112,7 +111,7 @@ func encodeUint32(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	v := val.Uint()
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, uint32(v))
-	w.str = append(w.str, b...)
+	w.str[startOffset:startOffset+4] = b
 	return startOffset + 4, nil
 }
 
@@ -120,12 +119,12 @@ func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	v := val.Uint()
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(v))
-	w.str = append(w.str, b...)
+	w.str[startOffset:startOffset+8] = b
 	return startOffset + 8, nil
 }
 
 func encodeBytes(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
-	w.str = append(w.str, val.Bytes()...)
+	w.str[startOffset:startOffset+uint64(val.Len())] = val.Bytes()
 	return startOffset + uint64(val.Len()), nil
 }
 

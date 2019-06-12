@@ -110,3 +110,11 @@ func determineVariableSize(val reflect.Value) uint64 {
 	}
 	return 0
 }
+
+func determineSize(val reflect.Value) uint64 {
+	if isVariableSizeType(val, val.Kind()) {
+		return determineVariableSize(val)
+	}
+	return determineFixedSize(val)
+}
+
