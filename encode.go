@@ -1,7 +1,6 @@
 package ssz
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -69,8 +68,8 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 	case kind == reflect.Uint64:
 		return encodeUint64, nil
 	case (kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8) ||
-			(kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8):
-				return encodeBytes, nil
+		(kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8):
+		return encodeBytes, nil
 	case kind == reflect.Slice || kind == reflect.Array:
 		return makeSliceEncoder(typ)
 	//case kind == reflect.Struct:
@@ -94,7 +93,7 @@ func encodeBool(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error
 func encodeUint8(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	w.str = append(w.str, uint8(v))
-	return startOffset + 1 , nil
+	return startOffset + 1, nil
 }
 
 func encodeUint16(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
@@ -102,7 +101,7 @@ func encodeUint16(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(v))
 	w.str = append(w.str, b...)
-	return startOffset+2, nil
+	return startOffset + 2, nil
 }
 
 func encodeUint32(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
@@ -110,7 +109,7 @@ func encodeUint32(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, uint32(v))
 	w.str = append(w.str, b...)
-	return startOffset+4, nil
+	return startOffset + 4, nil
 }
 
 func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
@@ -118,12 +117,12 @@ func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(v))
 	w.str = append(w.str, b...)
-	return startOffset+8, nil
+	return startOffset + 8, nil
 }
 
 func encodeBytes(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	w.str = append(w.str, val.Bytes()...)
-	return startOffset+uint64(val.Len()), nil
+	return startOffset + uint64(val.Len()), nil
 }
 
 func makeSliceEncoder(typ reflect.Type) (encoder, error) {
@@ -131,18 +130,40 @@ func makeSliceEncoder(typ reflect.Type) (encoder, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
-	encoder := func(val reflect.Value, w *encbuf) error {
-		for i := 0; i < val.Len(); i++ {
-			// Determine the fixed parts of the element.
-			if isBasicType(typ.Elem().Kind()) || typ.Elem().Kind() == reflect.Array {
-			} else {
-				//elemBuf := &encbuf{}
-				//if err := elemSSZUtils.encoder(val.Index(i), elemBuf); err != nil {
-				//	return fmt.Errorf("failed to encode element of slice/array: %v", err)
-				//}
+
+	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+		index := startOffset
+		var err error
+		if isBasicType(typ.Elem().Kind()) || typ.Elem().Kind() == reflect.Array {
+			for i := 0; i < val.Len(); i++ {
+				index, err = elemSSZUtils.encoder(val.Index(i), w, index)
+				if err != nil {
+					return 0, err
+				}
 			}
+		} else {
+			fixedIndex := index
+			currentOffsetIndex := startOffset + uint64(val.Len()*BytesPerLengthOffset)
+			nextOffsetIndex := currentOffsetIndex
+			// If the elements are variable size, we need to include offset indices
+			// in the serialized output list.
+			for i := 0; i < val.Len(); i++ {
+				nextOffsetIndex, err = elemSSZUtils.encoder(val.Index(i), w, currentOffsetIndex)
+				if err != nil {
+					return 0, err
+				}
+				// Write the offset.
+				skipIndices := make([]byte, fixedIndex)
+				w.str = append(w.str, skipIndices...)
+				offsetBuf := make([]byte, BytesPerLengthOffset)
+				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
+				w.str = append(w.str, offsetBuf...)
+				currentOffsetIndex = nextOffsetIndex
+				fixedIndex += uint64(BytesPerLengthOffset)
+			}
+			index = currentOffsetIndex
 		}
-		return nil
+		return index, nil
 	}
 	return encoder, nil
 }

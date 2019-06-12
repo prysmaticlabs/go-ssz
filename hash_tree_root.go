@@ -82,7 +82,7 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		buf := &encbuf{}
-		if err = utils.encoder(val, buf); err != nil {
+		if _, err = utils.encoder(val, buf, 0); err != nil {
 			return [32]byte{}, err
 		}
 		writer := new(bytes.Buffer)
@@ -106,7 +106,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		buf := &encbuf{}
-		if err = utils.encoder(val, buf); err != nil {
+		if _, err = utils.encoder(val, buf, 0); err != nil {
 			return [32]byte{}, err
 		}
 		writer := new(bytes.Buffer)
@@ -217,7 +217,7 @@ func getEncoding(val reflect.Value) ([]byte, error) {
 		return nil, err
 	}
 	buf := &encbuf{}
-	if err = utils.encoder(val, buf); err != nil {
+	if _, err = utils.encoder(val, buf, 0); err != nil {
 		return nil, err
 	}
 	writer := new(bytes.Buffer)
