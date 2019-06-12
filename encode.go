@@ -75,10 +75,10 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 		return encodeBytes, nil
 	case kind == reflect.Slice || kind == reflect.Array:
 		return makeSliceEncoder(typ)
-	//case kind == reflect.Struct:
-	//	return makeStructEncoder(typ)
-	//case kind == reflect.Ptr:
-	//	return makePtrEncoder(typ)
+	case kind == reflect.Struct:
+		return makeStructEncoder(typ)
+	case kind == reflect.Ptr:
+		return makePtrEncoder(typ)
 	default:
 		return nil, fmt.Errorf("type %v is not serializable", typ)
 	}
@@ -124,7 +124,8 @@ func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 }
 
 func encodeBytes(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
-	copy(w.str[startOffset:startOffset+uint64(val.Len())], val.Bytes())
+	slice := val.Slice(0, val.Len()).Interface().([]byte)
+	copy(w.str[startOffset:startOffset+uint64(len(slice))], slice)
 	return startOffset + uint64(val.Len()), nil
 }
 
@@ -137,8 +138,7 @@ func makeSliceEncoder(typ reflect.Type) (encoder, error) {
 	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 		index := startOffset
 		var err error
-		if isBasicType(typ.Elem().Kind()) || typ.Elem().Kind() == reflect.Array {
-			fmt.Println(w.str)
+		if !isVariableSizeType(val, typ.Elem().Kind()) {
 			for i := 0; i < val.Len(); i++ {
 				index, err = elemSSZUtils.encoder(val.Index(i), w, index)
 				if err != nil {
@@ -172,116 +172,66 @@ func makeSliceEncoder(typ reflect.Type) (encoder, error) {
 	return encoder, nil
 }
 
-//func makeStructEncoder(typ reflect.Type) (encoder, error) {
-//	fields, err := structFields(typ)
-//	if err != nil {
-//		return nil, err
-//	}
-//	encoder := func(val reflect.Value, w *encbuf) error {
-//		fixedParts := [][]byte{}
-//		variableParts := [][]byte{}
-//		for _, f := range fields {
-//			item := val.Field(f.index)
-//			// Determine the fixed parts of the element.
-//			if isBasicType(item.Kind()) || item.Kind() == reflect.Array {
-//				elemBuf := &encbuf{}
-//				if err := f.sszUtils.encoder(item, w); err != nil {
-//					return fmt.Errorf("failed to encode field of struct: %v", err)
-//				}
-//				fixedParts = append(fixedParts, elemBuf.str)
-//			} else {
-//				elemBuf := &encbuf{}
-//				if err := f.sszUtils.encoder(item, w); err != nil {
-//					return fmt.Errorf("failed to encode field of struct: %v", err)
-//				}
-//				variableParts = append(variableParts, elemBuf.str)
-//				fixedParts = append(fixedParts, []byte{})
-//			}
-//		}
-//		serializedStruct, err := serializeFromParts(fixedParts, variableParts, len(fields))
-//		if err != nil {
-//			return err
-//		}
-//		w.str = append(w.str, serializedStruct...)
-//		return nil
-//	}
-//	return encoder, nil
-//}
+func makeStructEncoder(typ reflect.Type) (encoder, error) {
+	fields, err := structFields(typ)
+	if err != nil {
+		return nil, err
+	}
+	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+		fixedIndex := startOffset
+		fixedLength := uint64(0)
+		for _, f := range fields {
+			item := val.Field(f.index)
+			if isVariableSizeType(item, item.Type().Kind()) {
+				fixedLength += uint64(BytesPerLengthOffset)
+			} else {
+				fixedLength += determineFixedSize(val.Field(f.index), val.Field(f.index).Type())
+			}
+		}
+		currentOffsetIndex := startOffset + fixedLength
+		nextOffsetIndex := currentOffsetIndex
+		var err error
+		for _, f := range fields {
+			item := val.Field(f.index)
+			if !isVariableSizeType(item, item.Type().Kind()) {
+				fixedIndex, err = f.sszUtils.encoder(item, w, fixedIndex)
+				if err != nil {
+					return 0, err
+				}
+			} else {
+				nextOffsetIndex, err = f.sszUtils.encoder(val.Field(f.index), w, currentOffsetIndex)
+				if err != nil {
+					return 0, err
+				}
+				// Write the offset.
+				offsetBuf := make([]byte, BytesPerLengthOffset)
+				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
+				copy(w.str[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
 
-//func makePtrEncoder(typ reflect.Type) (encoder, error) {
-//	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
-//	if err != nil {
-//		return nil, err
-//	}
-//	encoder := func(val reflect.Value, w *encbuf) error {
-//		// Nil encodes to []byte{}.
-//		if val.IsNil() {
-//			w.str = append(w.str, []byte{}...)
-//			return nil
-//		}
-//		return elemSSZUtils.encoder(val.Elem(), w)
-//	}
-//
-//	return encoder, nil
-//}
+				// We increase the offset indices accordingly.
+				currentOffsetIndex = nextOffsetIndex
+				fixedIndex += uint64(BytesPerLengthOffset)
+			}
+		}
+		return currentOffsetIndex, nil
+	}
+	return encoder, nil
+}
 
-//func serializeFromParts(fixedParts [][]byte, variableParts [][]byte, numElements int) ([]byte, error) {
-//	fixedLengths := []int{}
-//	variableLengths := []int{}
-//	for _, item := range fixedParts {
-//		if !bytes.Equal(item, []byte{}) {
-//			fixedLengths = append(fixedLengths, len(item))
-//		} else {
-//			fixedLengths = append(fixedLengths, BytesPerLengthOffset)
-//		}
-//	}
-//	for _, item := range variableParts {
-//		if len(item) == 0 {
-//			continue
-//		}
-//		variableLengths = append(variableLengths, len(item))
-//	}
-//	sum := 0
-//	for _, item := range append(fixedLengths, variableLengths...) {
-//		sum += item
-//	}
-//	if sum >= MaxByteOffset {
-//		return nil, fmt.Errorf(
-//			"expected sum(fixed_length + variable_length) < MaxByteOffset, received %d >= %d",
-//			sum,
-//			MaxByteOffset,
-//		)
-//	}
-//	variableOffsets := [][]byte{}
-//	upperBound := numElements
-//	if len(variableLengths) < upperBound {
-//		upperBound = len(variableLengths)
-//	}
-//	for i := 0; i < upperBound; i++ {
-//		sum = 0
-//		for _, item := range append(fixedLengths, variableLengths[:i]...) {
-//			sum += item
-//		}
-//		b := make([]byte, 8)
-//		binary.LittleEndian.PutUint64(b, uint64(sum))
-//		variableOffsets = append(variableOffsets, b)
-//	}
-//	offsetParts := [][]byte{}
-//	for idx, item := range fixedParts {
-//		if !bytes.Equal(item, []byte{}) {
-//			offsetParts = append(offsetParts, item)
-//		} else {
-//			if idx < len(variableOffsets) {
-//				offsetParts = append(offsetParts, variableOffsets[idx])
-//			}
-//		}
-//	}
-//	fixedParts = offsetParts
-//	concat := append(fixedParts, variableParts...)
-//	finalSerialization := []byte{}
-//	// We flatten the final serialized slice.
-//	for _, item := range concat {
-//		finalSerialization = append(finalSerialization, item...)
-//	}
-//	return finalSerialization, nil
-//}
+func makePtrEncoder(typ reflect.Type) (encoder, error) {
+	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	if err != nil {
+		return nil, err
+	}
+	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+		// Nil encodes to []byte{}.
+		if val.IsNil() {
+			w.str[startOffset] = 0
+			return 0, nil
+		}
+		return elemSSZUtils.encoder(val.Elem(), w, startOffset)
+	}
+
+	return encoder, nil
+}
+
