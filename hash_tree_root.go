@@ -219,7 +219,7 @@ func makePtrHasher(typ reflect.Type) (hasher, error) {
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		if val.IsNil() {
-			return hashedEncoding(val)
+			return HashedEncoding(val)
 		}
 		return elemSSZUtils.hasher(val.Elem())
 	}
@@ -242,7 +242,8 @@ func getEncoding(val reflect.Value) ([]byte, error) {
 	return writer.Bytes(), nil
 }
 
-func hashedEncoding(val reflect.Value) ([32]byte, error) {
+// HashedEncoding returns the hash of the encoded object.
+func HashedEncoding(val reflect.Value) ([32]byte, error) {
 	encoding, err := getEncoding(val)
 	if err != nil {
 		return [32]byte{}, err

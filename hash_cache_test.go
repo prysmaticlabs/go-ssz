@@ -47,7 +47,7 @@ func TestCache_byHash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := hashedEncoding(reflect.ValueOf(byteSl))
+	hs, err := HashedEncoding(reflect.ValueOf(byteSl))
 	if err != nil {
 		t.Fatal(err)
 	}
