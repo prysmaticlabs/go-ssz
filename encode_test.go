@@ -60,5 +60,5 @@ func TestEncode(t *testing.T) {
 	if err := Encode(buffer, item); err != nil {
 		panic(err)
 	}
-	fmt.Println(buffer.Bytes())
+	fmt.Printf("%#x\n", buffer.Bytes())
 }
