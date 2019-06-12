@@ -103,7 +103,7 @@ func encodeUint16(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	v := val.Uint()
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(v))
-	w.str[startOffset:startOffset+2] = b
+	copy(w.str[startOffset:startOffset+2], b)
 	return startOffset + 2, nil
 }
 
@@ -111,7 +111,7 @@ func encodeUint32(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	v := val.Uint()
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, uint32(v))
-	w.str[startOffset:startOffset+4] = b
+	copy(w.str[startOffset:startOffset+4], b)
 	return startOffset + 4, nil
 }
 
@@ -119,12 +119,12 @@ func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	v := val.Uint()
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(v))
-	w.str[startOffset:startOffset+8] = b
+	copy(w.str[startOffset:startOffset+8], b)
 	return startOffset + 8, nil
 }
 
 func encodeBytes(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
-	w.str[startOffset:startOffset+uint64(val.Len())] = val.Bytes()
+	copy(w.str[startOffset:startOffset+uint64(val.Len())], val.Bytes())
 	return startOffset + uint64(val.Len()), nil
 }
 
@@ -138,6 +138,7 @@ func makeSliceEncoder(typ reflect.Type) (encoder, error) {
 		index := startOffset
 		var err error
 		if isBasicType(typ.Elem().Kind()) || typ.Elem().Kind() == reflect.Array {
+			fmt.Println(w.str)
 			for i := 0; i < val.Len(); i++ {
 				index, err = elemSSZUtils.encoder(val.Index(i), w, index)
 				if err != nil {
@@ -156,11 +157,11 @@ func makeSliceEncoder(typ reflect.Type) (encoder, error) {
 					return 0, err
 				}
 				// Write the offset.
-				skipIndices := make([]byte, fixedIndex)
-				w.str = append(w.str, skipIndices...)
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
-				w.str = append(w.str, offsetBuf...)
+				copy(w.str[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
+
+				// We increase the offset indices accordingly.
 				currentOffsetIndex = nextOffsetIndex
 				fixedIndex += uint64(BytesPerLengthOffset)
 			}
