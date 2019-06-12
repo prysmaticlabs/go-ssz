@@ -94,28 +94,28 @@ func encodeUint8(val reflect.Value, w *encbuf, startOffset uint64) (uint64, erro
 	return startOffset + 1, nil
 }
 
-func encodeUint16(val reflect.Value, w *encbuf) error {
+func encodeUint16(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(v))
 	w.str = append(w.str, b...)
-	return nil
+	return startOffset+2, nil
 }
 
-func encodeUint32(val reflect.Value, w *encbuf) error {
+func encodeUint32(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, uint32(v))
 	w.str = append(w.str, b...)
-	return nil
+	return startOffset+4, nil
 }
 
-func encodeUint64(val reflect.Value, w *encbuf) error {
+func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(v))
 	w.str = append(w.str, b...)
-	return nil
+	return startOffset+8, nil
 }
 
 func makeSliceEncoder(typ reflect.Type) (encoder, error) {
