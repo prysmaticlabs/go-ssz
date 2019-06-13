@@ -182,7 +182,7 @@ func makeStructEncoder(typ reflect.Type) (encoder, error) {
 		fixedLength := uint64(0)
 		for _, f := range fields {
 			item := val.Field(f.index)
-			if isVariableSizeType(item, item.Type().Kind()) {
+			if isVariableSizeType(item, item.Kind()) {
 				fixedLength += uint64(BytesPerLengthOffset)
 			} else {
 				fixedLength += determineFixedSize(val.Field(f.index), val.Field(f.index).Type())

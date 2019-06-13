@@ -70,8 +70,6 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 			totalSize += determineFixedSize(val.Field(i), val.Field(i).Type())
 		}
 		return totalSize
-	case kind == reflect.Ptr:
-		return determineFixedSize(val.Elem(), val.Elem().Type())
 	default:
 		return 0
 	}
@@ -100,7 +98,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 				varSize := determineVariableSize(val.Field(i), val.Field(i).Type())
 				totalSize += varSize + uint64(BytesPerLengthOffset)
 			} else {
-				varSize := determineVariableSize(val.Field(i), val.Field(i).Type())
+				varSize := determineFixedSize(val.Field(i), val.Field(i).Type())
 				totalSize += varSize
 			}
 		}
@@ -111,6 +109,9 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 }
 
 func determineSize(val reflect.Value) uint64 {
+	if val.Kind() == reflect.Ptr {
+		return determineSize(val.Elem())
+	}
 	if isVariableSizeType(val, val.Kind()) {
 		return determineVariableSize(val, val.Type())
 	}
