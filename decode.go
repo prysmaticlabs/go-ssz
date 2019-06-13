@@ -227,9 +227,9 @@ func makeArrayDecoder(typ reflect.Type) (decoder, error) {
 		size := val.Len()
 		i := 0
 		offsetIndex := uint64(0)
-		elemSize := determineFixedSize(val.Elem(), val.Elem().Type())
+		elemSize := determineFixedSize(val, typ.Elem())
 		for ; i < size; i++ {
-			if err := elemSSZUtils.decoder(input[offsetIndex:offsetIndex+elemSize], val.Index(i), offsetIndex); err != nil {
+			if err := elemSSZUtils.decoder(input, val.Index(i), offsetIndex); err != nil {
 				return fmt.Errorf("failed to decode element of array: %v", err)
 			}
 			if err != nil {
