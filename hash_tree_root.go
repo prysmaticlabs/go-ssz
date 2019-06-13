@@ -81,7 +81,9 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 		return nil, err
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
-		buf := &encbuf{}
+		buf := &encbuf{
+			str: make([]byte, determineSize(val)),
+		}
 		if _, err = utils.encoder(val, buf, 0); err != nil {
 			return [32]byte{}, err
 		}
@@ -105,7 +107,9 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
-		buf := &encbuf{}
+		buf := &encbuf{
+			str: make([]byte, determineSize(val)),
+		}
 		if _, err = utils.encoder(val, buf, 0); err != nil {
 			return [32]byte{}, err
 		}
