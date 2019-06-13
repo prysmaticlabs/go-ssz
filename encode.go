@@ -70,9 +70,10 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 		return encodeUint32, nil
 	case kind == reflect.Uint64:
 		return encodeUint64, nil
-	case (kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8) ||
-		(kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8):
-		return encodeBytes, nil
+	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
+		return encodeByteSlice, nil
+	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
+		return encodeByteArray, nil
 	case kind == reflect.Slice || kind == reflect.Array:
 		return makeSliceEncoder(typ)
 	case kind == reflect.Struct:
@@ -123,10 +124,19 @@ func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	return startOffset + 8, nil
 }
 
-func encodeBytes(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+func encodeByteSlice(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	slice := val.Slice(0, val.Len()).Interface().([]byte)
 	copy(w.str[startOffset:startOffset+uint64(len(slice))], slice)
 	return startOffset + uint64(val.Len()), nil
+}
+
+func encodeByteArray(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+	rawBytes := make([]byte, val.Len())
+	for i := 0; i < val.Len(); i++ {
+		rawBytes[i] = uint8(val.Index(i).Uint())
+	}
+	copy(w.str[startOffset:startOffset+uint64(len(rawBytes))], rawBytes)
+	return startOffset + uint64(len(rawBytes)), nil
 }
 
 // When serializing a slice, we care about whether the underlying element is

@@ -62,8 +62,6 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 		return decodeUint64, nil
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return makeByteSliceDecoder()
-	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return makeByteArrayDecoder()
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
 		return makeBasicSliceDecoder(typ)
 	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
@@ -120,14 +118,14 @@ func decodeUint64(input []byte, val reflect.Value, startOffset uint64) error {
 	return nil
 }
 
-func makeByteArrayDecoder() (decoder, error) {
-	decoder := func(input []byte, val reflect.Value, startOffset uint64) error {
-		slice := val.Slice(int(startOffset), val.Len()).Interface().([]byte)
-		copy(slice, input[startOffset:uint64(val.Len())])
-		return nil
-	}
-	return decoder, nil
-}
+//func makeByteArrayDecoder() (decoder, error) {
+//	decoder := func(input []byte, val reflect.Value, startOffset uint64) error {
+//		slice := val.Slice(int(startOffset), val.Len()).Interface().([]byte)
+//		copy(slice, input[startOffset:uint64(val.Len())])
+//		return nil
+//	}
+//	return decoder, nil
+//}
 
 func makeByteSliceDecoder() (decoder, error) {
 	decoder := func(input []byte, val reflect.Value, startOffset uint64) error {
@@ -175,7 +173,7 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 		return nil, err
 	}
 	decoder := func(input []byte, val reflect.Value, startOffset uint64) error {
-		elementSize := determineVariableSize(val.Elem(), val.Elem().Type())
+		elementSize := determineSize(val)
 		endOffset := uint64(len(input)) / elementSize
 		newVal := reflect.MakeSlice(val.Type(), len(input), len(input))
 		reflect.Copy(newVal, val)
