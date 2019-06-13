@@ -7,11 +7,11 @@ import (
 	"sync"
 )
 
-type encoder func(reflect.Value, *encbuf) error
+// An encoder type takes in a value, an output buffer, and a start offset,
+// it returns the index of the last byte written and an error, if any.
+type encoder func(reflect.Value, *encbuf, uint64) (uint64, error)
 
-type decoder func([]byte, reflect.Value) (int, error)
-
-type encodeSizer func(reflect.Value) (uint32, error)
+type decoder func([]byte, reflect.Value) (uint64, error)
 
 type hasher func(reflect.Value) ([32]byte, error)
 

@@ -8,8 +8,8 @@ import (
 
 type crosslink struct {
 	Epoch                 uint64
-	PreviousCrosslinkRoot []byte
-	CrosslinkDataRoot     []byte
+	PreviousCrosslinkRoot [32]byte
+	CrosslinkDataRoot     [32]byte
 }
 
 type fork struct {
@@ -42,8 +42,8 @@ func TestEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 	cross := &crosslink{
-		PreviousCrosslinkRoot: prevRoot,
-		CrosslinkDataRoot:     root,
+		PreviousCrosslinkRoot: ToBytes32(prevRoot),
+		CrosslinkDataRoot:     ToBytes32(root),
 		Epoch:                 19993510755097755,
 	}
 	want, _ = hex.DecodeString("9bdc5efafd074700e8933c7bb4e15a6476373346d2334d8f845bc3c0c93d5d5acf3fd0fba9d7e8d90f9e7e66592424d43d7d6109182b6519c0b748e6eb33cbccc1527aae78dc889f")
