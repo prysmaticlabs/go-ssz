@@ -113,7 +113,7 @@ func decodeUint32(input []byte, val reflect.Value, startOffset uint64) error {
 }
 
 func decodeUint64(input []byte, val reflect.Value, startOffset uint64) error {
-	offset := startOffset + 4
+	offset := startOffset + 8
 	buf := make([]byte, 8)
 	copy(buf, input[startOffset:offset])
 	val.SetUint(binary.LittleEndian.Uint64(buf))
@@ -145,7 +145,7 @@ func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
 	}
 	decoder := func(input []byte, val reflect.Value, startOffset uint64) error {
 		index := startOffset
-		elementSize := determineFixedSize(val.Elem(), val.Elem().Type())
+		elementSize := basicTypeSize(typ.Elem())
 		endOffset := uint64(len(input)) / elementSize
 		if startOffset == endOffset {
 			return nil
@@ -153,13 +153,14 @@ func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
 		newVal := reflect.MakeSlice(val.Type(), int(endOffset), int(endOffset))
 		reflect.Copy(newVal, val)
 		val.Set(newVal)
-		i := 0
+		i := uint64(0)
 		var nextIndex uint64
-		for index < endOffset {
+		for i < endOffset {
 			nextIndex = index + elementSize
-			if err := elemSSZUtils.decoder(input[index:nextIndex], val.Index(i), startOffset); err != nil {
+			if err := elemSSZUtils.decoder(input, val.Index(int(i)), index); err != nil {
 				return fmt.Errorf("failed to decode element of slice: %v", err)
 			}
+			index = nextIndex
 			i++
 		}
 		return nil

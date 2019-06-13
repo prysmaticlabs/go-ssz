@@ -42,6 +42,26 @@ func isVariableSizeType(val reflect.Value, kind reflect.Kind) bool {
 	return false
 }
 
+func basicTypeSize(typ reflect.Type) uint64 {
+	kind := typ.Kind()
+	switch {
+	case kind == reflect.Bool:
+		return 1
+	case kind == reflect.Uint8:
+		return 1
+	case kind == reflect.Uint16:
+		return 2
+	case kind == reflect.Uint32:
+		return 4
+	case kind == reflect.Uint64:
+		return 8
+	case isBasicTypeArray(typ, kind):
+		return uint64(typ.Len())
+	default:
+		return 0
+	}
+}
+
 func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 	kind := typ.Kind()
 	switch {
