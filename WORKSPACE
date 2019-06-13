@@ -12,7 +12,7 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_to
 
 go_rules_dependencies()
 
-go_register_toolchains()
+go_register_toolchains(nogo = "@com_github_prysmaticlabs_go_ssz//:nogo")
 
 http_archive(
     name = "bazel_gazelle",
