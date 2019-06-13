@@ -122,7 +122,6 @@ func TestBlockCache_maxSize(t *testing.T) {
 		maxCacheSize,
 		cache.hashCache.ItemCount(),
 	)
-	time.Sleep(1 * time.Second)
 	if int64(cache.hashCache.ItemCount()) > maxCacheSize {
 		t.Errorf(
 			"Expected hash cache key size to be %d, got %d",
