@@ -1,6 +1,7 @@
 package ssz
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -21,19 +22,20 @@ func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
 	return kind == reflect.Slice && isBasicType(typ.Elem().Kind())
 }
 
-func isVariableSizeType(val reflect.Value, kind reflect.Kind) bool {
+func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
+	kind := val.Kind()
 	switch {
 	case isBasicType(kind):
 		return false
-	case isBasicTypeArray(val.Type(), kind):
+	case isBasicTypeArray(typ, kind):
 		return false
 	case kind == reflect.Slice:
 		return true
 	case kind == reflect.Array:
-		return isVariableSizeType(val.Elem(), val.Elem().Kind())
+		return isVariableSizeType(val, typ.Elem())
 	case kind == reflect.Struct:
-		for i := 0; i < val.Type().NumField(); i++ {
-			if isVariableSizeType(val.Field(i), val.Field(i).Kind()) {
+		for i := 0; i < typ.NumField(); i++ {
+			if isVariableSizeType(val.Field(i), val.Field(i).Type()) {
 				return true
 			}
 		}
@@ -97,6 +99,7 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 
 func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	kind := typ.Kind()
+	fmt.Println("getting var")
 	switch {
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return uint64(val.Len())
@@ -104,17 +107,18 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 		totalSize := uint64(0)
 		for i := 0; i < val.Len(); i++ {
 			varSize := determineSize(val.Index(i))
-			if isVariableSizeType(val.Index(i), val.Index(i).Kind()) {
+			if isVariableSizeType(val.Index(i), val.Index(i).Type()) {
 				totalSize += varSize + uint64(BytesPerLengthOffset)
 			} else {
 				totalSize += varSize
+				fmt.Println(totalSize)
 			}
 		}
 		return totalSize
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
 		for i := 0; i < val.Type().NumField(); i++ {
-			if isVariableSizeType(val.Field(i), val.Field(i).Kind()) {
+			if isVariableSizeType(val.Field(i), val.Field(i).Type()) {
 				varSize := determineVariableSize(val.Field(i), val.Field(i).Type())
 				totalSize += varSize + uint64(BytesPerLengthOffset)
 			} else {
@@ -132,7 +136,7 @@ func determineSize(val reflect.Value) uint64 {
 	if val.Kind() == reflect.Ptr {
 		return determineSize(val.Elem())
 	}
-	if isVariableSizeType(val, val.Kind()) {
+	if isVariableSizeType(val, val.Type()) {
 		return determineVariableSize(val, val.Type())
 	}
 	return determineFixedSize(val, val.Type())
