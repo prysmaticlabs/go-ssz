@@ -64,6 +64,8 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 		return makeByteSliceDecoder()
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
 		return makeBasicSliceDecoder(typ)
+	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
+		return makeBasicSliceDecoder(typ)
 	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
 		return makeCompositeSliceDecoder(typ)
 	case kind == reflect.Array:
@@ -114,7 +116,6 @@ func decodeUint64(input []byte, val reflect.Value, startOffset uint64) error {
 	offset := startOffset + 8
 	buf := make([]byte, 8)
 	copy(buf, input[startOffset:offset])
-	fmt.Println(buf)
 	val.SetUint(binary.LittleEndian.Uint64(buf))
 	return nil
 }
@@ -140,6 +141,7 @@ func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
 		if startOffset == endOffset {
 			return nil
 		}
+		fmt.Println(elementSize)
 		newVal := reflect.MakeSlice(val.Type(), int(endOffset), int(endOffset))
 		reflect.Copy(newVal, val)
 		val.Set(newVal)

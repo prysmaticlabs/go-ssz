@@ -74,11 +74,11 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 		return encodeByteSlice, nil
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
 		return encodeByteArray, nil
+	case kind == reflect.Array:
+		return makeBasicSliceEncoder(typ)
 	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
-		fmt.Println("basic slice")
 		return makeBasicSliceEncoder(typ)
 	case kind == reflect.Slice:
-		fmt.Println("composite slice")
 		return makeCompositeSliceEncoder(typ)
 	case kind == reflect.Struct:
 		return makeStructEncoder(typ)
@@ -123,7 +123,6 @@ func encodeUint32(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 8)
-	fmt.Println(w.str)
 	binary.LittleEndian.PutUint64(b, uint64(v))
 	copy(w.str[startOffset:startOffset+8], b)
 	return startOffset + 8, nil
@@ -151,13 +150,9 @@ func makeBasicSliceEncoder(typ reflect.Type) (encoder, error) {
 	}
 
 	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
-		fmt.Println("calling encoder")
 		index := startOffset
 		var err error
 		for i := 0; i < val.Len(); i++ {
-			fmt.Println("in basic")
-			fmt.Println(val.Index(i))
-			fmt.Println("end basic")
 			index, err = elemSSZUtils.encoder(val.Index(i), w, index)
 			if err != nil {
 				return 0, err
@@ -179,7 +174,6 @@ func makeCompositeSliceEncoder(typ reflect.Type) (encoder, error) {
 		var err error
 		if !isVariableSizeType(val, typ.Elem()) {
 			for i := 0; i < val.Len(); i++ {
-				fmt.Println(val.Index(i))
 				// If each element is not variable size, we simply encode sequentially and write
 				// into the buffer at the last index we wrote at.
 				index, err = elemSSZUtils.encoder(val.Index(i), w, index)
@@ -188,7 +182,6 @@ func makeCompositeSliceEncoder(typ reflect.Type) (encoder, error) {
 				}
 			}
 		} else {
-			fmt.Println("IS VARIABLE")
 			fixedIndex := index
 			currentOffsetIndex := startOffset + uint64(val.Len()*BytesPerLengthOffset)
 			nextOffsetIndex := currentOffsetIndex
