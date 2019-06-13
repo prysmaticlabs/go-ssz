@@ -28,7 +28,6 @@ func (err *encodeError) Error() string {
 // Encode encodes val and output the result into w.
 func Encode(w io.Writer, val interface{}) error {
 	eb := &encbuf{}
-	// Need to preallocate
 	if err := eb.encode(val); err != nil {
 		return err
 	}
@@ -40,7 +39,8 @@ func (w *encbuf) encode(val interface{}) error {
 		return newEncodeError("untyped nil is not supported", nil)
 	}
 	rval := reflect.ValueOf(val)
-	// We preallocate a buffer-size depending on the value's size:
+
+	// We pre-allocate a buffer-size depending on the value's size.
 	w.str = make([]byte, determineSize(rval))
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
@@ -129,6 +129,8 @@ func encodeBytes(val reflect.Value, w *encbuf, startOffset uint64) (uint64, erro
 	return startOffset + uint64(val.Len()), nil
 }
 
+// When serializing a slice, we care about whether the underlying element is
+// variable size or not.
 func makeSliceEncoder(typ reflect.Type) (encoder, error) {
 	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
@@ -140,6 +142,8 @@ func makeSliceEncoder(typ reflect.Type) (encoder, error) {
 		var err error
 		if !isVariableSizeType(val, typ.Elem().Kind()) {
 			for i := 0; i < val.Len(); i++ {
+				// If each element is not variable size, we simply encode sequentially and write
+				// into the buffer at the last index we wrote at.
 				index, err = elemSSZUtils.encoder(val.Index(i), w, index)
 				if err != nil {
 					return 0, err
@@ -180,6 +184,8 @@ func makeStructEncoder(typ reflect.Type) (encoder, error) {
 	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 		fixedIndex := startOffset
 		fixedLength := uint64(0)
+		// For every field, we add up the total length of the items depending if they
+		// are variable or fixed-size fields.
 		for _, f := range fields {
 			item := val.Field(f.index)
 			if isVariableSizeType(item, item.Kind()) {

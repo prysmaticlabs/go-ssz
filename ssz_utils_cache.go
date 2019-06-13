@@ -8,11 +8,10 @@ import (
 	"sync"
 )
 
+// An encoder type takes in a value, an output buffer, and a start offset,
+// it returns the index of the last byte written and an error, if any.
 type encoder func(reflect.Value, *encbuf, uint64) (uint64, error)
 
-// Notice: we are not exactly following the spec which requires a decoder to return new index in the input buffer.
-// Our io.Reader is already capable of tracking its latest read location, so we decide to return the decoded byte size
-// instead. This makes our implementation look cleaner.
 type decoder func(io.Reader, reflect.Value) (uint32, error)
 
 type hasher func(reflect.Value) ([32]byte, error)
