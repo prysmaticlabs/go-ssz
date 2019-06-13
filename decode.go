@@ -39,7 +39,7 @@ func Decode(input []byte, val interface{}) error {
 	if err != nil {
 		return newDecodeError(fmt.Sprint(err), rval.Elem().Type())
 	}
-	if _, err = sszUtils.decoder(input, rval.Elem()); err != nil {
+	if _, err = sszUtils.decoder(input, rval.Elem(), 0, uint64(len(input))); err != nil {
 		return newDecodeError(fmt.Sprint(err), rval.Elem().Type())
 	}
 	return nil
@@ -79,8 +79,8 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 	}
 }
 
-func decodeBool(input []byte, val reflect.Value) (int, error) {
-	v := uint8(input[0])
+func decodeBool(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+	v := uint8(input[startOffset])
 	if v == 0 {
 		val.SetBool(false)
 	} else if v == 1 {
@@ -91,41 +91,43 @@ func decodeBool(input []byte, val reflect.Value) (int, error) {
 	return 1, nil
 }
 
-func decodeUint8(input []byte, val reflect.Value) (int, error) {
-	val.SetUint(uint64(input[0]))
+func decodeUint8(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+	val.SetUint(uint64(input[startOffset]))
 	return 1, nil
 }
 
-func decodeUint16(input []byte, val reflect.Value) (int, error) {
+func decodeUint16(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+	offset := startOffset + 2
 	buf := make([]byte, 2)
-	copy(buf, input)
+	copy(buf, input[startOffset:offset])
 	val.SetUint(uint64(binary.LittleEndian.Uint16(buf)))
 	return 2, nil
 }
 
-func decodeUint32(input []byte, val reflect.Value) (int, error) {
+func decodeUint32(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+	offset := startOffset + 4
 	buf := make([]byte, 4)
-	copy(buf, input)
+	copy(buf, input[startOffset:offset])
 	val.SetUint(uint64(binary.LittleEndian.Uint32(buf)))
 	return 4, nil
 }
 
-func decodeUint64(input []byte, val reflect.Value) (int, error) {
+func decodeUint64(input []byte, val reflect.Value) (uint64, error) {
 	buf := make([]byte, 8)
 	copy(buf, input)
 	val.SetUint(binary.LittleEndian.Uint64(buf))
 	return 8, nil
 }
 
-func decodeByteArray(input []byte, val reflect.Value) (int, error) {
+func decodeByteArray(input []byte, val reflect.Value) (uint64, error) {
 	slice := val.Slice(0, val.Len()).Interface().([]byte)
 	copy(slice, input)
-	return len(input), nil
+	return uint64(len(input)), nil
 }
 
-func decodeByteSlice(input []byte, val reflect.Value) (int, error) {
+func decodeByteSlice(input []byte, val reflect.Value) (uint64, error) {
 	val.SetBytes(input)
-	return len(input), nil
+	return uint64(len(input)), nil
 }
 
 func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
@@ -135,13 +137,14 @@ func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
 		return nil, err
 	}
 	decoder := func(input []byte, val reflect.Value) (int, error) {
-		elemSize := basicElementSize(typ.Elem(), typ.Elem().Kind())
-		size := len(input) / elemSize
-		newVal := reflect.MakeSlice(val.Type(), size, size)
-		reflect.Copy(newVal, val)
-		val.Set(newVal)
-		i, decodeSize := 0, uint64(0)
-		elementIndex := 0
+		//elemSize := basicElementSize(typ.Elem(), typ.Elem().Kind())
+		//size := len(input) / elemSize
+		//newVal := reflect.MakeSlice(val.Type(), size, size)
+		//reflect.Copy(newVal, val)
+		//val.Set(newVal)
+		//i, decodeSize := 0, uint64(0)
+		//elementIndex := 0
+		index :=
 		for ; i < len(input); i += elemSize {
 			elemDecodeSize, err := elemSSZUtils.decoder(input[i:i+elemSize], val.Index(elementIndex))
 			if err != nil {
