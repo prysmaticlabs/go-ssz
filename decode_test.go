@@ -52,6 +52,7 @@ func TestDecode(t *testing.T) {
 		{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
 		{input: [][][]uint64{{{1, 2}, {3}}, {{4, 5}}, {{0}}}, ptr: new([][][]uint64)},
 		//{input: [][3]uint64{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}, ptr: new([][3]uint64)},
+		//{input: [3][]uint64{{1, 2}, {4, 5, 6}, {7}}, ptr: new([3][]uint64)},
 		//{input: [4]fork{forkExample, forkExample, forkExample}, ptr: new([4]fork)},
 	}
 	for _, tt := range tests {
