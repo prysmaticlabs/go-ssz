@@ -80,8 +80,10 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 		return nil, err
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
-		buf := &encbuf{}
-		if err = utils.encoder(val, buf); err != nil {
+		buf := &encbuf{
+			str: make([]byte, determineSize(val)),
+		}
+		if _, err = utils.encoder(val, buf, 0); err != nil {
 			return [32]byte{}, err
 		}
 		writer := new(bytes.Buffer)
@@ -104,8 +106,10 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
-		buf := &encbuf{}
-		if err = utils.encoder(val, buf); err != nil {
+		buf := &encbuf{
+			str: make([]byte, determineSize(val)),
+		}
+		if _, err = utils.encoder(val, buf, 0); err != nil {
 			return [32]byte{}, err
 		}
 		writer := new(bytes.Buffer)
@@ -232,7 +236,7 @@ func getEncoding(val reflect.Value) ([]byte, error) {
 		return nil, err
 	}
 	buf := &encbuf{}
-	if err = utils.encoder(val, buf); err != nil {
+	if _, err = utils.encoder(val, buf, 0); err != nil {
 		return nil, err
 	}
 	writer := new(bytes.Buffer)
@@ -249,20 +253,4 @@ func HashedEncoding(val reflect.Value) ([32]byte, error) {
 		return [32]byte{}, err
 	}
 	return Hash(encoding), nil
-}
-
-func isBasicType(kind reflect.Kind) bool {
-	return kind == reflect.Bool ||
-		kind == reflect.Uint8 ||
-		kind == reflect.Uint16 ||
-		kind == reflect.Uint32 ||
-		kind == reflect.Uint64
-}
-
-func isBasicTypeArray(typ reflect.Type, kind reflect.Kind) bool {
-	return kind == reflect.Array && isBasicType(typ.Elem().Kind())
-}
-
-func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
-	return kind == reflect.Slice && isBasicType(typ.Elem().Kind())
 }

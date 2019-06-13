@@ -1,7 +1,6 @@
 package ssz
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -40,11 +39,14 @@ func (w *encbuf) encode(val interface{}) error {
 		return newEncodeError("untyped nil is not supported", nil)
 	}
 	rval := reflect.ValueOf(val)
+
+	// We pre-allocate a buffer-size depending on the value's size.
+	w.str = make([]byte, determineSize(rval))
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
 		return newEncodeError(fmt.Sprint(err), rval.Type())
 	}
-	if err = sszUtils.encoder(rval, w); err != nil {
+	if _, err = sszUtils.encoder(rval, w, 0 /* start offset */); err != nil {
 		return newEncodeError(fmt.Sprint(err), rval.Type())
 	}
 	return nil
@@ -68,6 +70,9 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 		return encodeUint32, nil
 	case kind == reflect.Uint64:
 		return encodeUint64, nil
+	case (kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8) ||
+		(kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8):
+		return encodeBytes, nil
 	case kind == reflect.Slice || kind == reflect.Array:
 		return makeSliceEncoder(typ)
 	case kind == reflect.Struct:
@@ -79,76 +84,94 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 	}
 }
 
-func encodeBool(val reflect.Value, w *encbuf) error {
+func encodeBool(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	if val.Bool() {
-		w.str = append(w.str, uint8(1))
+		w.str[startOffset] = uint8(1)
 	} else {
-		w.str = append(w.str, uint8(0))
+		w.str[startOffset] = uint8(0)
 	}
-	return nil
+	return startOffset + 1, nil
 }
 
-func encodeUint8(val reflect.Value, w *encbuf) error {
+func encodeUint8(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
-	w.str = append(w.str, uint8(v))
-	return nil
+	w.str[startOffset] = uint8(v)
+	return startOffset + 1, nil
 }
 
-func encodeUint16(val reflect.Value, w *encbuf) error {
+func encodeUint16(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(v))
-	w.str = append(w.str, b...)
-	return nil
+	copy(w.str[startOffset:startOffset+2], b)
+	return startOffset + 2, nil
 }
 
-func encodeUint32(val reflect.Value, w *encbuf) error {
+func encodeUint32(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, uint32(v))
-	w.str = append(w.str, b...)
-	return nil
+	copy(w.str[startOffset:startOffset+4], b)
+	return startOffset + 4, nil
 }
 
-func encodeUint64(val reflect.Value, w *encbuf) error {
+func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(v))
-	w.str = append(w.str, b...)
-	return nil
+	copy(w.str[startOffset:startOffset+8], b)
+	return startOffset + 8, nil
 }
 
+func encodeBytes(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+	slice := val.Slice(0, val.Len()).Interface().([]byte)
+	copy(w.str[startOffset:startOffset+uint64(len(slice))], slice)
+	return startOffset + uint64(val.Len()), nil
+}
+
+// When serializing a slice, we care about whether the underlying element is
+// variable size or not.
 func makeSliceEncoder(typ reflect.Type) (encoder, error) {
 	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
-	encoder := func(val reflect.Value, w *encbuf) error {
-		fixedParts := [][]byte{}
-		variableParts := [][]byte{}
-		for i := 0; i < val.Len(); i++ {
-			// Determine the fixed parts of the element.
-			if isBasicType(typ.Elem().Kind()) || typ.Elem().Kind() == reflect.Array {
-				elemBuf := &encbuf{}
-				if err := elemSSZUtils.encoder(val.Index(i), elemBuf); err != nil {
-					return fmt.Errorf("failed to encode element of slice/array: %v", err)
+
+	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+		index := startOffset
+		var err error
+		if !isVariableSizeType(val, typ.Elem().Kind()) {
+			for i := 0; i < val.Len(); i++ {
+				// If each element is not variable size, we simply encode sequentially and write
+				// into the buffer at the last index we wrote at.
+				index, err = elemSSZUtils.encoder(val.Index(i), w, index)
+				if err != nil {
+					return 0, err
 				}
-				fixedParts = append(fixedParts, elemBuf.str)
-			} else {
-				elemBuf := &encbuf{}
-				if err := elemSSZUtils.encoder(val.Index(i), elemBuf); err != nil {
-					return fmt.Errorf("failed to encode element of slice/array: %v", err)
-				}
-				variableParts = append(variableParts, elemBuf.str)
-				fixedParts = append(fixedParts, []byte{})
 			}
+		} else {
+			fixedIndex := index
+			currentOffsetIndex := startOffset + uint64(val.Len()*BytesPerLengthOffset)
+			nextOffsetIndex := currentOffsetIndex
+			// If the elements are variable size, we need to include offset indices
+			// in the serialized output list.
+			for i := 0; i < val.Len(); i++ {
+				nextOffsetIndex, err = elemSSZUtils.encoder(val.Index(i), w, currentOffsetIndex)
+				if err != nil {
+					return 0, err
+				}
+				// Write the offset.
+				offsetBuf := make([]byte, BytesPerLengthOffset)
+				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
+				copy(w.str[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
+
+				// We increase the offset indices accordingly.
+				currentOffsetIndex = nextOffsetIndex
+				fixedIndex += uint64(BytesPerLengthOffset)
+			}
+			index = currentOffsetIndex
 		}
-		serializedSlice, err := serializeFromParts(fixedParts, variableParts, val.Len())
-		if err != nil {
-			return err
-		}
-		w.str = append(w.str, serializedSlice...)
-		return nil
+		return index, nil
 	}
 	return encoder, nil
 }
@@ -158,33 +181,45 @@ func makeStructEncoder(typ reflect.Type) (encoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	encoder := func(val reflect.Value, w *encbuf) error {
-		fixedParts := [][]byte{}
-		variableParts := [][]byte{}
+	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+		fixedIndex := startOffset
+		fixedLength := uint64(0)
+		// For every field, we add up the total length of the items depending if they
+		// are variable or fixed-size fields.
 		for _, f := range fields {
 			item := val.Field(f.index)
-			// Determine the fixed parts of the element.
-			if isBasicType(item.Kind()) || item.Kind() == reflect.Array {
-				elemBuf := &encbuf{}
-				if err := f.sszUtils.encoder(item, w); err != nil {
-					return fmt.Errorf("failed to encode field of struct: %v", err)
-				}
-				fixedParts = append(fixedParts, elemBuf.str)
+			if isVariableSizeType(item, item.Kind()) {
+				fixedLength += uint64(BytesPerLengthOffset)
 			} else {
-				elemBuf := &encbuf{}
-				if err := f.sszUtils.encoder(item, w); err != nil {
-					return fmt.Errorf("failed to encode field of struct: %v", err)
-				}
-				variableParts = append(variableParts, elemBuf.str)
-				fixedParts = append(fixedParts, []byte{})
+				fixedLength += determineFixedSize(val.Field(f.index), val.Field(f.index).Type())
 			}
 		}
-		serializedStruct, err := serializeFromParts(fixedParts, variableParts, len(fields))
-		if err != nil {
-			return err
+		currentOffsetIndex := startOffset + fixedLength
+		nextOffsetIndex := currentOffsetIndex
+		var err error
+		for _, f := range fields {
+			item := val.Field(f.index)
+			if !isVariableSizeType(item, item.Type().Kind()) {
+				fixedIndex, err = f.sszUtils.encoder(item, w, fixedIndex)
+				if err != nil {
+					return 0, err
+				}
+			} else {
+				nextOffsetIndex, err = f.sszUtils.encoder(val.Field(f.index), w, currentOffsetIndex)
+				if err != nil {
+					return 0, err
+				}
+				// Write the offset.
+				offsetBuf := make([]byte, BytesPerLengthOffset)
+				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
+				copy(w.str[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
+
+				// We increase the offset indices accordingly.
+				currentOffsetIndex = nextOffsetIndex
+				fixedIndex += uint64(BytesPerLengthOffset)
+			}
 		}
-		w.str = append(w.str, serializedStruct...)
-		return nil
+		return currentOffsetIndex, nil
 	}
 	return encoder, nil
 }
@@ -194,75 +229,14 @@ func makePtrEncoder(typ reflect.Type) (encoder, error) {
 	if err != nil {
 		return nil, err
 	}
-	encoder := func(val reflect.Value, w *encbuf) error {
+	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 		// Nil encodes to []byte{}.
 		if val.IsNil() {
-			w.str = append(w.str, []byte{}...)
-			return nil
+			w.str[startOffset] = 0
+			return 0, nil
 		}
-		return elemSSZUtils.encoder(val.Elem(), w)
+		return elemSSZUtils.encoder(val.Elem(), w, startOffset)
 	}
 
 	return encoder, nil
-}
-
-func serializeFromParts(fixedParts [][]byte, variableParts [][]byte, numElements int) ([]byte, error) {
-	fixedLengths := []int{}
-	variableLengths := []int{}
-	for _, item := range fixedParts {
-		if !bytes.Equal(item, []byte{}) {
-			fixedLengths = append(fixedLengths, len(item))
-		} else {
-			fixedLengths = append(fixedLengths, BytesPerLengthOffset)
-		}
-	}
-	for _, item := range variableParts {
-		if len(item) == 0 {
-			continue
-		}
-		variableLengths = append(variableLengths, len(item))
-	}
-	sum := 0
-	for _, item := range append(fixedLengths, variableLengths...) {
-		sum += item
-	}
-	if sum >= MaxByteOffset {
-		return nil, fmt.Errorf(
-			"expected sum(fixed_length + variable_length) < 2**(BytesPerLengthOffset*BitsPerByte), received %d >= %d",
-			sum,
-			MaxByteOffset,
-		)
-	}
-	variableOffsets := [][]byte{}
-	upperBound := numElements
-	if len(variableLengths) < upperBound {
-		upperBound = len(variableLengths)
-	}
-	for i := 0; i < upperBound; i++ {
-		sum = 0
-		for _, item := range append(fixedLengths, variableLengths[:i]...) {
-			sum += item
-		}
-		b := make([]byte, 8)
-		binary.LittleEndian.PutUint64(b, uint64(sum))
-		variableOffsets = append(variableOffsets, b)
-	}
-	offsetParts := [][]byte{}
-	for idx, item := range fixedParts {
-		if !bytes.Equal(item, []byte{}) {
-			offsetParts = append(offsetParts, item)
-		} else {
-			if idx < len(variableOffsets) {
-				offsetParts = append(offsetParts, variableOffsets[idx])
-			}
-		}
-	}
-	fixedParts = offsetParts
-	concat := append(fixedParts, variableParts...)
-	finalSerialization := []byte{}
-	// We flatten the final serialized slice.
-	for _, item := range concat {
-		finalSerialization = append(finalSerialization, item...)
-	}
-	return finalSerialization, nil
 }

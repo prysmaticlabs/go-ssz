@@ -6,78 +6,78 @@ import (
 )
 
 type signingRootTest struct {
-	val1 interface{}
-	val2 interface{}
+	Val1 interface{}
+	Val2 interface{}
 }
 
 type truncateSignatureCase struct {
-	slot              uint64
-	previousBlockRoot []byte
-	signature         []byte
+	Slot              uint64
+	PreviousBlockRoot []byte
+	Signature         []byte
 }
 
 type truncateLastCase struct {
-	slot           uint64
-	stateRoot      []byte
-	truncatedField []byte
+	Slot           uint64
+	StateRoot      []byte
+	TruncatedField []byte
 }
 
 func TestSigningRoot(t *testing.T) {
 	var signingRootTests = []signingRootTest{
 		{
-			val1: &truncateSignatureCase{slot: 20, signature: []byte{'A', 'B'}},
-			val2: &truncateSignatureCase{slot: 20, signature: []byte("TESTING")},
+			Val1: &truncateSignatureCase{Slot: 20, Signature: []byte{'A', 'B'}},
+			Val2: &truncateSignatureCase{Slot: 20, Signature: []byte("TESTING")},
 		},
 		{
-			val1: &truncateSignatureCase{
-				slot:              10,
-				previousBlockRoot: []byte{'a', 'b'},
-				signature:         []byte("TESTINGDIFF")},
-			val2: &truncateSignatureCase{
-				slot:              10,
-				previousBlockRoot: []byte{'a', 'b'},
-				signature:         []byte("TESTING23")},
+			Val1: &truncateSignatureCase{
+				Slot:              10,
+				PreviousBlockRoot: []byte{'a', 'b'},
+				Signature:         []byte("TESTINGDIFF")},
+			Val2: &truncateSignatureCase{
+				Slot:              10,
+				PreviousBlockRoot: []byte{'a', 'b'},
+				Signature:         []byte("TESTING23")},
 		},
 		{
-			val1: truncateSignatureCase{slot: 50, signature: []byte("THIS")},
-			val2: truncateSignatureCase{slot: 50, signature: []byte("DOESNT")},
+			Val1: truncateSignatureCase{Slot: 50, Signature: []byte("THIS")},
+			Val2: truncateSignatureCase{Slot: 50, Signature: []byte("DOESNT")},
 		},
 		{
-			val1: truncateSignatureCase{signature: []byte("MATTER")},
-			val2: truncateSignatureCase{signature: []byte("TESTING")},
+			Val1: truncateSignatureCase{Signature: []byte("MATTER")},
+			Val2: truncateSignatureCase{Signature: []byte("TESTING")},
 		},
 		{
-			val1: truncateLastCase{
-				slot:           5,
-				stateRoot:      []byte("MATTERS"),
-				truncatedField: []byte("DOESNT MATTER"),
+			Val1: truncateLastCase{
+				Slot:           5,
+				StateRoot:      []byte("MATTERS"),
+				TruncatedField: []byte("DOESNT MATTER"),
 			},
-			val2: truncateLastCase{
-				slot:           5,
-				stateRoot:      []byte("MATTERS"),
-				truncatedField: []byte("SHOULDNT MATTER"),
+			Val2: truncateLastCase{
+				Slot:           5,
+				StateRoot:      []byte("MATTERS"),
+				TruncatedField: []byte("SHOULDNT MATTER"),
 			},
 		},
 		{
-			val1: truncateLastCase{
-				slot:           550,
-				stateRoot:      []byte("SHOULD"),
-				truncatedField: []byte("DOESNT"),
+			Val1: truncateLastCase{
+				Slot:           550,
+				StateRoot:      []byte("SHOULD"),
+				TruncatedField: []byte("DOESNT"),
 			},
-			val2: truncateLastCase{
-				slot:           550,
-				stateRoot:      []byte("SHOULD"),
-				truncatedField: []byte("SHOULDNT"),
+			Val2: truncateLastCase{
+				Slot:           550,
+				StateRoot:      []byte("SHOULD"),
+				TruncatedField: []byte("SHOULDNT"),
 			},
 		},
 	}
 
 	for i, test := range signingRootTests {
-		output1, err := SigningRoot(test.val1)
+		output1, err := SigningRoot(test.Val1)
 		if err != nil {
 			t.Fatalf("could not get the signing root of test %d, value 1 %v", i, err)
 		}
-		output2, err := SigningRoot(test.val2)
+		output2, err := SigningRoot(test.Val2)
 		if err != nil {
 			t.Fatalf("could not get the signing root of test %d, value 2 %v", i, err)
 		}
