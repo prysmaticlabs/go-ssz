@@ -39,7 +39,7 @@ func Decode(input []byte, val interface{}) error {
 	if err != nil {
 		return newDecodeError(fmt.Sprint(err), rval.Elem().Type())
 	}
-	if _, err = sszUtils.decoder(input, rval.Elem(), 0); err != nil {
+	if err = sszUtils.decoder(input, rval.Elem(), 0); err != nil {
 		return newDecodeError(fmt.Sprint(err), rval.Elem().Type())
 	}
 	return nil
@@ -61,11 +61,11 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 	case kind == reflect.Uint64:
 		return decodeUint64, nil
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
-		return makeByteSliceDecoder(typ)
+		return makeByteSliceDecoder(uint64(typ.Len()))
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return makeByteArrayDecoder(typ)
+		return makeByteArrayDecoder(uint64(typ.Len()))
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
-		return makeBasicSliceDecoder(typ)
+		return makeBasicSliceDecoder(typ, uint64(typ.Len()))
 	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
 		return makeCompositeSliceDecoder(typ)
 	case kind == reflect.Array:
@@ -79,85 +79,86 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 	}
 }
 
-func decodeBool(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+func decodeBool(input []byte, val reflect.Value, startOffset uint64) error {
 	v := uint8(input[startOffset])
 	if v == 0 {
 		val.SetBool(false)
 	} else if v == 1 {
 		val.SetBool(true)
 	} else {
-		return 0, fmt.Errorf("expect 0 or 1 for decoding bool but got %d", v)
+		return fmt.Errorf("expect 0 or 1 for decoding bool but got %d", v)
 	}
-	return 1, nil
+	return nil
 }
 
-func decodeUint8(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+func decodeUint8(input []byte, val reflect.Value, startOffset uint64) error {
 	val.SetUint(uint64(input[startOffset]))
-	return 1, nil
+	return nil
 }
 
-func decodeUint16(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+func decodeUint16(input []byte, val reflect.Value, startOffset uint64) error {
 	offset := startOffset + 2
 	buf := make([]byte, 2)
 	copy(buf, input[startOffset:offset])
 	val.SetUint(uint64(binary.LittleEndian.Uint16(buf)))
-	return 2, nil
+	return nil
 }
 
-func decodeUint32(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+func decodeUint32(input []byte, val reflect.Value, startOffset uint64) error {
 	offset := startOffset + 4
 	buf := make([]byte, 4)
 	copy(buf, input[startOffset:offset])
 	val.SetUint(uint64(binary.LittleEndian.Uint32(buf)))
-	return 4, nil
+	return nil
 }
 
-func decodeUint64(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+func decodeUint64(input []byte, val reflect.Value, startOffset uint64) error {
 	offset := startOffset + 4
 	buf := make([]byte, 8)
 	copy(buf, input[startOffset:offset])
 	val.SetUint(binary.LittleEndian.Uint64(buf))
-	return 8, nil
+	return nil
 }
 
-func decodeByteArray(input []byte, val reflect.Value, startOffset uint64, endOffset uint64) (uint64, error) {
-	slice := val.Slice(int(startOffset), int(endOffset)).Interface().([]byte)
-	copy(slice, input[startOffset:endOffset])
-	return uint64(len(input)), nil
+func makeByteArrayDecoder(endOffset uint64) (decoder, error) {
+	decoder := func(input []byte, val reflect.Value, startOffset uint64) error {
+		slice := val.Slice(int(startOffset), int(endOffset)).Interface().([]byte)
+		copy(slice, input[startOffset:endOffset])
+        return nil
+	}
+	return decoder, nil
 }
 
-func decodeByteSlice(input []byte, val reflect.Value, startOffset uint64, endOffset uint64) (uint64, error) {
-	val.SetBytes(input[startOffset:endOffset])
-	return uint64(len(input)), nil
+func makeByteSliceDecoder(endOffset uint64) (decoder, error) {
+	decoder := func(input []byte, val reflect.Value, startOffset uint64) error {
+		val.SetBytes(input[startOffset:endOffset])
+        return nil
+	}
+	return decoder, nil
 }
 
-func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
+func makeBasicSliceDecoder(typ reflect.Type, endOffset uint64) (decoder, error) {
 	elemType := typ.Elem()
 	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
 	if err != nil {
 		return nil, err
 	}
-	decoder := func(input []byte, val reflect.Value) (int, error) {
-		//elemSize := basicElementSize(typ.Elem(), typ.Elem().Kind())
-		//size := len(input) / elemSize
-		//newVal := reflect.MakeSlice(val.Type(), size, size)
-		//reflect.Copy(newVal, val)
-		//val.Set(newVal)
-		//i, decodeSize := 0, uint64(0)
-		//elementIndex := 0
-		index :=
-		for ; i < len(input); i += elemSize {
-			elemDecodeSize, err := elemSSZUtils.decoder(input[i:i+elemSize], val.Index(elementIndex))
-			if err != nil {
-				return 0, fmt.Errorf("failed to decode element of slice: %v", err)
+	decoder := func(input []byte, val reflect.Value, startOffset uint64) (error) {
+		if startOffset == endOffset {
+            return nil
+		}
+		index := startOffset
+		elementSize := determineFixedSize(val.Elem(), val.Elem().Type())
+		i := 0
+		var nextIndex uint64
+        for index < endOffset {
+        	nextIndex = index + elementSize
+			if err := elemSSZUtils.decoder(input[index:nextIndex], val.Index(i), startOffset); err != nil {
+				return fmt.Errorf("failed to decode element of slice: %v", err)
 			}
-			elementIndex++
-			decodeSize += uint64(elemDecodeSize)
+            i++
 		}
-		if decodeSize < uint64(size) {
-			return 0, errors.New("input is too long")
-		}
-		return size, nil
+		return nil
 	}
 	return decoder, nil
 }
@@ -185,15 +186,6 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
         nextOffset := currentOffset
         i := 0
         for currentIndex < firstOffset {
-        	fmt.Printf("iter %d --------------------\n", i)
-        	fmt.Printf("Current index: %v\n", currentIndex)
-			fmt.Printf("Current offset: %v\n", currentOffset)
-			fmt.Printf("First index: %v\n", nextIndex)
-			fmt.Printf("First offset: %v\n", firstOffset)
-			fmt.Printf("Next index: %v\n", nextIndex)
-			fmt.Printf("Next offset: %v\n", nextOffset)
-			fmt.Printf("iter %d --------------------\n", i)
-
         	if currentOffset > uint64(len(input)) {
         		return 0, errors.New("offset out of bounds")
 			}
