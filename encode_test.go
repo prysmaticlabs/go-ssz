@@ -3,7 +3,6 @@ package ssz
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"testing"
 )
 
@@ -56,10 +55,4 @@ func TestEncode(t *testing.T) {
 	if !bytes.Equal(want, encodedBytes) {
 		t.Errorf("want %v, encode() = %v", want, encodedBytes)
 	}
-	item := [][]uint64{{10}, {1, 2, 3}, {4}, {5, 6}}
-	buffer = new(bytes.Buffer)
-	if err := Encode(buffer, item); err != nil {
-		panic(err)
-	}
-	fmt.Printf("%#x\n", buffer.Bytes())
 }
