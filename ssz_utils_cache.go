@@ -11,7 +11,7 @@ import (
 // it returns the index of the last byte written and an error, if any.
 type encoder func(reflect.Value, *encbuf, uint64) (uint64, error)
 
-type decoder func([]byte, reflect.Value, uint64, uint64) (uint64, error)
+type decoder func([]byte, reflect.Value, uint64) (uint64, error)
 
 type hasher func(reflect.Value) ([32]byte, error)
 

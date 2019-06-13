@@ -39,7 +39,7 @@ func Decode(input []byte, val interface{}) error {
 	if err != nil {
 		return newDecodeError(fmt.Sprint(err), rval.Elem().Type())
 	}
-	if _, err = sszUtils.decoder(input, rval.Elem(), 0, uint64(len(input))); err != nil {
+	if _, err = sszUtils.decoder(input, rval.Elem(), 0); err != nil {
 		return newDecodeError(fmt.Sprint(err), rval.Elem().Type())
 	}
 	return nil
@@ -61,9 +61,9 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 	case kind == reflect.Uint64:
 		return decodeUint64, nil
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
-		return decodeByteSlice, nil
+		return makeByteSliceDecoder(typ)
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return decodeByteArray, nil
+		return makeByteArrayDecoder(typ)
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
 		return makeBasicSliceDecoder(typ)
 	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
@@ -112,21 +112,22 @@ func decodeUint32(input []byte, val reflect.Value, startOffset uint64) (uint64, 
 	return 4, nil
 }
 
-func decodeUint64(input []byte, val reflect.Value) (uint64, error) {
+func decodeUint64(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+	offset := startOffset + 4
 	buf := make([]byte, 8)
-	copy(buf, input)
+	copy(buf, input[startOffset:offset])
 	val.SetUint(binary.LittleEndian.Uint64(buf))
 	return 8, nil
 }
 
-func decodeByteArray(input []byte, val reflect.Value) (uint64, error) {
-	slice := val.Slice(0, val.Len()).Interface().([]byte)
-	copy(slice, input)
+func decodeByteArray(input []byte, val reflect.Value, startOffset uint64, endOffset uint64) (uint64, error) {
+	slice := val.Slice(int(startOffset), int(endOffset)).Interface().([]byte)
+	copy(slice, input[startOffset:endOffset])
 	return uint64(len(input)), nil
 }
 
-func decodeByteSlice(input []byte, val reflect.Value) (uint64, error) {
-	val.SetBytes(input)
+func decodeByteSlice(input []byte, val reflect.Value, startOffset uint64, endOffset uint64) (uint64, error) {
+	val.SetBytes(input[startOffset:endOffset])
 	return uint64(len(input)), nil
 }
 
