@@ -20,7 +20,7 @@ func TestDecode(t *testing.T) {
 		// Bool test cases.
 		{input: true, ptr: new(bool)},
 		{input: false, ptr: new(bool)},
-		//// Uint8 test cases.
+		// Uint8 test cases.
 		{input: byte(1), ptr: new(byte)},
 		{input: byte(0), ptr: new(byte)},
 		// Uint16 test cases.
@@ -45,8 +45,8 @@ func TestDecode(t *testing.T) {
 		{input: []bool{true, false, true, true, true}, ptr: new([]bool)},
 		{input: []uint32{0, 0, 0}, ptr: new([]uint32)},
 		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
-		//// Struct decoding test cases.
-		//{input: forkExample, ptr: &fork{}},
+		// Struct decoding test cases.
+		////{input: forkExample, ptr: &fork{}},
 		// Non-basic type slice/array test cases.
 		//{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
 		{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
