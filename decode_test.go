@@ -35,14 +35,14 @@ func TestDecode(t *testing.T) {
 		//// Byte slice, byte array test cases.
 		//{input: [8]byte{1, 2, 3, 4, 5, 6, 7, 8}, ptr: new([8]byte)},
 		//{input: []byte{9, 8, 9, 8}, ptr: new([]byte)},
-		//// Basic type array test cases.
-		{input: [12]uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, ptr: new([12]uint64)},
-		{input: [100]bool{true, false, true, true}, ptr: new([100]bool)},
-		{input: [20]uint16{3, 4, 5}, ptr: new([20]uint16)},
-		{input: [20]uint32{4, 5}, ptr: new([20]uint32)},
+		////// Basic type array test cases.
+		//{input: [12]uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, ptr: new([12]uint64)},
+		//{input: [100]bool{true, false, true, true}, ptr: new([100]bool)},
+		//{input: [20]uint16{3, 4, 5}, ptr: new([20]uint16)},
+		//{input: [20]uint32{4, 5}, ptr: new([20]uint32)},
 		//{input: [20][2]uint32{{3, 4}, {5}, {8}, {9, 10}}, ptr: new([20][2]uint32)},
 		//// Basic type slice test cases.
-		//{input: []uint64{1, 2, 3}, ptr: new([]uint64)},
+		{input: []uint64{1, 2, 3}, ptr: new([]uint64)},
 		//{input: []bool{true, false, true, true, true}, ptr: new([]bool)},
 		//{input: []uint32{0, 0, 0}, ptr: new([]uint32)},
 		//{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},

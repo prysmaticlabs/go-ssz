@@ -78,6 +78,8 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 		return makeBasicSliceEncoder(typ)
 	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
 		return makeBasicSliceEncoder(typ)
+	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
+		return makeBasicSliceEncoder(typ)
 	case kind == reflect.Slice:
 		return makeCompositeSliceEncoder(typ)
 	case kind == reflect.Struct:

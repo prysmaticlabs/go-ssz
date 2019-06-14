@@ -129,28 +129,28 @@ func makeByteSliceDecoder() (decoder, error) {
 }
 
 func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
-	elemType := typ.Elem()
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
+	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, err
 	}
 	decoder := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
-		index := startOffset
-
-		var elementSize uint64
-		if typ.Elem().Kind() == reflect.Array {
-			elementSize = uint64(typ.Elem().Len()) * basicTypeSize(typ.Elem().Elem())
-		} else {
-			elementSize = basicTypeSize(typ.Elem())
-		}
-		endOffset := uint64(len(input)) / elementSize
-		if startOffset == endOffset {
-			return 0, nil
-		}
-		newVal := reflect.MakeSlice(val.Type(), int(endOffset), int(endOffset))
+		newVal := reflect.MakeSlice(val.Type(), 1, 1)
 		reflect.Copy(newVal, val)
 		val.Set(newVal)
-		i := uint64(0)
+
+		index := startOffset
+		index, err = elemSSZUtils.decoder(input, val.Index(0), index)
+		if err != nil {
+			return 0, fmt.Errorf("failed to decode element of slice: %v", err)
+		}
+		elementSize := index - startOffset
+		fmt.Println(elementSize)
+		endOffset := uint64(len(input)) / elementSize
+
+		newVal = reflect.MakeSlice(val.Type(), int(endOffset), int(endOffset))
+		reflect.Copy(newVal, val)
+		val.Set(newVal)
+		i := uint64(1)
 		for i < endOffset {
 			index, err = elemSSZUtils.decoder(input, val.Index(int(i)), index)
 			if err != nil {

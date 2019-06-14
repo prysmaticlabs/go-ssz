@@ -1,7 +1,6 @@
 package ssz
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 )
@@ -99,7 +98,6 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 
 func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	kind := typ.Kind()
-	fmt.Println("getting var")
 	switch {
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return uint64(val.Len())
@@ -111,7 +109,6 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 				totalSize += varSize + uint64(BytesPerLengthOffset)
 			} else {
 				totalSize += varSize
-				fmt.Println(totalSize)
 			}
 		}
 		return totalSize
