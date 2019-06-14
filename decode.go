@@ -228,7 +228,7 @@ func makeArrayDecoder(typ reflect.Type) (decoder, error) {
 			}
 			i++
 		}
-		return 0, nil
+		return index, nil
 	}
 	return decoder, nil
 }
