@@ -8,11 +8,11 @@ import (
 )
 
 func TestDecode(t *testing.T) {
-	//forkExample := fork{
-	//	PreviousVersion: [4]byte{2, 3, 4, 1},
-	//	CurrentVersion:  [4]byte{},
-	//	Epoch:           10923910294,
-	//}
+	forkExample := fork{
+		PreviousVersion: [4]byte{2, 3, 4, 1},
+		CurrentVersion:  [4]byte{},
+		Epoch:           10923910294,
+	}
 	tests := []struct {
 		input interface{}
 		ptr   interface{}
@@ -35,7 +35,7 @@ func TestDecode(t *testing.T) {
 		//// Byte slice, byte array test cases.
 		//{input: [8]byte{1, 2, 3, 4, 5, 6, 7, 8}, ptr: new([8]byte)},
 		//{input: []byte{9, 8, 9, 8}, ptr: new([]byte)},
-		////// Basic type array test cases.
+		//// Basic type array test cases.
 		//{input: [12]uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, ptr: new([12]uint64)},
 		//{input: [100]bool{true, false, true, true}, ptr: new([100]bool)},
 		//{input: [20]uint16{3, 4, 5}, ptr: new([20]uint16)},
@@ -46,8 +46,8 @@ func TestDecode(t *testing.T) {
 		//{input: []bool{true, false, true, true, true}, ptr: new([]bool)},
 		//{input: []uint32{0, 0, 0}, ptr: new([]uint32)},
 		//{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
-		//// Struct decoding test cases.
-		//////{input: forkExample, ptr: &fork{}},
+		// Struct decoding test cases.
+		{input: forkExample, ptr: &fork{}},
 		//// Non-basic type slice/array test cases.
 		////{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
 		//{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
