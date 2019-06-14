@@ -1,6 +1,7 @@
 package ssz
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -22,7 +23,7 @@ func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
 }
 
 func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
-	kind := val.Kind()
+	kind := typ.Kind()
 	switch {
 	case isBasicType(kind):
 		return false
@@ -33,34 +34,9 @@ func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
 	case kind == reflect.Array:
 		return isVariableSizeType(val, typ.Elem())
 	case kind == reflect.Struct:
-		for i := 0; i < typ.NumField(); i++ {
-			if isVariableSizeType(val.Field(i), val.Field(i).Type()) {
-				return true
-			}
-		}
-		return false
+		return true
 	}
 	return false
-}
-
-func basicTypeSize(typ reflect.Type) uint64 {
-	kind := typ.Kind()
-	switch {
-	case kind == reflect.Bool:
-		return 1
-	case kind == reflect.Uint8:
-		return 1
-	case kind == reflect.Uint16:
-		return 2
-	case kind == reflect.Uint32:
-		return 4
-	case kind == reflect.Uint64:
-		return 8
-	case isBasicTypeArray(typ, kind):
-		return uint64(typ.Len())
-	default:
-		return 0
-	}
 }
 
 func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
@@ -109,6 +85,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 				totalSize += varSize + uint64(BytesPerLengthOffset)
 			} else {
 				totalSize += varSize
+				fmt.Println(totalSize)
 			}
 		}
 		return totalSize

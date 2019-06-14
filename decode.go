@@ -66,14 +66,20 @@ func makeDecoder(typ reflect.Type) (dec decoder, err error) {
 		return makeBasicSliceDecoder(typ)
 	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
 		return makeBasicSliceDecoder(typ)
+	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
+		return makeBasicSliceDecoder(typ)
 	case kind == reflect.Slice:
 		return makeCompositeSliceDecoder(typ)
+	case kind == reflect.Array && isBasicType(typ.Elem().Kind()):
+		return makeBasicArrayDecoder(typ)
+	case kind == reflect.Array && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
+		return makeBasicArrayDecoder(typ)
 	case kind == reflect.Array:
-		return makeArrayDecoder(typ)
+		return makeCompositeArrayDecoder(typ)
 	case kind == reflect.Struct:
 		return makeStructDecoder(typ)
-	//case kind == reflect.Ptr:
-	//	return makePtrDecoder(typ)
+	case kind == reflect.Ptr:
+		return makePtrDecoder(typ)
 	default:
 		return nil, fmt.Errorf("type %v is not deserializable", typ)
 	}
@@ -212,7 +218,7 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 	return decoder, nil
 }
 
-func makeArrayDecoder(typ reflect.Type) (decoder, error) {
+func makeBasicArrayDecoder(typ reflect.Type) (decoder, error) {
 	elemType := typ.Elem()
 	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
 	if err != nil {
@@ -230,6 +236,49 @@ func makeArrayDecoder(typ reflect.Type) (decoder, error) {
 			i++
 		}
 		return index, nil
+	}
+	return decoder, nil
+}
+
+func makeCompositeArrayDecoder(typ reflect.Type) (decoder, error) {
+	elemType := typ.Elem()
+	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
+	if err != nil {
+		return nil, err
+	}
+	decoder := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+		endOffset := uint64(val.Len())
+
+		currentIndex := startOffset
+		nextIndex := currentIndex
+		offsetVal := input[startOffset : startOffset+uint64(BytesPerLengthOffset)]
+		firstOffset := startOffset + uint64(binary.LittleEndian.Uint32(offsetVal))
+		currentOffset := firstOffset
+		nextOffset := currentOffset
+		i := 0
+		// TODO: Debug composite decoding.
+		for currentIndex < firstOffset {
+			if currentOffset > endOffset {
+				return 0, errors.New("offset out of bounds")
+			}
+			nextIndex = currentIndex + uint64(BytesPerLengthOffset)
+			if nextIndex == firstOffset {
+				nextOffset = endOffset
+			} else {
+				nextOffsetVal := input[nextIndex : nextIndex+uint64(BytesPerLengthOffset)]
+				nextOffset = startOffset + uint64(binary.LittleEndian.Uint32(nextOffsetVal))
+			}
+			if currentOffset > nextOffset {
+				return 0, errors.New("offsets must be increasing")
+			}
+			if _, err := elemSSZUtils.decoder(input[currentOffset:nextOffset], val.Index(i), 0); err != nil {
+				return 0, fmt.Errorf("failed to decode element of slice: %v", err)
+			}
+			i++
+			currentIndex = nextIndex
+			currentOffset = nextOffset
+		}
+		return currentIndex, nil
 	}
 	return decoder, nil
 }
@@ -292,20 +341,20 @@ func makeStructDecoder(typ reflect.Type) (decoder, error) {
 	}
 	return decoder, nil
 }
-//
-//func makePtrDecoder(typ reflect.Type) (decoder, error) {
-//	elemType := typ.Elem()
-//	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
-//	if err != nil {
-//		return nil, err
-//	}
-//	decoder := func(input []byte, val reflect.Value) (int, error) {
-//		newVal := reflect.New(elemType)
-//		elemDecodeSize, err := elemSSZUtils.decoder(input, newVal.Elem())
-//		if err != nil {
-//			return 0, fmt.Errorf("failed to decode to object pointed by pointer: %v", err)
-//		}
-//		return elemDecodeSize, nil
-//	}
-//	return decoder, nil
-//}
+
+func makePtrDecoder(typ reflect.Type) (decoder, error) {
+	elemType := typ.Elem()
+	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
+	if err != nil {
+		return nil, err
+	}
+	decoder := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+		newVal := reflect.New(elemType)
+		elemDecodeSize, err := elemSSZUtils.decoder(input, newVal.Elem(), startOffset)
+		if err != nil {
+			return 0, fmt.Errorf("failed to decode to object pointed by pointer: %v", err)
+		}
+		return elemDecodeSize, nil
+	}
+	return decoder, nil
+}

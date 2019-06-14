@@ -74,13 +74,11 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 		return encodeByteSlice, nil
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
 		return encodeByteArray, nil
-	case kind == reflect.Array:
-		return makeBasicSliceEncoder(typ)
 	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
 		return makeBasicSliceEncoder(typ)
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
 		return makeBasicSliceEncoder(typ)
-	case kind == reflect.Slice:
+	case kind == reflect.Slice || kind == reflect.Array:
 		return makeCompositeSliceEncoder(typ)
 	case kind == reflect.Struct:
 		return makeStructEncoder(typ)
