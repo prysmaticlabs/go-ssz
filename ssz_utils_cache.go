@@ -73,8 +73,7 @@ func cachedSSZUtilsNoAcquireLock(typ reflect.Type) (*sszUtils, error) {
 func generateSSZUtilsForType(typ reflect.Type) (utils *sszUtils, err error) {
 	utils = new(sszUtils)
 	if utils.encoder, err = makeEncoder(typ); err != nil {
-		fmt.Println("could not make enc")
-		return nil, err
+		return nil, fmt.Errorf("could not make encoder: %v", err)
 	}
 	if utils.decoder, err = makeDecoder(typ); err != nil {
 		return nil, err

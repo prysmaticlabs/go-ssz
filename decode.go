@@ -94,12 +94,12 @@ func decodeBool(input []byte, val reflect.Value, startOffset uint64) (uint64, er
 	} else {
 		return 0, fmt.Errorf("expect 0 or 1 for decoding bool but got %d", v)
 	}
-	return startOffset+1, nil
+	return startOffset + 1, nil
 }
 
 func decodeUint8(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
 	val.SetUint(uint64(input[startOffset]))
-	return startOffset+1, nil
+	return startOffset + 1, nil
 }
 
 func decodeUint16(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
@@ -128,9 +128,9 @@ func decodeUint64(input []byte, val reflect.Value, startOffset uint64) (uint64, 
 
 func makeByteSliceDecoder() (decoder, error) {
 	decoder := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
-		offset := startOffset+uint64(len(input))
+		offset := startOffset + uint64(len(input))
 		val.SetBytes(input[startOffset:offset])
-        return offset, nil
+		return offset, nil
 	}
 	return decoder, nil
 }
@@ -247,16 +247,15 @@ func makeCompositeArrayDecoder(typ reflect.Type) (decoder, error) {
 		return nil, err
 	}
 	decoder := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
-		endOffset := uint64(val.Len())
-
 		currentIndex := startOffset
 		nextIndex := currentIndex
 		offsetVal := input[startOffset : startOffset+uint64(BytesPerLengthOffset)]
 		firstOffset := startOffset + uint64(binary.LittleEndian.Uint32(offsetVal))
 		currentOffset := firstOffset
 		nextOffset := currentOffset
+		endOffset := uint64(len(input))
+
 		i := 0
-		// TODO: Debug composite decoding.
 		for currentIndex < firstOffset {
 			if currentOffset > endOffset {
 				return 0, errors.New("offset out of bounds")
@@ -305,7 +304,7 @@ func makeStructDecoder(typ reflect.Type) (decoder, error) {
 
 		offsets := make([]uint64, 0)
 		fixedEnd := uint64(0)
-		for i, item := range fixedSizes	{
+		for i, item := range fixedSizes {
 			if item > 0 {
 				fixedEnd += uint64(i) + item
 			} else {
@@ -349,8 +348,7 @@ func makePtrDecoder(typ reflect.Type) (decoder, error) {
 		return nil, err
 	}
 	decoder := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
-		newVal := reflect.New(elemType)
-		elemDecodeSize, err := elemSSZUtils.decoder(input, newVal.Elem(), startOffset)
+		elemDecodeSize, err := elemSSZUtils.decoder(input, val.Elem(), startOffset)
 		if err != nil {
 			return 0, fmt.Errorf("failed to decode to object pointed by pointer: %v", err)
 		}

@@ -1,7 +1,6 @@
 package ssz
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 )
@@ -34,6 +33,8 @@ func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
 	case kind == reflect.Array:
 		return isVariableSizeType(val, typ.Elem())
 	case kind == reflect.Struct:
+		return true
+	case kind == reflect.Ptr:
 		return true
 	}
 	return false
@@ -85,7 +86,6 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 				totalSize += varSize + uint64(BytesPerLengthOffset)
 			} else {
 				totalSize += varSize
-				fmt.Println(totalSize)
 			}
 		}
 		return totalSize
