@@ -42,7 +42,7 @@ func TestDecode(t *testing.T) {
 		//{input: [20]uint32{4, 5}, ptr: new([20]uint32)},
 		//{input: [20][2]uint32{{3, 4}, {5}, {8}, {9, 10}}, ptr: new([20][2]uint32)},
 		//// Basic type slice test cases.
-		{input: []uint64{1, 2, 3}, ptr: new([]uint64)},
+		//{input: []uint64{1, 2, 3}, ptr: new([]uint64)},
 		//{input: []bool{true, false, true, true, true}, ptr: new([]bool)},
 		//{input: []uint32{0, 0, 0}, ptr: new([]uint32)},
 		//{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},

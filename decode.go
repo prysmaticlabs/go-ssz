@@ -144,7 +144,6 @@ func makeBasicSliceDecoder(typ reflect.Type) (decoder, error) {
 			return 0, fmt.Errorf("failed to decode element of slice: %v", err)
 		}
 		elementSize := index - startOffset
-		fmt.Println(elementSize)
 		endOffset := uint64(len(input)) / elementSize
 
 		newVal = reflect.MakeSlice(val.Type(), int(endOffset), int(endOffset))
