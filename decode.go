@@ -176,7 +176,8 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 		return nil, err
 	}
 	decoder := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
-		newVal := reflect.MakeSlice(val.Type(), 1, 1)
+		// TODO: Limitation, creating a list of type pointers creates a list of nil values.
+		newVal := reflect.MakeSlice(typ, 1, 1)
 		reflect.Copy(newVal, val)
 		val.Set(newVal)
 		endOffset := uint64(len(input))
@@ -203,7 +204,7 @@ func makeCompositeSliceDecoder(typ reflect.Type) (decoder, error) {
 				return 0, errors.New("offsets must be increasing")
 			}
 			// We grow the slice's size to accommodate a new element being decoded.
-			newVal := reflect.MakeSlice(val.Type(), i+1, i+1)
+			newVal := reflect.MakeSlice(typ, i+1, i+1)
 			reflect.Copy(newVal, val)
 			val.Set(newVal)
 			if _, err := elemSSZUtils.decoder(input[currentOffset:nextOffset], val.Index(i), 0); err != nil {

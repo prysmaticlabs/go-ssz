@@ -14,7 +14,7 @@ type fork struct {
 }
 
 func TestEncodeDecode(t *testing.T) {
-	forkExample := &fork{
+	forkExample := fork{
 		PreviousVersion: [4]byte{2, 3, 4, 1},
 		CurrentVersion:  [4]byte{5, 6, 7, 8},
 		Epoch:           5,
@@ -52,16 +52,16 @@ func TestEncodeDecode(t *testing.T) {
 		{input: []bool{true, false, true, true, true}, ptr: new([]bool)},
 		{input: []uint32{0, 0, 0}, ptr: new([]uint32)},
 		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
-		//// Struct decoding test cases.
+		// Struct decoding test cases.
 		{input: forkExample, ptr: new(fork)},
 		{input: forkExample, ptr: new(fork)},
-		//// Non-basic type slice/array test cases.
-		//{input: []*fork{forkExample, forkExample}, ptr: new([]*fork)},
+		// Non-basic type slice/array test cases.
+		{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
 		{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
 		{input: [][][]uint64{{{1, 2}, {3}}, {{4, 5}}, {{0}}}, ptr: new([][][]uint64)},
 		{input: [][3]uint64{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}, ptr: new([][3]uint64)},
 		{input: [3][]uint64{{1, 2}, {4, 5, 6}, {7}}, ptr: new([3][]uint64)},
-		//{input: [][4]*fork{{forkExample, forkExample, forkExample}}, ptr: new([][4]*fork)},
+		{input: [][4]fork{{forkExample, forkExample, forkExample}}, ptr: new([][4]fork)},
 	}
 	for _, tt := range tests {
 		buffer := new(bytes.Buffer)
