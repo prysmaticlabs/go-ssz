@@ -2,7 +2,6 @@ package ssz
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -68,7 +67,6 @@ func TestEncodeDecode(t *testing.T) {
 		if err := Encode(buffer, tt.input); err != nil {
 			panic(err)
 		}
-		fmt.Printf("AFTER ENCODE: %v\n", buffer.Bytes())
 		if err := Decode(buffer.Bytes(), tt.ptr); err != nil {
 			t.Fatal(err)
 		}
