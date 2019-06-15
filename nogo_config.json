@@ -1,0 +1,18 @@
+{
+  "assign": {
+    "exclude_files": {
+      "external/*": "Third party code"
+    }
+  },
+  "nilness": {
+    "exclude_files": {
+      "external/*": "Third party code"
+    }
+  },
+  "unreachable": {
+    "exclude_files": {
+      "external/*": "Third party code"
+    }
+  }
+
+}
