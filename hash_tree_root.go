@@ -1,7 +1,6 @@
 package ssz
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"reflect"
@@ -81,18 +80,11 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 		return nil, err
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
-		buf := &encbuf{
-			str: make([]byte, determineSize(val)),
-		}
-		if _, err = utils.encoder(val, buf, 0); err != nil {
+		buf := make([]byte, determineSize(val))
+		if _, err = utils.marshaler(val, buf, 0); err != nil {
 			return [32]byte{}, err
 		}
-		writer := new(bytes.Buffer)
-		if err = buf.toWriter(writer); err != nil {
-			return [32]byte{}, err
-		}
-		serialized := writer.Bytes()
-		chunks, err := pack([][]byte{serialized})
+		chunks, err := pack([][]byte{buf})
 		if err != nil {
 			return [32]byte{}, err
 		}
@@ -107,17 +99,11 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
-		buf := &encbuf{
-			str: make([]byte, determineSize(val)),
-		}
-		if _, err = utils.encoder(val, buf, 0); err != nil {
+		buf := make([]byte, determineSize(val))
+		if _, err = utils.marshaler(val, buf, 0); err != nil {
 			return [32]byte{}, err
 		}
-		writer := new(bytes.Buffer)
-		if err = buf.toWriter(writer); err != nil {
-			return [32]byte{}, err
-		}
-		serializedValues := [][]byte{writer.Bytes()}
+		serializedValues := [][]byte{buf}
 		chunks, err := pack(serializedValues)
 		if err != nil {
 			return [32]byte{}, err
@@ -220,15 +206,11 @@ func getEncoding(val reflect.Value) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	buf := &encbuf{}
-	if _, err = utils.encoder(val, buf, 0); err != nil {
+	buf := []byte{}
+	if _, err = utils.marshaler(val, buf, 0); err != nil {
 		return nil, err
 	}
-	writer := new(bytes.Buffer)
-	if err = buf.toWriter(writer); err != nil {
-		return nil, err
-	}
-	return writer.Bytes(), nil
+	return buf, nil
 }
 
 func hashedEncoding(val reflect.Value) ([32]byte, error) {

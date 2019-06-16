@@ -7,17 +7,17 @@ import (
 	"sync"
 )
 
-// An encoder type takes in a value, an output buffer, and a start offset,
+// The marshaler/unmarshaler types take in a value, an output buffer, and a start offset,
 // it returns the index of the last byte written and an error, if any.
-type encoder func(reflect.Value, *encbuf, uint64) (uint64, error)
+type marshaler func(reflect.Value, []byte, uint64) (uint64, error)
 
-type decoder func([]byte, reflect.Value, uint64) (uint64, error)
+type unmarshaler func([]byte, reflect.Value, uint64) (uint64, error)
 
 type hasher func(reflect.Value) ([32]byte, error)
 
 type sszUtils struct {
-	encoder
-	decoder
+	marshaler
+	unmarshaler
 	hasher
 }
 
@@ -27,7 +27,7 @@ var (
 	hashCache          = newHashCache(100000)
 )
 
-// Get cached encoder, encodeSizer and decoder implementation for a specified type.
+// Get cached encoder, encodeSizer and unmarshaler implementation for a specified type.
 // With a cache we can achieve O(1) amortized time overhead for creating encoder, encodeSizer and decoder.
 func cachedSSZUtils(typ reflect.Type) (*sszUtils, error) {
 	sszUtilsCacheMutex.RLock()
@@ -72,10 +72,10 @@ func cachedSSZUtilsNoAcquireLock(typ reflect.Type) (*sszUtils, error) {
 
 func generateSSZUtilsForType(typ reflect.Type) (utils *sszUtils, err error) {
 	utils = new(sszUtils)
-	if utils.encoder, err = makeEncoder(typ); err != nil {
-		return nil, fmt.Errorf("could not make encoder: %v", err)
+	if utils.marshaler, err = makeMarshaler(typ); err != nil {
+		return nil, err
 	}
-	if utils.decoder, err = makeDecoder(typ); err != nil {
+	if utils.unmarshaler, err = makeUnmarshaler(typ); err != nil {
 		return nil, err
 	}
 	if utils.hasher, err = makeHasher(typ); err != nil {

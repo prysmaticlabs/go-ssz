@@ -1,7 +1,6 @@
 package ssz
 
 import (
-	"bytes"
 	"reflect"
 	"testing"
 )
@@ -12,7 +11,7 @@ type fork struct {
 	Epoch           uint64
 }
 
-func TestEncodeDecode(t *testing.T) {
+func TestMarshalUnmarshal(t *testing.T) {
 	forkExample := fork{
 		PreviousVersion: [4]byte{2, 3, 4, 1},
 		CurrentVersion:  [4]byte{5, 6, 7, 8},
@@ -63,11 +62,11 @@ func TestEncodeDecode(t *testing.T) {
 		{input: [][4]fork{{forkExample, forkExample, forkExample}}, ptr: new([][4]fork)},
 	}
 	for _, tt := range tests {
-		buffer := new(bytes.Buffer)
-		if err := Encode(buffer, tt.input); err != nil {
+		serializedItem, err := Marshal(tt.input)
+		if err != nil {
 			panic(err)
 		}
-		if err := Decode(buffer.Bytes(), tt.ptr); err != nil {
+		if err := Unmarshal(serializedItem, tt.ptr); err != nil {
 			t.Fatal(err)
 		}
 		output := reflect.ValueOf(tt.ptr)
