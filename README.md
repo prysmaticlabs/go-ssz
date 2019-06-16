@@ -40,48 +40,36 @@ type exampleStruct1 struct {
 
 Now you can encode this object like this
 ```go
-e1 := &exampleStruct1{
+e1 := exampleStruct1{
     Field1: 10,
     Field2: []byte{1, 2, 3, 4},
 }
-wBuf := new(bytes.Buffer)
-if err = e1.EncodeSSZ(wBuf); err != nil {
-    return fmt.Errorf("failed to encode: %v", err)
+encoded, err := Marshal(e1)
+if err != nil {
+    return fmt.Errorf("failed to marshal: %v", err)
 }
-encoding := wBuf.Bytes() // encoding becomes [0 0 0 9 10 0 0 0 4 1 2 3 4]
 ```
 
-To calculate tree-hash of the object
-```go
-var hash [32]byte
-if hash, err = e1.TreeHashSSZ(); err != nil {
-    return fmt.Errorf("failed to hash: %v", err)
-}
-// hash stores the hashing result
-```
-
-Similarly, you can implement the `Decodable` interface for this struct
+Similarly, you can unmarshal encoded bytes into its original form:
 
 ```go
-func (e *exampleStruct1) DecodeSSZ(r io.Reader) error {
-	return Decode(r, e)
+var e2 exampleStruct
+if err = Unmarshal(encoded, &e2); err != nil {
+    return fmt.Errorf("failed to unmarshal: %v", err)
 }
+reflect.DeepEqual(e1, e2) // Returns true as e2 now has the same content as e1.
 ```
 
-Now you can decode to create new struct
-
+To calculate tree-hash root of the object run:
 ```go
-e2 := new(exampleStruct1)
-rBuf := bytes.NewReader(encoding)
-if err = e2.DecodeSSZ(rBuf); err != nil {
-    return fmt.Errorf("failed to decode: %v", err)
+root, err := HashTreeRoot(e1)
+if err != nil {
+    return fmt.Errorf("failed to compute Merkle root: %v", err)
 }
-// e2 now has the same content as e1
 ```
-
-## Notes
 
 ### Supported data types
+- bool
 - uint8
 - uint16
 - uint32
