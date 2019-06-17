@@ -83,8 +83,8 @@ func TestMerkleize_Identity(t *testing.T) {
 
 func TestMerkleize_OK(t *testing.T) {
 	chunk := make([]byte, BytesPerChunk)
-	secondLayerRoot := Hash(append(chunk, chunk...))
-	thirdLayerRoot := Hash(append(secondLayerRoot[:], secondLayerRoot[:]...))
+	secondLayerRoot := hash(append(chunk, chunk...))
+	thirdLayerRoot := hash(append(secondLayerRoot[:], secondLayerRoot[:]...))
 	tests := []struct {
 		name   string
 		input  [][]byte
@@ -93,7 +93,7 @@ func TestMerkleize_OK(t *testing.T) {
 		{
 			name:   "two elements should return the hash of their concatenation",
 			input:  [][]byte{make([]byte, BytesPerChunk), make([]byte, BytesPerChunk)},
-			output: Hash(make([]byte, BytesPerChunk*2)),
+			output: hash(make([]byte, BytesPerChunk*2)),
 		},
 		{
 			name:   "four chunks should return the Merkle root of a three layer trie",

@@ -101,6 +101,8 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 			}
 		}
 		return totalSize
+	case kind == reflect.Ptr:
+		return determineVariableSize(val.Elem(), val.Elem().Type())
 	default:
 		return 0
 	}

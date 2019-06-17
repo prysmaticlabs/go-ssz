@@ -11,11 +11,22 @@ type fork struct {
 	Epoch           uint64
 }
 
+type nestedItem struct {
+	Field1 []uint64
+	Field2 *fork
+	Field3 [3]byte
+}
+
 func TestMarshalUnmarshal(t *testing.T) {
 	forkExample := fork{
 		PreviousVersion: [4]byte{2, 3, 4, 1},
 		CurrentVersion:  [4]byte{5, 6, 7, 8},
 		Epoch:           5,
+	}
+	nestedItemExample := nestedItem{
+		Field1: []uint64{1, 2, 3, 4},
+		Field2: &forkExample,
+		Field3: [3]byte{32, 33, 34},
 	}
 	tests := []struct {
 		input interface{}
@@ -60,6 +71,13 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: [][3]uint64{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}, ptr: new([][3]uint64)},
 		{input: [3][]uint64{{1, 2}, {4, 5, 6}, {7}}, ptr: new([3][]uint64)},
 		{input: [][4]fork{{forkExample, forkExample, forkExample}}, ptr: new([][4]fork)},
+		// Pointer-type test cases.
+		{input: &forkExample, ptr: new(fork)},
+		{input: &nestedItemExample, ptr: new(nestedItem)},
+		{input: []*fork{&forkExample, &forkExample}, ptr: new([]*fork)},
+		{input: []*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([]*nestedItem)},
+		{input: [2]*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([2]*nestedItem)},
+		{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
 	}
 	for _, tt := range tests {
 		serializedItem, err := Marshal(tt.input)
