@@ -3,180 +3,162 @@ package ssz
 import (
 	"encoding/binary"
 	"fmt"
-	"io"
 	"reflect"
 )
 
-type encbuf struct {
-	str []byte
-}
-
-// encodeError is what gets reported to the encoder user in error case.
-type encodeError struct {
+// marshalError is what gets reported to the marshaler user in error case.
+type marshalError struct {
 	msg string
 	typ reflect.Type
 }
 
-func newEncodeError(msg string, typ reflect.Type) *encodeError {
-	return &encodeError{msg, typ}
+func newMarshalError(msg string, typ reflect.Type) *marshalError {
+	return &marshalError{msg, typ}
 }
 
-func (err *encodeError) Error() string {
-	return fmt.Sprintf("encode error: %s for input type %v", err.msg, err.typ)
+func (err *marshalError) Error() string {
+	return fmt.Sprintf("marshal error: %s for input type %v", err.msg, err.typ)
 }
 
-// Encode encodes val and output the result into w.
-func Encode(w io.Writer, val interface{}) error {
-	eb := &encbuf{}
-	if err := eb.encode(val); err != nil {
-		return err
-	}
-	return eb.toWriter(w)
-}
-
-func (w *encbuf) encode(val interface{}) error {
+// Marshal a value and output the result into a byte slice.
+func Marshal(val interface{}) ([]byte, error) {
 	if val == nil {
-		return newEncodeError("untyped nil is not supported", nil)
+		return nil, newMarshalError("untyped nil is not supported", nil)
 	}
 	rval := reflect.ValueOf(val)
 
 	// We pre-allocate a buffer-size depending on the value's size.
-	w.str = make([]byte, determineSize(rval))
+	buf := make([]byte, determineSize(rval))
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
-		return newEncodeError(fmt.Sprint(err), rval.Type())
+		return nil, newMarshalError(fmt.Sprint(err), rval.Type())
 	}
-	if _, err = sszUtils.encoder(rval, w, 0 /* start offset */); err != nil {
-		return newEncodeError(fmt.Sprint(err), rval.Type())
+	if _, err = sszUtils.marshaler(rval, buf, 0 /* start offset */); err != nil {
+		return nil, newMarshalError(fmt.Sprint(err), rval.Type())
 	}
-	return nil
+	return buf, nil
 }
 
-func (w *encbuf) toWriter(out io.Writer) error {
-	_, err := out.Write(w.str)
-	return err
-}
-
-func makeEncoder(typ reflect.Type) (encoder, error) {
+func makeMarshaler(typ reflect.Type) (marshaler, error) {
 	kind := typ.Kind()
 	switch {
 	case kind == reflect.Bool:
-		return encodeBool, nil
+		return marshalBool, nil
 	case kind == reflect.Uint8:
-		return encodeUint8, nil
+		return marshalUint8, nil
 	case kind == reflect.Uint16:
-		return encodeUint16, nil
+		return marshalUint16, nil
 	case kind == reflect.Uint32:
-		return encodeUint32, nil
+		return marshalUint32, nil
 	case kind == reflect.Uint64:
-		return encodeUint64, nil
+		return marshalUint64, nil
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
-		return encodeByteSlice, nil
+		return marshalByteSlice, nil
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return encodeByteArray, nil
+		return marshalByteArray, nil
 	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
-		return makeBasicSliceEncoder(typ)
+		return makeBasicSliceMarshaler(typ)
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
-		return makeBasicSliceEncoder(typ)
+		return makeBasicSliceMarshaler(typ)
 	case kind == reflect.Slice || kind == reflect.Array:
-		return makeCompositeSliceEncoder(typ)
+		return makeCompositeSliceMarshaler(typ)
 	case kind == reflect.Struct:
-		return makeStructEncoder(typ)
+		return makeStructMarshaler(typ)
 	case kind == reflect.Ptr:
-		return makePtrEncoder(typ)
+		return makePtrMarshaler(typ)
 	default:
 		return nil, fmt.Errorf("type %v is not serializable", typ)
 	}
 }
 
-func encodeBool(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+func marshalBool(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	if val.Bool() {
-		w.str[startOffset] = uint8(1)
+		buf[startOffset] = uint8(1)
 	} else {
-		w.str[startOffset] = uint8(0)
+		buf[startOffset] = uint8(0)
 	}
 	return startOffset + 1, nil
 }
 
-func encodeUint8(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+func marshalUint8(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	v := val.Uint()
-	w.str[startOffset] = uint8(v)
+	buf[startOffset] = uint8(v)
 	return startOffset + 1, nil
 }
 
-func encodeUint16(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+func marshalUint16(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, uint16(v))
-	copy(w.str[startOffset:startOffset+2], b)
+	copy(buf[startOffset:startOffset+2], b)
 	return startOffset + 2, nil
 }
 
-func encodeUint32(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+func marshalUint32(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, uint32(v))
-	copy(w.str[startOffset:startOffset+4], b)
+	copy(buf[startOffset:startOffset+4], b)
 	return startOffset + 4, nil
 }
 
-func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+func marshalUint64(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	v := val.Uint()
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(v))
-	copy(w.str[startOffset:startOffset+8], b)
+	copy(buf[startOffset:startOffset+8], b)
 	return startOffset + 8, nil
 }
 
-func encodeByteSlice(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+func marshalByteSlice(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	slice := val.Slice(0, val.Len()).Interface().([]byte)
-	copy(w.str[startOffset:startOffset+uint64(len(slice))], slice)
+	copy(buf[startOffset:startOffset+uint64(len(slice))], slice)
 	return startOffset + uint64(val.Len()), nil
 }
 
-func encodeByteArray(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+func marshalByteArray(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	rawBytes := make([]byte, val.Len())
 	for i := 0; i < val.Len(); i++ {
 		rawBytes[i] = uint8(val.Index(i).Uint())
 	}
-	copy(w.str[startOffset:startOffset+uint64(len(rawBytes))], rawBytes)
+	copy(buf[startOffset:startOffset+uint64(len(rawBytes))], rawBytes)
 	return startOffset + uint64(len(rawBytes)), nil
 }
 
-func makeBasicSliceEncoder(typ reflect.Type) (encoder, error) {
+func makeBasicSliceMarshaler(typ reflect.Type) (marshaler, error) {
 	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
 
-	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+	marshaler := func(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 		index := startOffset
 		var err error
 		for i := 0; i < val.Len(); i++ {
-			index, err = elemSSZUtils.encoder(val.Index(i), w, index)
+			index, err = elemSSZUtils.marshaler(val.Index(i), buf, index)
 			if err != nil {
 				return 0, err
 			}
 		}
 		return index, nil
 	}
-	return encoder, nil
+	return marshaler, nil
 }
 
-func makeCompositeSliceEncoder(typ reflect.Type) (encoder, error) {
+func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
 
-	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+	marshaler := func(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 		index := startOffset
 		var err error
 		if !isVariableSizeType(val, typ.Elem()) {
 			for i := 0; i < val.Len(); i++ {
 				// If each element is not variable size, we simply encode sequentially and write
 				// into the buffer at the last index we wrote at.
-				index, err = elemSSZUtils.encoder(val.Index(i), w, index)
+				index, err = elemSSZUtils.marshaler(val.Index(i), buf, index)
 				if err != nil {
 					return 0, err
 				}
@@ -188,14 +170,14 @@ func makeCompositeSliceEncoder(typ reflect.Type) (encoder, error) {
 			// If the elements are variable size, we need to include offset indices
 			// in the serialized output list.
 			for i := 0; i < val.Len(); i++ {
-				nextOffsetIndex, err = elemSSZUtils.encoder(val.Index(i), w, currentOffsetIndex)
+				nextOffsetIndex, err = elemSSZUtils.marshaler(val.Index(i), buf, currentOffsetIndex)
 				if err != nil {
 					return 0, err
 				}
 				// Write the offset.
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
-				copy(w.str[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
+				copy(buf[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
 
 				// We increase the offset indices accordingly.
 				currentOffsetIndex = nextOffsetIndex
@@ -205,15 +187,15 @@ func makeCompositeSliceEncoder(typ reflect.Type) (encoder, error) {
 		}
 		return index, nil
 	}
-	return encoder, nil
+	return marshaler, nil
 }
 
-func makeStructEncoder(typ reflect.Type) (encoder, error) {
+func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 	fields, err := structFields(typ)
 	if err != nil {
 		return nil, err
 	}
-	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+	marshaler := func(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 		fixedIndex := startOffset
 		fixedLength := uint64(0)
 		// For every field, we add up the total length of the items depending if they
@@ -232,19 +214,19 @@ func makeStructEncoder(typ reflect.Type) (encoder, error) {
 		for _, f := range fields {
 			item := val.Field(f.index)
 			if !isVariableSizeType(item, item.Type()) {
-				fixedIndex, err = f.sszUtils.encoder(item, w, fixedIndex)
+				fixedIndex, err = f.sszUtils.marshaler(item, buf, fixedIndex)
 				if err != nil {
 					return 0, err
 				}
 			} else {
-				nextOffsetIndex, err = f.sszUtils.encoder(val.Field(f.index), w, currentOffsetIndex)
+				nextOffsetIndex, err = f.sszUtils.marshaler(val.Field(f.index), buf, currentOffsetIndex)
 				if err != nil {
 					return 0, err
 				}
 				// Write the offset.
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
-				copy(w.str[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
+				copy(buf[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
 
 				// We increase the offset indices accordingly.
 				currentOffsetIndex = nextOffsetIndex
@@ -253,22 +235,22 @@ func makeStructEncoder(typ reflect.Type) (encoder, error) {
 		}
 		return currentOffsetIndex, nil
 	}
-	return encoder, nil
+	return marshaler, nil
 }
 
-func makePtrEncoder(typ reflect.Type) (encoder, error) {
+func makePtrMarshaler(typ reflect.Type) (marshaler, error) {
 	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, err
 	}
-	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+	marshaler := func(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 		// Nil encodes to []byte{}.
 		if val.IsNil() {
-			w.str[startOffset] = 0
+			buf[startOffset] = 0
 			return 0, nil
 		}
-		return elemSSZUtils.encoder(val.Elem(), w, startOffset)
+		return elemSSZUtils.marshaler(val.Elem(), buf, startOffset)
 	}
 
-	return encoder, nil
+	return marshaler, nil
 }

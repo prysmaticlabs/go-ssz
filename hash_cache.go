@@ -153,11 +153,11 @@ func makeSliceHasherCache(typ reflect.Type) (hasher, error) {
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		hs, err := hashedEncoding(val)
 		if err != nil {
-			return [32]byte{}, fmt.Errorf("failed to encode element of slice/array: %v", err)
+			return [32]byte{}, fmt.Errorf("failed to marshal element of slice/array: %v", err)
 		}
 		exists, fetchedInfo, err := hashCache.RootByEncodedHash(hs)
 		if err != nil {
-			return [32]byte{}, fmt.Errorf("failed to encode element of slice/array: %v", err)
+			return [32]byte{}, fmt.Errorf("failed to marshal element of slice/array: %v", err)
 		}
 		var output [32]byte
 		if exists {
@@ -194,11 +194,11 @@ func makeStructHasherCache(typ reflect.Type) (hasher, error) {
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		hs, err := hashedEncoding(val)
 		if err != nil {
-			return hs, fmt.Errorf("failed to encode element of slice/array: %v", err)
+			return hs, fmt.Errorf("failed to marshal element of slice/array: %v", err)
 		}
 		exists, fetchedInfo, err := hashCache.RootByEncodedHash(hs)
 		if err != nil {
-			return hs, fmt.Errorf("failed to encode element of slice/array: %v", err)
+			return hs, fmt.Errorf("failed to marshal element of slice/array: %v", err)
 		}
 		if exists {
 			return ToBytes32(fetchedInfo.MerkleRoot), nil

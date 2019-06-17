@@ -41,7 +41,7 @@ nogo(
         "@org_golang_x_tools//go/analysis/passes/asmdecl:go_tool_library",
     ],
     visibility = ["//visibility:public"],
-    config = "nogo_config.json", 
+    config = "nogo_config.json",
 )
 
 workspace_binary(
@@ -53,15 +53,15 @@ go_library(
     name = "go_default_library",
     srcs = [
         "config.go",
-        "decode.go",
         "doc.go",
-        "encode.go",
         "hash_cache.go",
         "hash_tree_root.go",
         "helpers.go",
+        "marshal.go",
         "signing_root.go",
         "size.go",
         "ssz_utils_cache.go",
+        "unmarshal.go",
         "utils.go",
     ],
     importpath = "github.com/prysmaticlabs/go-ssz",
@@ -77,9 +77,9 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
-        "encode_decode_test.go",
         "hash_tree_root_test.go",
         "helpers_test.go",
+        "marshal_unmarshal_test.go",
         "signing_root_test.go",
     ],
     embed = [":go_default_library"],
