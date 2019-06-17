@@ -165,7 +165,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeStructHasher(typ reflect.Type) (hasher, error) {
-	fields, err := structFields(typ)
+	fields, err := marshalerStructFields(typ)
 	if err != nil {
 		return nil, err
 	}

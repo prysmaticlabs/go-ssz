@@ -191,7 +191,7 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 }
 
 func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
-	fields, err := structFields(typ)
+	fields, err := marshalerStructFields(typ)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		for i, f := range fields {
 			if !isVariableSizeType(val.Field(i), f.typ) {
 				newVal := reflect.New(f.typ).Elem()
-                reflect.Copy(newVal.Slice(0, newVal.Len()), val.Field(i))
+				reflect.Copy(newVal.Slice(0, newVal.Len()), val.Field(i))
 				fixedIndex, err = f.sszUtils.marshaler(newVal, buf, fixedIndex)
 				if err != nil {
 					return 0, err

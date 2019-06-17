@@ -1,7 +1,6 @@
 package ssz
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -34,6 +33,12 @@ func TestMarshalUnmarshal(t *testing.T) {
 	//	Field2: &forkExample,
 	//	Field3: [3]byte{32, 33, 34},
 	//}
+	headRoot := [32]byte{3, 4, 5}
+	forkType := [4]byte{6, 7}
+	stateExample := prysmState{
+		HeadRoot: headRoot[:],
+		ForkType: forkType[:],
+	}
 	tests := []struct {
 		input interface{}
 		ptr   interface{}
@@ -84,14 +89,13 @@ func TestMarshalUnmarshal(t *testing.T) {
 		//{input: []*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([]*nestedItem)},
 		//{input: [2]*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([2]*nestedItem)},
 		//{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
-		{input: &prysmState{HeadRoot: []byte{3, 4, 5}, ForkType: []byte{6, 7}}, ptr: new(prysmState)},
+		{input: stateExample, ptr: new(prysmState)},
 	}
 	for _, tt := range tests {
 		serializedItem, err := Marshal(tt.input)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(serializedItem)
 		if err := Unmarshal(serializedItem, tt.ptr); err != nil {
 			t.Fatal(err)
 		}

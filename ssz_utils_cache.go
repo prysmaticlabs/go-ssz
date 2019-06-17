@@ -88,21 +88,21 @@ func generateSSZUtilsForType(typ reflect.Type) (utils *sszUtils, err error) {
 type field struct {
 	index    int
 	name     string
-	typ reflect.Type
+	typ      reflect.Type
 	sszUtils *sszUtils
 }
 
 // truncateLast removes the last value of a struct, usually the signature,
 // in order to hash only the data the signature field is intended to represent.
 func truncateLast(typ reflect.Type) (fields []field, err error) {
-	fields, err = structFields(typ)
+	fields, err = marshalerStructFields(typ)
 	if err != nil {
 		return nil, err
 	}
 	return fields[:len(fields)-1], nil
 }
 
-func structFields(typ reflect.Type) (fields []field, err error) {
+func marshalerStructFields(typ reflect.Type) (fields []field, err error) {
 	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)
 		if strings.Contains(f.Name, "XXX") {
@@ -113,6 +113,26 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 			return nil, err
 		}
 		utils, err := cachedSSZUtilsNoAcquireLock(fType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
+		}
+		name := f.Name
+		fields = append(fields, field{index: i, name: name, sszUtils: utils, typ: fType})
+	}
+	return fields, nil
+}
+
+func unmarshalerStructFields(typ reflect.Type) (fields []field, err error) {
+	for i := 0; i < typ.NumField(); i++ {
+		f := typ.Field(i)
+		if strings.Contains(f.Name, "XXX") {
+			continue
+		}
+		fType, err := fieldType(f)
+		if err != nil {
+			return nil, err
+		}
+		utils, err := cachedSSZUtilsNoAcquireLock(f.Type)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 		}
@@ -140,5 +160,5 @@ func fieldType(field reflect.StructField) (reflect.Type, error) {
 		}
 		return reflect.ArrayOf(size, field.Type.Elem()), nil
 	}
-    return field.Type, nil
+	return field.Type, nil
 }
