@@ -85,7 +85,7 @@ func (b *hashCacheS) TrieRootCached(val interface{}) ([32]byte, error) {
 	}
 	var paddedOutput [32]byte
 	if exists {
-		paddedOutput = ToBytes32(fetchedInfo.MerkleRoot)
+		paddedOutput = toBytes32(fetchedInfo.MerkleRoot)
 	} else {
 		sszUtils, err := cachedSSZUtils(rval.Type())
 		if err != nil {
@@ -117,7 +117,7 @@ func (b *hashCacheS) MerkleHashCached(byteSlice [][]byte) ([32]byte, error) {
 	}
 	mh := [32]byte{}
 	if exists {
-		mh = ToBytes32(fetchedInfo.MerkleRoot)
+		mh = toBytes32(fetchedInfo.MerkleRoot)
 	} else {
 		mh = merkleize(byteSlice)
 		mr := &root{
@@ -161,7 +161,7 @@ func makeSliceHasherCache(typ reflect.Type) (hasher, error) {
 		}
 		var output [32]byte
 		if exists {
-			output = ToBytes32(fetchedInfo.MerkleRoot)
+			output = toBytes32(fetchedInfo.MerkleRoot)
 		} else {
 			var elemHashList [][]byte
 			for i := 0; i < val.Len(); i++ {
@@ -201,7 +201,7 @@ func makeStructHasherCache(typ reflect.Type) (hasher, error) {
 			return hs, fmt.Errorf("failed to marshal element of slice/array: %v", err)
 		}
 		if exists {
-			return ToBytes32(fetchedInfo.MerkleRoot), nil
+			return toBytes32(fetchedInfo.MerkleRoot), nil
 		}
 		roots := [][]byte{}
 		for _, f := range fields {

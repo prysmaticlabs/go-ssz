@@ -218,5 +218,5 @@ func hashedEncoding(val reflect.Value) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, err
 	}
-	return Hash(encoding), nil
+	return hash(encoding), nil
 }

@@ -1,5 +1,5 @@
 -----BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA512
+hash: SHA512
 
 Contact: mailto:security@prysmaticlabs.com
 Encryption: openpgp4fpr:0AE0051D647BA3C1A917AF4072E33E4DF1A5036E
