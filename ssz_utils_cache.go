@@ -3,6 +3,7 @@ package ssz
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -87,23 +88,16 @@ func generateSSZUtilsForType(typ reflect.Type) (utils *sszUtils, err error) {
 type field struct {
 	index    int
 	name     string
+	typ reflect.Type
 	sszUtils *sszUtils
 }
 
 // truncateLast removes the last value of a struct, usually the signature,
 // in order to hash only the data the signature field is intended to represent.
 func truncateLast(typ reflect.Type) (fields []field, err error) {
-	for i := 0; i < typ.NumField(); i++ {
-		f := typ.Field(i)
-		if strings.Contains(f.Name, "XXX") {
-			continue
-		}
-		utils, err := cachedSSZUtilsNoAcquireLock(f.Type)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
-		}
-		name := f.Name
-		fields = append(fields, field{i, name, utils})
+	fields, err = structFields(typ)
+	if err != nil {
+		return nil, err
 	}
 	return fields[:len(fields)-1], nil
 }
@@ -114,12 +108,37 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 		if strings.Contains(f.Name, "XXX") {
 			continue
 		}
-		utils, err := cachedSSZUtilsNoAcquireLock(f.Type)
+		fType, err := fieldType(f)
+		if err != nil {
+			return nil, err
+		}
+		utils, err := cachedSSZUtilsNoAcquireLock(fType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 		}
 		name := f.Name
-		fields = append(fields, field{i, name, utils})
+		fields = append(fields, field{index: i, name: name, sszUtils: utils, typ: fType})
 	}
 	return fields, nil
+}
+
+func sszTagSize(tag string) (int, error) {
+	sizeValue := strings.IndexRune(tag, '=')
+	size, err := strconv.Atoi(tag[sizeValue+1:])
+	if err != nil {
+		return 0, err
+	}
+	return size, nil
+}
+
+func fieldType(field reflect.StructField) (reflect.Type, error) {
+	item, exists := field.Tag.Lookup("ssz")
+	if exists {
+		size, err := sszTagSize(item)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.ArrayOf(size, field.Type.Elem()), nil
+	}
+    return field.Type, nil
 }

@@ -200,21 +200,21 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		fixedLength := uint64(0)
 		// For every field, we add up the total length of the items depending if they
 		// are variable or fixed-size fields.
-		for _, f := range fields {
-			item := val.Field(f.index)
-			if isVariableSizeType(item, item.Type()) {
+		for i, f := range fields {
+			if isVariableSizeType(val.Field(i), f.typ) {
 				fixedLength += uint64(BytesPerLengthOffset)
 			} else {
-				fixedLength += determineFixedSize(val.Field(f.index), val.Field(f.index).Type())
+				fixedLength += determineFixedSize(val.Field(f.index), f.typ)
 			}
 		}
 		currentOffsetIndex := startOffset + fixedLength
 		nextOffsetIndex := currentOffsetIndex
 		var err error
-		for _, f := range fields {
-			item := val.Field(f.index)
-			if !isVariableSizeType(item, item.Type()) {
-				fixedIndex, err = f.sszUtils.marshaler(item, buf, fixedIndex)
+		for i, f := range fields {
+			if !isVariableSizeType(val.Field(i), f.typ) {
+				newVal := reflect.New(f.typ).Elem()
+                reflect.Copy(newVal.Slice(0, newVal.Len()), val.Field(i))
+				fixedIndex, err = f.sszUtils.marshaler(newVal, buf, fixedIndex)
 				if err != nil {
 					return 0, err
 				}
