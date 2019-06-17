@@ -194,7 +194,7 @@ func makePtrHasher(typ reflect.Type) (hasher, error) {
 	}
 	hasher := func(val reflect.Value) ([32]byte, error) {
 		if val.IsNil() {
-			return hashedEncoding(val)
+			return [32]byte{}, nil
 		}
 		return elemSSZUtils.hasher(val.Elem())
 	}
