@@ -70,11 +70,16 @@ func makeEncoder(typ reflect.Type) (encoder, error) {
 		return encodeUint32, nil
 	case kind == reflect.Uint64:
 		return encodeUint64, nil
-	case (kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8) ||
-		(kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8):
-		return encodeBytes, nil
+	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
+		return encodeByteSlice, nil
+	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
+		return encodeByteArray, nil
+	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
+		return makeBasicSliceEncoder(typ)
+	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
+		return makeBasicSliceEncoder(typ)
 	case kind == reflect.Slice || kind == reflect.Array:
-		return makeSliceEncoder(typ)
+		return makeCompositeSliceEncoder(typ)
 	case kind == reflect.Struct:
 		return makeStructEncoder(typ)
 	case kind == reflect.Ptr:
@@ -123,15 +128,22 @@ func encodeUint64(val reflect.Value, w *encbuf, startOffset uint64) (uint64, err
 	return startOffset + 8, nil
 }
 
-func encodeBytes(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+func encodeByteSlice(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 	slice := val.Slice(0, val.Len()).Interface().([]byte)
 	copy(w.str[startOffset:startOffset+uint64(len(slice))], slice)
 	return startOffset + uint64(val.Len()), nil
 }
 
-// When serializing a slice, we care about whether the underlying element is
-// variable size or not.
-func makeSliceEncoder(typ reflect.Type) (encoder, error) {
+func encodeByteArray(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+	rawBytes := make([]byte, val.Len())
+	for i := 0; i < val.Len(); i++ {
+		rawBytes[i] = uint8(val.Index(i).Uint())
+	}
+	copy(w.str[startOffset:startOffset+uint64(len(rawBytes))], rawBytes)
+	return startOffset + uint64(len(rawBytes)), nil
+}
+
+func makeBasicSliceEncoder(typ reflect.Type) (encoder, error) {
 	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
@@ -140,7 +152,27 @@ func makeSliceEncoder(typ reflect.Type) (encoder, error) {
 	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
 		index := startOffset
 		var err error
-		if !isVariableSizeType(val, typ.Elem().Kind()) {
+		for i := 0; i < val.Len(); i++ {
+			index, err = elemSSZUtils.encoder(val.Index(i), w, index)
+			if err != nil {
+				return 0, err
+			}
+		}
+		return index, nil
+	}
+	return encoder, nil
+}
+
+func makeCompositeSliceEncoder(typ reflect.Type) (encoder, error) {
+	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
+	}
+
+	encoder := func(val reflect.Value, w *encbuf, startOffset uint64) (uint64, error) {
+		index := startOffset
+		var err error
+		if !isVariableSizeType(val, typ.Elem()) {
 			for i := 0; i < val.Len(); i++ {
 				// If each element is not variable size, we simply encode sequentially and write
 				// into the buffer at the last index we wrote at.
@@ -188,7 +220,7 @@ func makeStructEncoder(typ reflect.Type) (encoder, error) {
 		// are variable or fixed-size fields.
 		for _, f := range fields {
 			item := val.Field(f.index)
-			if isVariableSizeType(item, item.Kind()) {
+			if isVariableSizeType(item, item.Type()) {
 				fixedLength += uint64(BytesPerLengthOffset)
 			} else {
 				fixedLength += determineFixedSize(val.Field(f.index), val.Field(f.index).Type())
@@ -199,7 +231,7 @@ func makeStructEncoder(typ reflect.Type) (encoder, error) {
 		var err error
 		for _, f := range fields {
 			item := val.Field(f.index)
-			if !isVariableSizeType(item, item.Type().Kind()) {
+			if !isVariableSizeType(item, item.Type()) {
 				fixedIndex, err = f.sszUtils.encoder(item, w, fixedIndex)
 				if err != nil {
 					return 0, err

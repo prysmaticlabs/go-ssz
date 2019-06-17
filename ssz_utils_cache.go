@@ -2,7 +2,6 @@ package ssz
 
 import (
 	"fmt"
-	"io"
 	"reflect"
 	"strings"
 	"sync"
@@ -12,7 +11,7 @@ import (
 // it returns the index of the last byte written and an error, if any.
 type encoder func(reflect.Value, *encbuf, uint64) (uint64, error)
 
-type decoder func(io.Reader, reflect.Value) (uint32, error)
+type decoder func([]byte, reflect.Value, uint64) (uint64, error)
 
 type hasher func(reflect.Value) ([32]byte, error)
 
@@ -74,7 +73,7 @@ func cachedSSZUtilsNoAcquireLock(typ reflect.Type) (*sszUtils, error) {
 func generateSSZUtilsForType(typ reflect.Type) (utils *sszUtils, err error) {
 	utils = new(sszUtils)
 	if utils.encoder, err = makeEncoder(typ); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not make encoder: %v", err)
 	}
 	if utils.decoder, err = makeDecoder(typ); err != nil {
 		return nil, err
