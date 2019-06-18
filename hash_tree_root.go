@@ -221,7 +221,7 @@ func getEncoding(val reflect.Value) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	buf := []byte{}
+	buf := make([]byte, determineSize(val))
 	if _, err = utils.marshaler(val, buf, 0); err != nil {
 		return nil, err
 	}
