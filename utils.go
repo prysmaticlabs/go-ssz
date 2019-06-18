@@ -29,8 +29,7 @@ func hash(data []byte) [32]byte {
 	return hash
 }
 
-// Bytes4 returns integer x to bytes in little-endian format, x.to_bytes(4, 'big').
-func Bytes4(x uint64) []byte {
+func bytes4(x uint64) []byte {
 	bytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(bytes, x)
 	return bytes[:4]

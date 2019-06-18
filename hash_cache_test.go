@@ -113,7 +113,7 @@ func TestBlockCache_maxSize(t *testing.T) {
 	cache := newHashCache(maxCacheSize)
 	for i := uint64(0); i < uint64(maxCacheSize+1025); i++ {
 
-		if err := cache.AddRoot(toBytes32(Bytes4(i)), []byte{1}); err != nil {
+		if err := cache.AddRoot(toBytes32(bytes4(i)), []byte{1}); err != nil {
 			t.Fatal(err)
 		}
 	}
