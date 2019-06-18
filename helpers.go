@@ -1,6 +1,9 @@
 package ssz
 
-import "bytes"
+import (
+	"bytes"
+	"reflect"
+)
 
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
 // chunks, right-pad the last chunk with zero bytes, and return the chunks.
@@ -74,7 +77,7 @@ func merkleize(chunks [][]byte) [32]byte {
 	for len(hashLayer) > 1 {
 		layer := [][]byte{}
 		for i := 0; i < len(hashLayer); i += 2 {
-			hashedChunk := Hash(append(hashLayer[i], hashLayer[i+1]...))
+			hashedChunk := hash(append(hashLayer[i], hashLayer[i+1]...))
 			layer = append(layer, hashedChunk[:])
 		}
 		hashLayer = layer
@@ -87,16 +90,20 @@ func merkleize(chunks [][]byte) [32]byte {
 // Given a Merkle root root and a length length ("uint256" little-endian serialization)
 // return hash(root + length).
 func mixInLength(root [32]byte, length []byte) [32]byte {
-	return Hash(append(root[:], length...))
-}
-
-// Given a Merkle root root and a type_index type_index ("uint256" little-endian serialization)
-// return hash(root + type_index).
-func mixInType(root [32]byte, typeIndex []byte) [32]byte {
-	return Hash(append(root[:], typeIndex...))
+	return hash(append(root[:], length...))
 }
 
 // fast verification to check if an number if a power of two.
 func isPowerTwo(n int) bool {
 	return n != 0 && (n&(n-1)) == 0
+}
+
+func makeSliceType(typ reflect.Type, val reflect.Value, length int) {
+	newVal := reflect.MakeSlice(typ, length, length)
+	reflect.Copy(newVal, val)
+	val.Set(newVal)
+	if typ.Elem().Kind() == reflect.Ptr {
+		tp := reflect.New(typ.Elem().Elem())
+		val.Index(length - 1).Set(tp)
+	}
 }

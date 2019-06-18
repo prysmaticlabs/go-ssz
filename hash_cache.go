@@ -76,17 +76,17 @@ func (b *hashCacheS) lookup(rval reflect.Value, hasher hasher) ([32]byte, error)
 		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
 	}
 	if exists {
-		return ToBytes32(fetchedInfo.MerkleRoot), nil
+		return toBytes32(fetchedInfo.MerkleRoot), nil
 	}
 	res, err := hasher(rval)
 	if err != nil {
-		return [32]byte{}, err
+		return [32]byte{}, newHashError(fmt.Sprint(err), reflect.TypeOf(rval))
 	}
 	err = b.AddRoot(hs, res[:])
 	if err != nil {
 		return [32]byte{}, err
 	}
-	return hasher(rval)
+	return res, nil
 
 }
 
@@ -100,5 +100,6 @@ func (b *hashCacheS) AddRoot(h common.Hash, rootB []byte) error {
 		MerkleRoot: rootB,
 	}
 	b.hashCache.Set(mr.Hash.Hex(), mr, time.Hour)
+	hashCacheSize.Set(float64(b.hashCache.ItemCount()))
 	return nil
 }

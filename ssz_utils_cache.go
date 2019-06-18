@@ -2,26 +2,23 @@ package ssz
 
 import (
 	"fmt"
-	"io"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 )
 
-type encoder func(reflect.Value, *encbuf) error
+// The marshaler/unmarshaler types take in a value, an output buffer, and a start offset,
+// it returns the index of the last byte written and an error, if any.
+type marshaler func(reflect.Value, []byte, uint64) (uint64, error)
 
-// Notice: we are not exactly following the spec which requires a decoder to return new index in the input buffer.
-// Our io.Reader is already capable of tracking its latest read location, so we decide to return the decoded byte size
-// instead. This makes our implementation look cleaner.
-type decoder func(io.Reader, reflect.Value) (uint32, error)
-
-type encodeSizer func(reflect.Value) (uint32, error)
+type unmarshaler func([]byte, reflect.Value, uint64) (uint64, error)
 
 type hasher func(reflect.Value) ([32]byte, error)
 
 type sszUtils struct {
-	encoder
-	decoder
+	marshaler
+	unmarshaler
 	hasher
 }
 
@@ -31,7 +28,7 @@ var (
 	hashCache          = newHashCache(100000)
 )
 
-// Get cached encoder, encodeSizer and decoder implementation for a specified type.
+// Get cached encoder, encodeSizer and unmarshaler implementation for a specified type.
 // With a cache we can achieve O(1) amortized time overhead for creating encoder, encodeSizer and decoder.
 func cachedSSZUtils(typ reflect.Type) (*sszUtils, error) {
 	sszUtilsCacheMutex.RLock()
@@ -76,10 +73,10 @@ func cachedSSZUtilsNoAcquireLock(typ reflect.Type) (*sszUtils, error) {
 
 func generateSSZUtilsForType(typ reflect.Type) (utils *sszUtils, err error) {
 	utils = new(sszUtils)
-	if utils.encoder, err = makeEncoder(typ); err != nil {
+	if utils.marshaler, err = makeMarshaler(typ); err != nil {
 		return nil, err
 	}
-	if utils.decoder, err = makeDecoder(typ); err != nil {
+	if utils.unmarshaler, err = makeUnmarshaler(typ); err != nil {
 		return nil, err
 	}
 	if utils.hasher, err = makeHasher(typ); err != nil {
@@ -91,39 +88,77 @@ func generateSSZUtilsForType(typ reflect.Type) (utils *sszUtils, err error) {
 type field struct {
 	index    int
 	name     string
+	typ      reflect.Type
 	sszUtils *sszUtils
 }
 
 // truncateLast removes the last value of a struct, usually the signature,
 // in order to hash only the data the signature field is intended to represent.
 func truncateLast(typ reflect.Type) (fields []field, err error) {
-	for i := 0; i < typ.NumField(); i++ {
-		f := typ.Field(i)
-		if strings.Contains(f.Name, "XXX") {
-			continue
-		}
-		utils, err := cachedSSZUtilsNoAcquireLock(f.Type)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
-		}
-		name := f.Name
-		fields = append(fields, field{i, name, utils})
+	fields, err = marshalerStructFields(typ)
+	if err != nil {
+		return nil, err
 	}
 	return fields[:len(fields)-1], nil
 }
 
-func structFields(typ reflect.Type) (fields []field, err error) {
+func marshalerStructFields(typ reflect.Type) (fields []field, err error) {
 	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)
 		if strings.Contains(f.Name, "XXX") {
 			continue
+		}
+		fType, err := fieldType(f)
+		if err != nil {
+			return nil, err
+		}
+		utils, err := cachedSSZUtilsNoAcquireLock(fType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
+		}
+		name := f.Name
+		fields = append(fields, field{index: i, name: name, sszUtils: utils, typ: fType})
+	}
+	return fields, nil
+}
+
+func unmarshalerStructFields(typ reflect.Type) (fields []field, err error) {
+	for i := 0; i < typ.NumField(); i++ {
+		f := typ.Field(i)
+		if strings.Contains(f.Name, "XXX") {
+			continue
+		}
+		fType, err := fieldType(f)
+		if err != nil {
+			return nil, err
 		}
 		utils, err := cachedSSZUtilsNoAcquireLock(f.Type)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 		}
 		name := f.Name
-		fields = append(fields, field{i, name, utils})
+		fields = append(fields, field{index: i, name: name, sszUtils: utils, typ: fType})
 	}
 	return fields, nil
+}
+
+func sszTagSize(tag string) (int, error) {
+	sizeStartIndex := strings.IndexRune(tag, '=')
+	size, err := strconv.Atoi(tag[sizeStartIndex+1:])
+	if err != nil {
+		return 0, err
+	}
+	return size, nil
+}
+
+func fieldType(field reflect.StructField) (reflect.Type, error) {
+	item, exists := field.Tag.Lookup("ssz")
+	if exists {
+		size, err := sszTagSize(item)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.ArrayOf(size, field.Type.Elem()), nil
+	}
+	return field.Type, nil
 }

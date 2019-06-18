@@ -6,61 +6,26 @@ This package implements simple serialize algorithm specified in official Ethereu
 [![Documentation](https://godoc.org/github.com/prysmatic-labs/go-ssz?status.svg)](http://godoc.org/github.com/prysmatic-labs/go-ssz)
 [![codecov](https://codecov.io/gh/prysmaticlabs/go-ssz/branch/master/graph/badge.svg)](https://codecov.io/gh/prysmaticlabs/go-ssz)
 
-## Interface
-
-### Encodable
-A type is Encodable if it implements `EncodeSSZ` and `EncodeSSZSize` function.
-
-```go
-type Encodable interface {
-	EncodeSSZ(io.Writer) error
-	// Estimate the encoding size of the object without doing the actual encoding
-	EncodeSSZSize() (uint32, error)
-}
-```
-
-### Decodable
-A type is Decodable if it implements `DecodeSSZ()`.
-```go
-type Decodable interface {
-	DecodeSSZ(io.Reader) error
-}
-```
-
-### Hashable
-A type is Hashable if it implements `TreeHashSSZ()`.
-```go
-type Hashable interface {
-	TreeHashSSZ() ([32]byte, error)
-}
-```
-
 ## API
 
-### Encoding function
+Our simple serialize API is designed to match the popular JSON marshal/unmarshal API from the Go standard library
 
 ```go
-// Encode val and output the result into w.
-func Encode(w io.Writer, val interface{}) error
+// Marshal val and output the result.
+func Marshal(val interface{}) ([]byte, error)
 ```
 
 ```go
-// EncodeSize returns the target encoding size without doing the actual encoding.
-// This is an optional pass. You don't need to call this before the encoding unless you
-// want to know the output size first.
-func EncodeSize(val interface{}) (uint32, error)
+// Unmarshal data from input and output it into the object pointed by pointer val.
+func Unmarshal(input []byte, val interface{}) error
 ```
 
-### Decoding function
-```go
-// Decode data read from r and output it into the object pointed by pointer val.
-func Decode(r io.Reader, val interface{}) error
-```
+### Tree Hashing
 
-### Hashing function
 ```go
-// Tree-hash data into [32]byte
-func TreeHash(val interface{}) ([32]byte, error)
+// HashTreeRoot SSZ marshals a value and packs its serialized bytes into leaves of a Merkle trie -
+// then, it determines the Merkle root of the trie.
+func HashTreeRoot(val interface{}) ([32]byte, error)
 ````
 
 ## Usage
@@ -73,71 +38,38 @@ type exampleStruct1 struct {
 }
 ````
 
-You implement the `Encoding` interface for it:
-
-```go
-func (e *exampleStruct1) EncodeSSZ(w io.Writer) error {
-	return Encode(w, *e)
-}
-
-func (e *exampleStruct1) EncodeSSZSize() (uint32, error) {
-	return EncodeSize(*e)
-}
-```
-
 Now you can encode this object like this
 ```go
-e1 := &exampleStruct1{
+e1 := exampleStruct1{
     Field1: 10,
     Field2: []byte{1, 2, 3, 4},
 }
-wBuf := new(bytes.Buffer)
-if err = e1.EncodeSSZ(wBuf); err != nil {
-    return fmt.Errorf("failed to encode: %v", err)
+encoded, err := Marshal(e1)
+if err != nil {
+    return fmt.Errorf("failed to marshal: %v", err)
 }
-encoding := wBuf.Bytes() // encoding becomes [0 0 0 9 10 0 0 0 4 1 2 3 4]
 ```
 
-You can also get the estimated encoding size
-```go
-var encodeSize uint32
-if encodeSize, err = e1.EncodeSSZSize(); err != nil {
-    return fmt.Errorf("failed to get encode size: %v", err)
-}
-// encodeSize becomes 13
-```
-
-To calculate tree-hash of the object
-```go
-var hash [32]byte
-if hash, err = e1.TreeHashSSZ(); err != nil {
-    return fmt.Errorf("failed to hash: %v", err)
-}
-// hash stores the hashing result
-```
-
-Similarly, you can implement the `Decodable` interface for this struct
+Similarly, you can unmarshal encoded bytes into its original form:
 
 ```go
-func (e *exampleStruct1) DecodeSSZ(r io.Reader) error {
-	return Decode(r, e)
+var e2 exampleStruct
+if err = Unmarshal(encoded, &e2); err != nil {
+    return fmt.Errorf("failed to unmarshal: %v", err)
 }
+reflect.DeepEqual(e1, e2) // Returns true as e2 now has the same content as e1.
 ```
 
-Now you can decode to create new struct
-
+To calculate tree-hash root of the object run:
 ```go
-e2 := new(exampleStruct1)
-rBuf := bytes.NewReader(encoding)
-if err = e2.DecodeSSZ(rBuf); err != nil {
-    return fmt.Errorf("failed to decode: %v", err)
+root, err := HashTreeRoot(e1)
+if err != nil {
+    return fmt.Errorf("failed to compute Merkle root: %v", err)
 }
-// e2 now has the same content as e1
 ```
-
-## Notes
 
 ### Supported data types
+- bool
 - uint8
 - uint16
 - uint32
@@ -145,4 +77,4 @@ if err = e2.DecodeSSZ(rBuf); err != nil {
 - slice
 - array
 - struct
-- pointer (nil pointer is not supported)
+- pointer
