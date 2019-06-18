@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -106,18 +107,18 @@ func TestMarshalUnmarshal(t *testing.T) {
 		CurrentVersion:  [4]byte{5, 6, 7, 8},
 		Epoch:           5,
 	}
-	nestedItemExample := nestedItem{
-		Field1: []uint64{1, 2, 3, 4},
-		Field2: &forkExample,
-		Field3: [3]byte{32, 33, 34},
-	}
-	headRoot := [32]uint64{3, 4, 5}
-	forkType := [4]byte{6, 7}
-	stateExample := prysmState{
-		HeadRoot: headRoot[:],
-		ForkType: forkType[:],
-		Epoch:    5,
-	}
+	//nestedItemExample := nestedItem{
+	//	Field1: []uint64{1, 2, 3, 4},
+	//	Field2: &forkExample,
+	//	Field3: [3]byte{32, 33, 34},
+	//}
+	//headRoot := [32]uint64{3, 4, 5}
+	//forkType := [4]byte{6, 7}
+	//stateExample := prysmState{
+	//	HeadRoot: headRoot[:],
+	//	ForkType: forkType[:],
+	//	Epoch:    5,
+	//}
 	tests := []struct {
 		input interface{}
 		ptr   interface{}
@@ -153,38 +154,41 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
 		// Struct decoding test cases.
 		{input: forkExample, ptr: new(fork)},
-		{input: forkExample, ptr: new(fork)},
-		// Non-basic type slice/array test cases.
+		//// Non-basic type slice/array test cases.
 		{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
-		{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
-		{input: [][][]uint64{{{1, 2}, {3}}, {{4, 5}}, {{0}}}, ptr: new([][][]uint64)},
-		{input: [][3]uint64{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}, ptr: new([][3]uint64)},
-		{input: [3][]uint64{{1, 2}, {4, 5, 6}, {7}}, ptr: new([3][]uint64)},
-		{input: [][4]fork{{forkExample, forkExample, forkExample}}, ptr: new([][4]fork)},
+		//{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
+		//{input: [][][]uint64{{{1, 2}, {3}}, {{4, 5}}, {{0}}}, ptr: new([][][]uint64)},
+		//{input: [][3]uint64{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}, ptr: new([][3]uint64)},
+		//{input: [3][]uint64{{1, 2}, {4, 5, 6}, {7}}, ptr: new([3][]uint64)},
+		//{input: [][4]fork{{forkExample, forkExample, forkExample}}, ptr: new([][4]fork)},
 		// Pointer-type test cases.
-		{input: &forkExample, ptr: new(fork)},
-		{input: &nestedItemExample, ptr: new(nestedItem)},
-		{input: []*fork{&forkExample, &forkExample}, ptr: new([]*fork)},
-		{input: []*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([]*nestedItem)},
-		{input: [2]*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([2]*nestedItem)},
-		{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
-		{input: stateExample, ptr: new(prysmState)},
+		//{input: &forkExample, ptr: new(fork)},
+		//{input: &nestedItemExample, ptr: new(nestedItem)},
+		//{input: []*fork{&forkExample, &forkExample}, ptr: new([]*fork)},
+		//{input: []*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([]*nestedItem)},
+		//{input: [2]*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([2]*nestedItem)},
+		//{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
+		//{input: stateExample, ptr: new(prysmState)},
 	}
 	for _, tt := range tests {
 		serializedItem, err := Marshal(tt.input)
 		if err != nil {
 			panic(err)
 		}
+		fmt.Println("---Serialized")
+		fmt.Println(serializedItem)
 		if err := Unmarshal(serializedItem, tt.ptr); err != nil {
 			t.Fatal(err)
 		}
 		output := reflect.ValueOf(tt.ptr)
 		inputVal := reflect.ValueOf(tt.input)
 		if inputVal.Kind() == reflect.Ptr {
+			fmt.Println(output.Interface())
 			if !reflect.DeepEqual(output.Interface(), tt.input) {
 				t.Errorf("Expected %d, received %d", tt.input, output.Interface())
 			}
 		} else {
+			fmt.Println(output.Elem().Interface())
 			if !reflect.DeepEqual(output.Elem().Interface(), tt.input) {
 				t.Errorf("Expected %d, received %d", tt.input, output.Elem().Interface())
 			}
