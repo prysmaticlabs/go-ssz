@@ -198,22 +198,22 @@ func TestYaml(t *testing.T) {
 				t.Fatalf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Serialized, encoded)
 			}
 		}
-		//if !isEmpty(testCase.Fork.Value) {
-		//	encoded, err := ssz.Marshal(testCase.Fork.Value)
-		//	if err != nil {
-		//		t.Fatal(err)
-		//	}
-		//	root, err := ssz.HashTreeRoot(testCase.Fork.Value)
-		//	if err != nil {
-		//		t.Fatal(err)
-		//	}
-		//	if !bytes.Equal(root[:], testCase.Fork.Root) {
-		//		t.Fatalf("Expected fork %#x, received %#x", testCase.Fork.Root, root[:])
-		//	}
-		//	if !bytes.Equal(encoded, testCase.Fork.Serialized) {
-		//		t.Fatalf("Expected fork %#x, received %#x", testCase.Fork.Serialized, encoded)
-		//	}
-		//}
+		if !isEmpty(testCase.Fork.Value) {
+			encoded, err := ssz.Marshal(testCase.Fork.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			root, err := ssz.HashTreeRoot(testCase.Fork.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(root[:], testCase.Fork.Root) {
+				t.Errorf("Expected fork %#x, received %#x", testCase.Fork.Root, root[:])
+			}
+			if !bytes.Equal(encoded, testCase.Fork.Serialized) {
+				t.Errorf("Expected fork %v, received %v", testCase.Fork.Serialized, encoded)
+			}
+		}
 		//if !isEmpty(testCase.HistoricalBatch.Value) {
 		//	encoded, err := ssz.Marshal(testCase.HistoricalBatch.Value)
 		//	if err != nil {
@@ -230,102 +230,102 @@ func TestYaml(t *testing.T) {
 		//		t.Fatalf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Serialized, encoded)
 		//	}
 		//}
-		if !isEmpty(testCase.IndexedAttestation.Value) {
-			encoded, err := ssz.Marshal(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.IndexedAttestation.Root) {
-				t.Fatalf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.IndexedAttestation.Serialized) {
-				t.Fatalf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Serialized, encoded)
-			}
-		}
-		if !isEmpty(testCase.PendingAttestation.Value) {
-			encoded, err := ssz.Marshal(testCase.PendingAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.PendingAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.PendingAttestation.Root) {
-				t.Fatalf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.PendingAttestation.Serialized) {
-				t.Fatalf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Serialized, encoded)
-			}
-		}
-		if !isEmpty(testCase.ProposerSlashing.Value) {
-			encoded, err := ssz.Marshal(testCase.ProposerSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.ProposerSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.ProposerSlashing.Root) {
-				t.Fatalf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.ProposerSlashing.Serialized) {
-				t.Fatalf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Serialized, encoded)
-			}
-		}
-		if !isEmpty(testCase.Transfer.Value) {
-			encoded, err := ssz.Marshal(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Transfer.Root) {
-				t.Fatalf("Expected transfer %#x, received %#x", testCase.Transfer.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Transfer.Serialized) {
-				t.Fatalf("Expected transfer %#x, received %#x", testCase.Transfer.Serialized, encoded)
-			}
-		}
-		if !isEmpty(testCase.Validator.Value) {
-			encoded, err := ssz.Marshal(testCase.Validator.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Validator.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Validator.Root) {
-				t.Fatalf("Expected validator %#x, received %#x", testCase.Validator.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Validator.Serialized) {
-				t.Fatalf("Expected validator %#x, received %#x", testCase.Validator.Serialized, encoded)
-			}
-		}
-		if !isEmpty(testCase.VoluntaryExit.Value) {
-			encoded, err := ssz.Marshal(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.VoluntaryExit.Root) {
-				t.Fatalf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.VoluntaryExit.Serialized) {
-				t.Fatalf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Serialized, encoded)
-			}
-		}
+		//if !isEmpty(testCase.IndexedAttestation.Value) {
+		//	encoded, err := ssz.Marshal(testCase.IndexedAttestation.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	root, err := ssz.HashTreeRoot(testCase.IndexedAttestation.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	if !bytes.Equal(root[:], testCase.IndexedAttestation.Root) {
+		//		t.Fatalf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Root, root[:])
+		//	}
+		//	if !bytes.Equal(encoded, testCase.IndexedAttestation.Serialized) {
+		//		t.Fatalf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Serialized, encoded)
+		//	}
+		//}
+		//if !isEmpty(testCase.PendingAttestation.Value) {
+		//	encoded, err := ssz.Marshal(testCase.PendingAttestation.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	root, err := ssz.HashTreeRoot(testCase.PendingAttestation.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	if !bytes.Equal(root[:], testCase.PendingAttestation.Root) {
+		//		t.Fatalf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Root, root[:])
+		//	}
+		//	if !bytes.Equal(encoded, testCase.PendingAttestation.Serialized) {
+		//		t.Fatalf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Serialized, encoded)
+		//	}
+		//}
+		//if !isEmpty(testCase.ProposerSlashing.Value) {
+		//	encoded, err := ssz.Marshal(testCase.ProposerSlashing.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	root, err := ssz.HashTreeRoot(testCase.ProposerSlashing.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	if !bytes.Equal(root[:], testCase.ProposerSlashing.Root) {
+		//		t.Fatalf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Root, root[:])
+		//	}
+		//	if !bytes.Equal(encoded, testCase.ProposerSlashing.Serialized) {
+		//		t.Fatalf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Serialized, encoded)
+		//	}
+		//}
+		//if !isEmpty(testCase.Transfer.Value) {
+		//	encoded, err := ssz.Marshal(testCase.Transfer.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	root, err := ssz.HashTreeRoot(testCase.Transfer.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	if !bytes.Equal(root[:], testCase.Transfer.Root) {
+		//		t.Fatalf("Expected transfer %#x, received %#x", testCase.Transfer.Root, root[:])
+		//	}
+		//	if !bytes.Equal(encoded, testCase.Transfer.Serialized) {
+		//		t.Fatalf("Expected transfer %#x, received %#x", testCase.Transfer.Serialized, encoded)
+		//	}
+		//}
+		//if !isEmpty(testCase.Validator.Value) {
+		//	encoded, err := ssz.Marshal(testCase.Validator.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	root, err := ssz.HashTreeRoot(testCase.Validator.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	if !bytes.Equal(root[:], testCase.Validator.Root) {
+		//		t.Fatalf("Expected validator %#x, received %#x", testCase.Validator.Root, root[:])
+		//	}
+		//	if !bytes.Equal(encoded, testCase.Validator.Serialized) {
+		//		t.Fatalf("Expected validator %#x, received %#x", testCase.Validator.Serialized, encoded)
+		//	}
+		//}
+		//if !isEmpty(testCase.VoluntaryExit.Value) {
+		//	encoded, err := ssz.Marshal(testCase.VoluntaryExit.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	root, err := ssz.HashTreeRoot(testCase.VoluntaryExit.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	if !bytes.Equal(root[:], testCase.VoluntaryExit.Root) {
+		//		t.Fatalf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Root, root[:])
+		//	}
+		//	if !bytes.Equal(encoded, testCase.VoluntaryExit.Serialized) {
+		//		t.Fatalf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Serialized, encoded)
+		//	}
+		//}
 	}
 }
 

@@ -516,8 +516,8 @@ type SszMinimalTest struct {
 		} `json:"Eth1Data,omitempty"`
 		Fork struct {
 			Value struct {
-				PreviousVersion []byte `json:"previous_version"`
-				CurrentVersion  []byte `json:"current_version"`
+				PreviousVersion []byte `json:"previous_version" ssz:"size=4"`
+				CurrentVersion  []byte `json:"current_version" ssz:"size=4"`
 				Epoch           uint64 `json:"epoch"`
 			} `json:"value"`
 			Serialized []byte `json:"serialized"`
