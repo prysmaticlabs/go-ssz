@@ -1,6 +1,9 @@
 package ssz
 
-import "crypto/sha256"
+import (
+	"crypto/sha256"
+	"encoding/binary"
+)
 
 // toBytes32 is a convenience method for converting a byte slice to a fix
 // sized 32 byte array. This method will truncate the input if it is larger
@@ -24,4 +27,10 @@ func hash(data []byte) [32]byte {
 	h.Sum(hash[:0])
 
 	return hash
+}
+
+func bytes4(x uint64) []byte {
+	bytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(bytes, x)
+	return bytes[:4]
 }
