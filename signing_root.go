@@ -39,7 +39,12 @@ func truncateAndHash(val reflect.Value) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, newHashError(fmt.Sprint(err), val.Type())
 	}
-	output, err := hasher(val)
+	var output [32]byte
+	if useCache {
+		output, err = hashCache.lookup(val, hasher)
+	} else {
+		output, err = hasher(val)
+	}
 	if err != nil {
 		return [32]byte{}, newHashError(fmt.Sprint(err), val.Type())
 	}

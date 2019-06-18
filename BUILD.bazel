@@ -77,6 +77,7 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
+        "hash_cache_test.go",
         "hash_tree_root_test.go",
         "helpers_test.go",
         "marshal_unmarshal_test.go",
