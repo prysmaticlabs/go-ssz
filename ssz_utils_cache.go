@@ -143,8 +143,8 @@ func unmarshalerStructFields(typ reflect.Type) (fields []field, err error) {
 }
 
 func sszTagSize(tag string) (int, error) {
-	sizeValue := strings.IndexRune(tag, '=')
-	size, err := strconv.Atoi(tag[sizeValue+1:])
+	sizeStartIndex := strings.IndexRune(tag, '=')
+	size, err := strconv.Atoi(tag[sizeStartIndex+1:])
 	if err != nil {
 		return 0, err
 	}
