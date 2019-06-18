@@ -224,7 +224,7 @@ func makeBasicArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
 		i := 0
 		index := startOffset
-		size := val.Len()
+		size := typ.Len()
 		for i < size {
 			index, err = elemSSZUtils.unmarshaler(input, val.Index(i), index)
 			if err != nil {
@@ -283,7 +283,7 @@ func makeCompositeArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 }
 
 func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
-	fields, err := structFields(typ)
+	fields, err := unmarshalerStructFields(typ)
 	if err != nil {
 		return nil, err
 	}
@@ -294,8 +294,8 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		fixedSizes := make([]uint64, len(fields))
 
 		for i := 0; i < len(fixedSizes); i++ {
-			if !isVariableSizeType(val.Field(i), val.Field(i).Type()) {
-				fixedSz := determineFixedSize(val.Field(i), val.Field(i).Type())
+			if !isVariableSizeType(val.Field(i), fields[i].typ) {
+				fixedSz := determineFixedSize(val.Field(i), fields[i].typ)
 				if fixedSz > 0 {
 					fixedSizes[i] = fixedSz
 				}

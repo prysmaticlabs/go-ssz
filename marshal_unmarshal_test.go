@@ -17,6 +17,12 @@ type nestedItem struct {
 	Field3 [3]byte
 }
 
+type prysmState struct {
+	HeadRoot []uint64 `ssz:"size=32"`
+	ForkType []byte   `ssz:"size=4"`
+	Epoch    uint64
+}
+
 func TestMarshalUnmarshal(t *testing.T) {
 	forkExample := fork{
 		PreviousVersion: [4]byte{2, 3, 4, 1},
@@ -27,6 +33,13 @@ func TestMarshalUnmarshal(t *testing.T) {
 		Field1: []uint64{1, 2, 3, 4},
 		Field2: &forkExample,
 		Field3: [3]byte{32, 33, 34},
+	}
+	headRoot := [32]uint64{3, 4, 5}
+	forkType := [4]byte{6, 7}
+	stateExample := prysmState{
+		HeadRoot: headRoot[:],
+		ForkType: forkType[:],
+		Epoch:    5,
 	}
 	tests := []struct {
 		input interface{}
@@ -78,6 +91,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: []*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([]*nestedItem)},
 		{input: [2]*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([2]*nestedItem)},
 		{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
+		{input: stateExample, ptr: new(prysmState)},
 	}
 	for _, tt := range tests {
 		serializedItem, err := Marshal(tt.input)
