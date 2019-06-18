@@ -1,6 +1,7 @@
 package ssz
 
 import (
+	"bytes"
 	"reflect"
 	"testing"
 )
@@ -21,6 +22,70 @@ type prysmState struct {
 	HeadRoot []uint64 `ssz:"size=32"`
 	ForkType []byte   `ssz:"size=4"`
 	Epoch    uint64
+}
+
+type Crosslink struct {
+	Shard      uint64
+	StartEpoch uint64
+	EndEpoch   uint64
+	ParentRoot []byte `ssz:"size=32"`
+	DataRoot   []byte `ssz:"size=32"`
+}
+
+type AttestationData struct {
+	BeaconBlockRoot []byte `ssz:"size=32"`
+	SourceEpoch     uint64
+	SourceRoot      []byte `ssz:"size=32"`
+	TargetEpoch     uint64
+	TargetRoot     []byte `ssz:"size=32"`
+	Crosslink       Crosslink
+}
+
+type Attestation struct {
+	AggregationBitfield []byte
+	Data AttestationData
+	CustodyBitfield []byte
+	Signature       []byte `ssz:"size=96"`
+}
+
+func TestSpecVector(t *testing.T) {
+	exampleAttestation := Attestation{
+		AggregationBitfield: []byte{159},
+		Data: AttestationData{
+			BeaconBlockRoot: []byte{65, 189, 91, 203, 176, 241, 215, 189, 166, 236, 135, 7, 215, 119, 198, 241, 63, 166, 13, 230, 40, 28, 95, 120, 222, 63, 97, 139, 26, 146, 63, 3},
+			SourceEpoch: 3997959117937236768,
+			SourceRoot: []byte{71, 46, 234, 222, 196, 99, 40, 195, 204, 18, 35, 158, 158, 113, 32, 33, 0, 248, 223, 1, 53, 198, 55, 245, 251, 42, 223, 42, 74, 80, 246, 50},
+			TargetEpoch: 3777515321107143329,
+			TargetRoot: []byte{240, 247, 176, 50, 247, 247, 228, 98, 76, 5, 92, 106, 42, 239, 37, 67, 16, 84, 77, 209, 154, 150, 0, 152, 173, 181, 86, 16, 79, 90, 209, 78},
+			Crosslink: Crosslink{
+				Shard: 0,
+				StartEpoch: 8876912483467349126,
+				EndEpoch: 3248842131919680082,
+				ParentRoot: []byte{65, 249, 240, 5, 243, 191, 91, 216, 103, 4, 140, 201, 107, 93, 96, 148, 215, 2, 115, 11, 181, 46, 159, 244, 244, 50, 30, 193, 62, 237, 209, 241},
+				DataRoot: []byte{118, 88, 131, 90, 228, 134, 64, 198, 118, 27, 150, 191, 199, 204, 94, 220, 75, 9, 110, 242, 250, 23, 53, 87, 131, 156, 92, 235, 37, 87, 70, 236},
+			},
+		},
+		CustodyBitfield: []byte{179},
+		Signature: []byte{139, 23, 79, 175, 81, 78, 45, 204, 20, 160, 38, 184, 176, 79, 255, 123, 41, 184, 12, 20, 252, 153, 136, 236, 103, 8, 60, 189, 152, 88, 211, 64, 116, 166, 107, 37, 14, 250, 234, 163, 8, 205, 126, 85, 214, 53, 33, 251, 187, 144, 243, 33, 161, 229, 201, 105, 27, 43, 111, 95, 38, 15, 216, 107, 75, 36, 116, 236, 255, 158, 218, 43, 249, 133, 116, 245, 124, 176, 186, 81, 122, 70, 74, 120, 103, 230, 37, 28, 96, 210, 253, 136, 245, 45, 160, 239},
+	}
+	encoded, err := Marshal(exampleAttestation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ptr := new(Attestation)
+	if err := Unmarshal(encoded, ptr); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(exampleAttestation, *ptr) {
+		t.Errorf("Expected %v, received %v", exampleAttestation, *ptr)
+	}
+	expect := []byte{48, 1, 0, 0, 65, 189, 91, 203, 176, 241, 215, 189, 166, 236, 135, 7, 215, 119, 198, 241, 63, 166, 13, 230, 40, 28, 95, 120, 222, 63, 97, 139, 26, 146, 63, 3, 32, 219, 46, 187, 162, 154, 123, 55, 71, 46, 234, 222, 196, 99, 40, 195, 204, 18, 35, 158, 158, 113, 32, 33, 0, 248, 223, 1, 53, 198, 55, 245, 251, 42, 223, 42, 74, 80, 246, 50, 161, 218, 47, 160, 43, 110, 108, 52, 240, 247, 176, 50, 247, 247, 228, 98, 76, 5, 92, 106, 42, 239, 37, 67, 16, 84, 77, 209, 154, 150, 0, 152, 173, 181, 86, 16, 79, 90, 209, 78, 197, 29, 18, 123, 145, 145, 72, 178, 134, 76, 77, 47, 223, 32, 49, 123, 82, 50, 101, 180, 180, 52, 22, 45, 65, 249, 240, 5, 243, 191, 91, 216, 103, 4, 140, 201, 107, 93, 96, 148, 215, 2, 115, 11, 181, 46, 159, 244, 244, 50, 30, 193, 62, 237, 209, 241, 118, 88, 131, 90, 228, 134, 64, 198, 118, 27, 150, 191, 199, 204, 94, 220, 75, 9, 110, 242, 250, 23, 53, 87, 131, 156, 92, 235, 37, 87, 70, 236, 49, 1, 0, 0, 139, 23, 79, 175, 81, 78, 45, 204, 20, 160, 38, 184, 176, 79, 255, 123, 41, 184, 12, 20, 252, 153, 136, 236, 103, 8, 60, 189, 152, 88, 211, 64, 116, 166, 107, 37, 14, 250, 234, 163, 8, 205, 126, 85, 214, 53, 33, 251, 187, 144, 243, 33, 161, 229, 201, 105, 27, 43, 111, 95, 38, 15, 216, 107, 75, 36, 116, 236, 255, 158, 218, 43, 249, 133, 116, 245, 124, 176, 186, 81, 122, 70, 74, 120, 103, 230, 37, 28, 96, 210, 253, 136, 245, 45, 160, 239, 159, 179}
+	if len(encoded) != len(expect) {
+		t.Fatalf("Expected encoded.length == %d, received %d", len(expect),  len(encoded))
+	}
+	if !bytes.Equal(encoded, expect) {
+		t.Fatalf("Expected %#x, received %#x", expect, encoded)
+	}
 }
 
 func TestMarshalUnmarshal(t *testing.T) {
