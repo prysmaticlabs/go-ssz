@@ -7,26 +7,26 @@ config: minimal
 runner: ssz
 handler: static
 test_cases:
-Attestation:
-  value:
-    aggregation_bitfield: nw==
-    data:
-      beacon_block_root: Qb1by7Dx172m7IcH13fG8T+mDeYoHF943j9hixqSPwM=
-      source_epoch: 3997959117937237000
-      source_root: Ry7q3sRjKMPMEiOennEgIQD43wE1xjf1+yrfKkpQ9jI=
-      target_epoch: 3777515321107143000
-      target_root: 8PewMvf35GJMBVxqKu8lQxBUTdGalgCYrbVWEE9a0U4=
-      crosslink:
-        shard: 12846677991095410000
-        start_epoch: 8876912483467349000
-        end_epoch: 3248842131919680000
-        parent_root: QfnwBfO/W9hnBIzJa11glNcCcwu1Lp/09DIewT7t0fE=
-        data_root: dliDWuSGQMZ2G5a/x8xe3EsJbvL6FzVXg5xc6yVXRuw=
-    custody_bitfield: sw==
-    signature: ixdPr1FOLcwUoCa4sE//eym4DBT8mYjsZwg8vZhY00B0pmslDvrqowjNflXWNSH7u5DzIaHlyWkbK29fJg/Ya0skdOz/ntor+YV09XywulF6Rkp4Z+YlHGDS/Yj1LaDv
-  serialized: MAEAAEG9W8uw8de9puyHB9d3xvE/pg3mKBxfeN4/YYsakj8DINsuu6KaezdHLurexGMow8wSI56ecSAhAPjfATXGN/X7Kt8qSlD2MqHaL6Arbmw08PewMvf35GJMBVxqKu8lQxBUTdGalgCYrbVWEE9a0U7FHRJ7kZFIsoZMTS/fIDF7UjJltLQ0Fi1B+fAF879b2GcEjMlrXWCU1wJzC7Uun/T0Mh7BPu3R8XZYg1rkhkDGdhuWv8fMXtxLCW7y+hc1V4OcXOslV0bsMQEAAIsXT69RTi3MFKAmuLBP/3spuAwU/JmI7GcIPL2YWNNAdKZrJQ766qMIzX5V1jUh+7uQ8yGh5clpGytvXyYP2GtLJHTs/57aK/mFdPV8sLpRekZKeGfmJRxg0v2I9S2g75+z
-  root: QatWuvNjCMHbHKNRiuWxt4PXSakWXsxxHDn97p7pV0I=
-  signing_root: ThtT5eXEGlz1w3wcXTO69H1III624HNLXjBjVJi+JCw=
+  - Attestation:
+      value:
+        aggregation_bitfield: nw==
+        data:
+          beacon_block_root: Qb1by7Dx172m7IcH13fG8T+mDeYoHF943j9hixqSPwM=
+          source_epoch: 3997959117937237000
+          source_root: Ry7q3sRjKMPMEiOennEgIQD43wE1xjf1+yrfKkpQ9jI=
+          target_epoch: 3777515321107143000
+          target_root: 8PewMvf35GJMBVxqKu8lQxBUTdGalgCYrbVWEE9a0U4=
+          crosslink:
+            shard: 12846677991095410000
+            start_epoch: 8876912483467349000
+            end_epoch: 3248842131919680000
+            parent_root: QfnwBfO/W9hnBIzJa11glNcCcwu1Lp/09DIewT7t0fE=
+            data_root: dliDWuSGQMZ2G5a/x8xe3EsJbvL6FzVXg5xc6yVXRuw=
+        custody_bitfield: sw==
+        signature: ixdPr1FOLcwUoCa4sE//eym4DBT8mYjsZwg8vZhY00B0pmslDvrqowjNflXWNSH7u5DzIaHlyWkbK29fJg/Ya0skdOz/ntor+YV09XywulF6Rkp4Z+YlHGDS/Yj1LaDv
+      serialized: MAEAAEG9W8uw8de9puyHB9d3xvE/pg3mKBxfeN4/YYsakj8DINsuu6KaezdHLurexGMow8wSI56ecSAhAPjfATXGN/X7Kt8qSlD2MqHaL6Arbmw08PewMvf35GJMBVxqKu8lQxBUTdGalgCYrbVWEE9a0U7FHRJ7kZFIsoZMTS/fIDF7UjJltLQ0Fi1B+fAF879b2GcEjMlrXWCU1wJzC7Uun/T0Mh7BPu3R8XZYg1rkhkDGdhuWv8fMXtxLCW7y+hc1V4OcXOslV0bsMQEAAIsXT69RTi3MFKAmuLBP/3spuAwU/JmI7GcIPL2YWNNAdKZrJQ766qMIzX5V1jUh+7uQ8yGh5clpGytvXyYP2GtLJHTs/57aK/mFdPV8sLpRekZKeGfmJRxg0v2I9S2g75+z
+      root: QatWuvNjCMHbHKNRiuWxt4PXSakWXsxxHDn97p7pV0I=
+      signing_root: ThtT5eXEGlz1w3wcXTO69H1III624HNLXjBjVJi+JCw=
   - Attestation:
       value:
         aggregation_bitfield: fw==

@@ -33,9 +33,22 @@ func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
 	case kind == reflect.Array:
 		return isVariableSizeType(val, typ.Elem())
 	case kind == reflect.Struct:
-		return true
+		for i := 0; i < typ.NumField(); i++ {
+			f := typ.Field(i)
+			if strings.Contains(f.Name, "XXX") {
+				continue
+			}
+			fType, err := fieldType(f)
+			if err != nil {
+				return false
+			}
+			if isVariableSizeType(val.Field(i), fType) {
+				return true
+			}
+		}
+		return false
 	case kind == reflect.Ptr:
-		return true
+		return isVariableSizeType(val.Elem(), val.Elem().Type())
 	}
 	return false
 }
