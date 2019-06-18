@@ -212,9 +212,7 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		var err error
 		for i, f := range fields {
 			if !isVariableSizeType(val.Field(i), f.typ) {
-				newVal := reflect.New(f.typ).Elem()
-				reflect.Copy(newVal.Slice(0, newVal.Len()), val.Field(i))
-				fixedIndex, err = f.sszUtils.marshaler(newVal, buf, fixedIndex)
+				fixedIndex, err = f.sszUtils.marshaler(val.Field(i), buf, fixedIndex)
 				if err != nil {
 					return 0, err
 				}
