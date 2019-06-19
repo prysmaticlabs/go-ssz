@@ -211,13 +211,13 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		nextOffsetIndex := currentOffsetIndex
 		var err error
 		for i, f := range fields {
-			//fmt.Printf("Writing %v\n", f.name)
 			if !isVariableSizeType(val.Field(i), f.typ) {
 				fixedIndex, err = f.sszUtils.marshaler(val.Field(i), buf, fixedIndex)
 				if err != nil {
 					return 0, err
 				}
 			} else {
+				fmt.Printf("Writing %v\n", f.name)
 				nextOffsetIndex, err = f.sszUtils.marshaler(val.Field(f.index), buf, currentOffsetIndex)
 				if err != nil {
 					return 0, err
