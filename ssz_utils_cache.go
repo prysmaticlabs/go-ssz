@@ -142,23 +142,37 @@ func unmarshalerStructFields(typ reflect.Type) (fields []field, err error) {
 	return fields, nil
 }
 
-func sszTagSize(tag string) (int, error) {
+func sszTagSizes(tag string) ([]int, error) {
 	sizeStartIndex := strings.IndexRune(tag, '=')
-	size, err := strconv.Atoi(tag[sizeStartIndex+1:])
-	if err != nil {
-		return 0, err
+	items := strings.Split(tag[sizeStartIndex+1:], ",")
+	sizes := make([]int, len(items))
+	var err error
+    for i := 0; i < len(items); i++ {
+		sizes[i], err = strconv.Atoi(items[i])
+		if err != nil {
+			return nil, err
+		}
 	}
-	return size, nil
+	return sizes, nil
 }
 
 func fieldType(field reflect.StructField) (reflect.Type, error) {
 	item, exists := field.Tag.Lookup("ssz")
 	if exists {
-		size, err := sszTagSize(item)
+		sizes, err := sszTagSizes(item)
 		if err != nil {
 			return nil, err
 		}
-		return reflect.ArrayOf(size, field.Type.Elem()), nil
+		if field.Type.Elem().Kind() == reflect.Slice {
+			if len(sizes) > 1 {
+				innerData := reflect.ArrayOf(sizes[1], field.Type.Elem().Elem())
+                return reflect.ArrayOf(sizes[0], innerData), nil
+			} else {
+				innerData := reflect.ArrayOf(sizes[0], field.Type.Elem().Elem())
+				return reflect.SliceOf(innerData), nil
+			}
+		}
+		return reflect.ArrayOf(sizes[0], field.Type.Elem()), nil
 	}
 	return field.Type, nil
 }

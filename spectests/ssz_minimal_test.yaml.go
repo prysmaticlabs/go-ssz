@@ -324,7 +324,7 @@ type SszMinimalTest struct {
 					Signature       []byte `json:"signature" ssz:"size=96"`
 				} `json:"attestations"`
 				Deposits []struct {
-					Proof [][]byte `json:"proof"`
+					Proof [][]byte `json:"proof" ssz:"size=32,32"`
 					Data  struct {
 						Pubkey                []byte `json:"pubkey" ssz:"size=48"`
 						WithdrawalCredentials []byte `json:"withdrawal_credentials" ssz:"size=32"`
@@ -483,7 +483,7 @@ type SszMinimalTest struct {
 		} `json:"Crosslink,omitempty"`
 		Deposit struct {
 			Value struct {
-				Proof [][]byte `json:"proof"`
+				Proof [][]byte `json:"proof" ssz:"size=32,32"`
 				Data  struct {
 					Pubkey                []byte `json:"pubkey" ssz:"size=48"`
 					WithdrawalCredentials []byte `json:"withdrawal_credentials" ssz:"size=32"`
@@ -525,8 +525,8 @@ type SszMinimalTest struct {
 		} `json:"Fork,omitempty"`
 		HistoricalBatch struct {
 			Value struct {
-				BlockRoots [][]byte `json:"block_roots"`
-				StateRoots [][]byte `json:"state_roots"`
+				BlockRoots [][]byte `json:"block_roots" ssz:"size=64,32"`
+				StateRoots [][]byte `json:"state_roots" ssz:"size=64,32"`
 			} `json:"value"`
 			Serialized []byte `json:"serialized"`
 			Root       []byte `json:"root" ssz:"size=32"`

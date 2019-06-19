@@ -154,7 +154,7 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 	marshaler := func(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 		index := startOffset
 		var err error
-		if !isVariableSizeType(val, typ.Elem()) {
+		if !isVariableSizeType(val, typ) {
 			for i := 0; i < val.Len(); i++ {
 				// If each element is not variable size, we simply encode sequentially and write
 				// into the buffer at the last index we wrote at.
@@ -211,6 +211,7 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		nextOffsetIndex := currentOffsetIndex
 		var err error
 		for i, f := range fields {
+			//fmt.Printf("Writing %v\n", f.name)
 			if !isVariableSizeType(val.Field(i), f.typ) {
 				fixedIndex, err = f.sszUtils.marshaler(val.Field(i), buf, fixedIndex)
 				if err != nil {
@@ -230,6 +231,7 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 				currentOffsetIndex = nextOffsetIndex
 				fixedIndex += uint64(BytesPerLengthOffset)
 			}
+			//fmt.Println(buf)
 		}
 		return currentOffsetIndex, nil
 	}
