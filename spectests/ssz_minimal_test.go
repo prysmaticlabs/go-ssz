@@ -104,12 +104,8 @@ func TestYaml(t *testing.T) {
 		//	}
 		//}
 		if !isEmpty(testCase.BeaconBlockBody.Value) {
-			fmt.Println(testCase.BeaconBlockBody.Value)
-			fmt.Println(" ")
-			fmt.Println(" ")
-			fmt.Println(" ")
-			fmt.Println(" ")
 			fmt.Println(testCase.BeaconBlockBody.Serialized)
+			fmt.Println(" ")
 			encoded, err := ssz.Marshal(testCase.BeaconBlockBody.Value)
 			if err != nil {
 				t.Fatal(err)

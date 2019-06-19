@@ -29,6 +29,7 @@ func Marshal(val interface{}) ([]byte, error) {
 
 	// We pre-allocate a buffer-size depending on the value's size.
 	buf := make([]byte, determineSize(rval))
+	fmt.Printf("Alloc buf size: %d\n", len(buf))
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
 		return nil, newMarshalError(fmt.Sprint(err), rval.Type())
@@ -231,7 +232,7 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 				currentOffsetIndex = nextOffsetIndex
 				fixedIndex += uint64(BytesPerLengthOffset)
 			}
-			//fmt.Println(buf)
+			fmt.Println(buf)
 		}
 		return currentOffsetIndex, nil
 	}
