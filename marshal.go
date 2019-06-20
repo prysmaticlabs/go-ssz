@@ -29,6 +29,7 @@ func Marshal(val interface{}) ([]byte, error) {
 
 	// We pre-allocate a buffer-size depending on the value's size.
 	buf := make([]byte, determineSize(rval))
+	fmt.Printf("Alloc buf size: %d\n", len(buf))
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
 		return nil, newMarshalError(fmt.Sprint(err), rval.Type())
@@ -214,26 +215,37 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		var err error
 		for i, f := range fields {
 			if !isVariableSizeType(f.typ) {
+				fmt.Printf("Writing fixed sized %v of type %v at index %v\n", f.name, f.typ, fixedIndex)
+				fmt.Println("--Before")
+				fmt.Println(buf)
 				fixedIndex, err = f.sszUtils.marshaler(val.Field(i), buf, fixedIndex)
 				if err != nil {
 					return 0, err
 				}
+				fmt.Println("--After")
+				fmt.Println(buf)
+				fmt.Println(" ")
 			} else {
-				fmt.Printf("Writing %v\n", f.name)
+				fmt.Printf("Writing variable sized %v of type %v at index %v\n", f.name, f.typ, currentOffsetIndex)
+				fmt.Println("--Before")
+				fmt.Println(buf)
 				nextOffsetIndex, err = f.sszUtils.marshaler(val.Field(f.index), buf, currentOffsetIndex)
 				if err != nil {
 					return 0, err
 				}
+				fmt.Println("--After")
+				fmt.Println(buf)
+				fmt.Println(" ")
 				// Write the offset.
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
+				fmt.Printf("Wrote offset: %d\n", offsetBuf)
 				copy(buf[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
 
 				// We increase the offset indices accordingly.
 				currentOffsetIndex = nextOffsetIndex
 				fixedIndex += uint64(BytesPerLengthOffset)
 			}
-			//fmt.Println(buf)
 		}
 		return currentOffsetIndex, nil
 	}

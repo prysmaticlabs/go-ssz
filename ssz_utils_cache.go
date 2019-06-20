@@ -147,7 +147,7 @@ func sszTagSizes(tag string) ([]int, error) {
 	items := strings.Split(tag[sizeStartIndex+1:], ",")
 	sizes := make([]int, len(items))
 	var err error
-    for i := 0; i < len(items); i++ {
+	for i := 0; i < len(items); i++ {
 		sizes[i], err = strconv.Atoi(items[i])
 		if err != nil {
 			return nil, err
@@ -166,7 +166,7 @@ func fieldType(field reflect.StructField) (reflect.Type, error) {
 		if field.Type.Elem().Kind() == reflect.Slice {
 			if len(sizes) > 1 {
 				innerData := reflect.ArrayOf(sizes[1], field.Type.Elem().Elem())
-                return reflect.ArrayOf(sizes[0], innerData), nil
+				return reflect.ArrayOf(sizes[0], innerData), nil
 			} else {
 				innerData := reflect.ArrayOf(sizes[0], field.Type.Elem().Elem())
 				return reflect.SliceOf(innerData), nil
