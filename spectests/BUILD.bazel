@@ -5,6 +5,7 @@ go_library(
     srcs = ["ssz_minimal_test.yaml.go"],
     importpath = "github.com/prysmaticlabs/go-ssz/spectests",
     visibility = ["//visibility:public"],
+    testonly = True,
 )
 
 go_test(
