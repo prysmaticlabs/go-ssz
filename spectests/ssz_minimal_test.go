@@ -97,29 +97,29 @@ func TestYaml(t *testing.T) {
 		//		t.Fatal(err)
 		//	}
 		//	if !bytes.Equal(root[:], testCase.BeaconBlock.Root) {
-		//		t.Fatalf("Expected %#x, received %#x", testCase.BeaconBlock.Root, root[:])
+		//		t.Fatalf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Root, root[:])
 		//	}
 		//	if !bytes.Equal(encoded, testCase.BeaconBlock.Serialized) {
-		//		t.Fatalf("Expected %#x, received %#x", testCase.BeaconBlock.Serialized, encoded)
+		//		t.Fatalf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Serialized, encoded)
 		//	}
 		//}
-		if !isEmpty(testCase.BeaconBlockBody.Value) {
-			fmt.Println(testCase.BeaconBlockBody.Value)
-			encoded, err := ssz.Marshal(testCase.BeaconBlockBody.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlockBody.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlockBody.Root) {
-				t.Fatalf("Expected %#x, received %#x", testCase.BeaconBlockBody.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlockBody.Serialized) {
-				t.Fatalf("Expected %#x, received %#x", testCase.BeaconBlockBody.Serialized, encoded)
-			}
-		}
+		//if !isEmpty(testCase.BeaconBlockBody.Value) {
+		//	encoded, err := ssz.Marshal(testCase.BeaconBlockBody.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	root, err := ssz.HashTreeRoot(testCase.BeaconBlockBody.Value)
+		//	if err != nil {
+		//		t.Fatal(err)
+		//	}
+		//	if !bytes.Equal(root[:], testCase.BeaconBlockBody.Root) {
+		//		t.Fatalf("Expected %#x, received %#x", testCase.BeaconBlockBody.Root, root[:])
+		//	}
+		//	if !bytes.Equal(encoded, testCase.BeaconBlockBody.Serialized) {
+		//		t.Fatalf("Expected %#x, received %#x", testCase.BeaconBlockBody.Serialized, encoded)
+		//	}
+		//	fmt.Println("Passes")
+		//}
 		//if !isEmpty(testCase.BeaconBlockHeader.Value) {
 		//	encoded, err := ssz.Marshal(testCase.BeaconBlockHeader.Value)
 		//	if err != nil {
@@ -136,22 +136,23 @@ func TestYaml(t *testing.T) {
 		//		t.Fatalf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Serialized, encoded)
 		//	}
 		//}
-		//if !isEmpty(testCase.BeaconState.Value) {
-		//	encoded, err := ssz.Marshal(testCase.BeaconState.Value)
-		//	if err != nil {
-		//		t.Fatal(err)
-		//	}
-		//	root, err := ssz.HashTreeRoot(testCase.BeaconState.Value)
-		//	if err != nil {
-		//		t.Fatal(err)
-		//	}
-		//	if !bytes.Equal(root[:], testCase.BeaconState.Root) {
-		//		t.Fatalf("Expected beacon state %#x, received %#x", testCase.BeaconState.Root, root[:])
-		//	}
-		//	if !bytes.Equal(encoded, testCase.BeaconState.Serialized) {
-		//		t.Fatalf("Expected beacon state %#x, received %#x", testCase.BeaconState.Serialized, encoded)
-		//	}
-		//}
+		if !isEmpty(testCase.BeaconState.Value) {
+			encoded, err := ssz.Marshal(testCase.BeaconState.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			root, err := ssz.HashTreeRoot(testCase.BeaconState.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(root[:], testCase.BeaconState.Root) {
+				t.Fatalf("Expected beacon state %#x, received %#x", testCase.BeaconState.Root, root[:])
+			}
+			if !bytes.Equal(encoded, testCase.BeaconState.Serialized) {
+				t.Fatalf("Expected beacon state %#x, received %#x", testCase.BeaconState.Serialized, encoded)
+			}
+			fmt.Println("PASSESSSSS")
+		}
 		//if !isEmpty(testCase.Crosslink.Value) {
 		//	encoded, err := ssz.Marshal(testCase.Crosslink.Value)
 		//	if err != nil {

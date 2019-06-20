@@ -71,8 +71,11 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return uint64(val.Len())
 	case kind == reflect.Array || kind == reflect.Slice:
-		num := determineFixedSize(val, typ.Elem()) * uint64(typ.Len())
-		return num
+		var num uint64
+		for i := 0; i < typ.Len(); i++ {
+			num += determineFixedSize(val.Index(i), typ.Elem())
+		}
+		return num*uint64(typ.Len())
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
 		for i := 0; i < typ.NumField(); i++ {
@@ -99,7 +102,6 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 		return uint64(val.Len())
 	case kind == reflect.Slice || kind == reflect.Array:
 		totalSize := uint64(0)
-		//fmt.Printf("Slice of type %v size %d\n", typ, val.Len())
 		for i := 0; i < val.Len(); i++ {
 			varSize := determineSize(val.Index(i))
 			if isVariableSizeType(typ.Elem()) {
@@ -117,23 +119,11 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 				return 0
 			}
 			if isVariableSizeType(fType) {
-				//fmt.Println("--Variable field")
-				//fmt.Println(typ.Field(i).Name)
-				//fmt.Println(fType)
 				varSize := determineVariableSize(val.Field(i), fType)
-				//fmt.Println(varSize+uint64(BytesPerLengthOffset))
 				totalSize += varSize + uint64(BytesPerLengthOffset)
-				//fmt.Println(" ")
-				//fmt.Println(" ")
 			} else {
-				//fmt.Println("--Fixed field")
-				//fmt.Println(typ.Field(i).Name)
-				//fmt.Println(fType)
 				varSize := determineFixedSize(val.Field(i), fType)
-				//fmt.Println(varSize)
 				totalSize += varSize
-				//fmt.Println(" ")
-				//fmt.Println(" ")
 			}
 		}
 		return totalSize

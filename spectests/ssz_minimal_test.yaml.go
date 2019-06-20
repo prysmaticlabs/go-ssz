@@ -209,7 +209,7 @@ type SszMinimalTest struct {
 						Signature       []byte `json:"signature" ssz:"size=96"`
 					} `json:"attestations"`
 					Deposits []struct {
-						Proof [][]byte `json:"proof"`
+						Proof [][]byte `json:"proof" ssz:"size=32,32"`
 						Data  struct {
 							Pubkey                []byte `json:"pubkey" ssz:"size=48"`
 							WithdrawalCredentials []byte `json:"withdrawal_credentials" ssz:"size=32"`
@@ -367,8 +367,8 @@ type SszMinimalTest struct {
 				Slot        uint64 `json:"slot"`
 				GenesisTime uint64 `json:"genesis_time"`
 				Fork        struct {
-					PreviousVersion []byte `json:"previous_version"`
-					CurrentVersion  []byte `json:"current_version"`
+					PreviousVersion []byte `json:"previous_version" ssz:"size=4"`
+					CurrentVersion  []byte `json:"current_version" ssz:"size=4"`
 					Epoch           uint64 `json:"epoch"`
 				} `json:"fork"`
 				ValidatorRegistry []struct {
@@ -382,7 +382,7 @@ type SszMinimalTest struct {
 					EffectiveBalance           uint64 `json:"effective_balance"`
 				} `json:"validator_registry"`
 				Balances                  []uint64 `json:"balances"`
-				LatestRandaoMixes         [][]byte `json:"latest_randao_mixes"`
+				LatestRandaoMixes         [][]byte `json:"latest_randao_mixes" ssz:"size=64"`
 				LatestStartShard          uint64   `json:"latest_start_shard"`
 				PreviousEpochAttestations []struct {
 					AggregationBitfield []byte `json:"aggregation_bitfield"`
@@ -435,18 +435,18 @@ type SszMinimalTest struct {
 					EndEpoch   uint64 `json:"end_epoch"`
 					ParentRoot []byte `json:"parent_root" ssz:"size=32"`
 					DataRoot   []byte `json:"data_root" ssz:"size=32"`
-				} `json:"current_crosslinks"`
+				} `json:"current_crosslinks" ssz:"size=8"`
 				PreviousCrosslinks []struct {
 					Shard      uint64 `json:"shard"`
 					StartEpoch uint64 `json:"start_epoch"`
 					EndEpoch   uint64 `json:"end_epoch"`
 					ParentRoot []byte `json:"parent_root" ssz:"size=32"`
 					DataRoot   []byte `json:"data_root" ssz:"size=32"`
-				} `json:"previous_crosslinks"`
-				LatestBlockRoots       [][]byte `json:"latest_block_roots"`
-				LatestStateRoots       [][]byte `json:"latest_state_roots"`
-				LatestActiveIndexRoots [][]byte `json:"latest_active_index_roots"`
-				LatestSlashedBalances  []uint64 `json:"latest_slashed_balances"`
+				} `json:"previous_crosslinks" ssz:"size=8"`
+				LatestBlockRoots       [][]byte `json:"latest_block_roots" ssz:"size=64,32"`
+				LatestStateRoots       [][]byte `json:"latest_state_roots" ssz:"size=64,32"`
+				LatestActiveIndexRoots [][]byte `json:"latest_active_index_roots" ssz:"size=64,32"`
+				LatestSlashedBalances  []uint64 `json:"latest_slashed_balances" ssz:"size=64"`
 				LatestBlockHeader      struct {
 					Slot       uint64 `json:"slot"`
 					ParentRoot []byte `json:"parent_root" ssz:"size=32"`
@@ -454,7 +454,7 @@ type SszMinimalTest struct {
 					BodyRoot   []byte `json:"body_root" ssz:"size=32"`
 					Signature  []byte `json:"signature" ssz:"size=96"`
 				} `json:"latest_block_header"`
-				HistoricalRoots [][]byte `json:"historical_roots"`
+				HistoricalRoots [][]byte `json:"historical_roots" size=,32`
 				LatestEth1Data  struct {
 					DepositRoot  []byte `json:"deposit_root" ssz:"size=32"`
 					DepositCount uint64 `json:"deposit_count"`

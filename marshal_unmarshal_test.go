@@ -79,13 +79,10 @@ func TestSpecVector(t *testing.T) {
 			},
 		},
 	}
-	fmt.Println(item)
-	fmt.Println(" ")
 	encoded, err := Marshal(item)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(encoded)
 	//ptr := new(NestedItem)
 	//if err := Unmarshal(encoded, ptr); err != nil {
 	//	t.Fatal(err)
