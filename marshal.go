@@ -226,13 +226,13 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 				// Write the offset.
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
+				fmt.Printf("Wrote offset: %d\n", offsetBuf)
 				copy(buf[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
 
 				// We increase the offset indices accordingly.
 				currentOffsetIndex = nextOffsetIndex
 				fixedIndex += uint64(BytesPerLengthOffset)
 			}
-			fmt.Println(buf)
 		}
 		return currentOffsetIndex, nil
 	}
