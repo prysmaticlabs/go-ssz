@@ -50,21 +50,28 @@ type Attestation struct {
 
 type Inner struct {
 	C []byte
-	D uint64
+	D byte
 }
 
 type NestedItem struct {
-	A uint64
+	A byte
 	B []Inner
+	Z []Inner
 }
 
 func TestSpecVector(t *testing.T) {
 	item := NestedItem{
-		A: 7,
+		A: byte(1),
 		B: []Inner{
 			{
-				C: []byte{3},
-				D: 8,
+				C: []byte{2},
+				D: byte(3),
+			},
+		},
+		Z: []Inner{
+			{
+				C: []byte{4},
+				D: byte(5),
 			},
 		},
 	}
