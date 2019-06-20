@@ -49,3 +49,15 @@ go_repository(
 
 # Do not add go dependencies here. They must be added in deps.bzl to provide
 # dependencies to downstream bazel projects.
+
+go_repository(
+    name = "com_github_ghodss_yaml",
+    commit = "25d852aebe32c875e9c044af3eef9c7dc6bc777f",
+    importpath = "github.com/ghodss/yaml",
+)
+
+go_repository(
+    name = "in_gopkg_yaml_v2",
+    commit = "51d6538a90f86fe93ac480b35f37b2be17fef232",
+    importpath = "gopkg.in/yaml.v2",
+)
