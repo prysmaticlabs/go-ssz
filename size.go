@@ -21,7 +21,7 @@ func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
 	return kind == reflect.Slice && isBasicType(typ.Elem().Kind())
 }
 
-func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
+func isVariableSizeType(typ reflect.Type) bool {
 	kind := typ.Kind()
 	switch {
 	case isBasicType(kind):
@@ -31,7 +31,7 @@ func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
 	case kind == reflect.Slice:
 		return true
 	case kind == reflect.Array:
-		return isVariableSizeType(val, typ.Elem())
+		return isVariableSizeType(typ.Elem())
 	case kind == reflect.Struct:
 		for i := 0; i < typ.NumField(); i++ {
 			f := typ.Field(i)
@@ -42,13 +42,13 @@ func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
 			if err != nil {
 				return false
 			}
-			if isVariableSizeType(val.Field(i), fType) {
+			if isVariableSizeType(fType) {
 				return true
 			}
 		}
 		return false
 	case kind == reflect.Ptr:
-		return isVariableSizeType(val.Elem(), val.Elem().Type())
+		return isVariableSizeType(typ.Elem())
 	}
 	return false
 }
@@ -102,7 +102,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 		//fmt.Printf("Slice of type %v size %d\n", typ, val.Len())
 		for i := 0; i < val.Len(); i++ {
 			varSize := determineSize(val.Index(i))
-			if isVariableSizeType(val.Index(i), typ.Elem()) {
+			if isVariableSizeType(typ.Elem()) {
 				totalSize += varSize + uint64(BytesPerLengthOffset)
 			} else {
 				totalSize += varSize
@@ -116,7 +116,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 			if err != nil {
 				return 0
 			}
-			if isVariableSizeType(val.Field(i), fType) {
+			if isVariableSizeType(fType) {
 				//fmt.Println("--Variable field")
 				//fmt.Println(typ.Field(i).Name)
 				//fmt.Println(fType)
@@ -148,7 +148,7 @@ func determineSize(val reflect.Value) uint64 {
 	if val.Kind() == reflect.Ptr {
 		return determineSize(val.Elem())
 	}
-	if isVariableSizeType(val, val.Type()) {
+	if isVariableSizeType(val.Type()) {
 		return determineVariableSize(val, val.Type())
 	}
 	return determineFixedSize(val, val.Type())

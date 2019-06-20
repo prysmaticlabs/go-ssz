@@ -60,6 +60,8 @@ func makeMarshaler(typ reflect.Type) (marshaler, error) {
 		return makeBasicSliceMarshaler(typ)
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
 		return makeBasicSliceMarshaler(typ)
+	case kind == reflect.Slice && !isVariableSizeType(typ.Elem()):
+		return makeBasicSliceMarshaler(typ)
 	case kind == reflect.Slice || kind == reflect.Array:
 		return makeCompositeSliceMarshaler(typ)
 	case kind == reflect.Struct:
@@ -154,7 +156,7 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 	marshaler := func(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 		index := startOffset
 		var err error
-		if !isVariableSizeType(val, typ) {
+		if !isVariableSizeType(typ) {
 			for i := 0; i < val.Len(); i++ {
 				// If each element is not variable size, we simply encode sequentially and write
 				// into the buffer at the last index we wrote at.
@@ -200,8 +202,8 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		fixedLength := uint64(0)
 		// For every field, we add up the total length of the items depending if they
 		// are variable or fixed-size fields.
-		for i, f := range fields {
-			if isVariableSizeType(val.Field(i), f.typ) {
+		for _, f := range fields {
+			if isVariableSizeType(f.typ) {
 				fixedLength += uint64(BytesPerLengthOffset)
 			} else {
 				fixedLength += determineFixedSize(val.Field(f.index), f.typ)
@@ -211,7 +213,7 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		nextOffsetIndex := currentOffsetIndex
 		var err error
 		for i, f := range fields {
-			if !isVariableSizeType(val.Field(i), f.typ) {
+			if !isVariableSizeType(f.typ) {
 				fixedIndex, err = f.sszUtils.marshaler(val.Field(i), buf, fixedIndex)
 				if err != nil {
 					return 0, err

@@ -294,7 +294,7 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		fixedSizes := make([]uint64, len(fields))
 
 		for i := 0; i < len(fixedSizes); i++ {
-			if !isVariableSizeType(val.Field(i), fields[i].typ) {
+			if !isVariableSizeType(fields[i].typ) {
 				fixedSz := determineFixedSize(val.Field(i), fields[i].typ)
 				if fixedSz > 0 {
 					fixedSizes[i] = fixedSz
