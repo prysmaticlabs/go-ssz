@@ -29,7 +29,6 @@ func Marshal(val interface{}) ([]byte, error) {
 
 	// We pre-allocate a buffer-size depending on the value's size.
 	buf := make([]byte, determineSize(rval))
-	fmt.Println(len(buf))
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
 		return nil, newMarshalError(fmt.Sprint(err), rval.Type())

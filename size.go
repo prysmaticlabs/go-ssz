@@ -1,6 +1,7 @@
 package ssz
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -75,7 +76,7 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 		for i := 0; i < typ.Len(); i++ {
 			num += determineFixedSize(val.Index(i), typ.Elem())
 		}
-		return num*uint64(typ.Len())
+		return num
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
 		for i := 0; i < typ.NumField(); i++ {
@@ -118,12 +119,17 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 			if err != nil {
 				return 0
 			}
+			fmt.Println("--Running")
+			fmt.Println(typ.Field(i).Name)
+			fmt.Println(fType)
 			if isVariableSizeType(fType) {
 				varSize := determineVariableSize(val.Field(i), fType)
 				totalSize += varSize + uint64(BytesPerLengthOffset)
+                fmt.Printf("Is variable: %v\n", totalSize)
 			} else {
 				varSize := determineFixedSize(val.Field(i), fType)
 				totalSize += varSize
+				fmt.Printf("Is fixed: %v\n", totalSize)
 			}
 		}
 		return totalSize
