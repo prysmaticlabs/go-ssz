@@ -148,6 +148,11 @@ func sszTagSizes(tag string) ([]int, error) {
 	sizes := make([]int, len(items))
 	var err error
 	for i := 0; i < len(items); i++ {
+		if items[i] == "?" {
+			// TODO: find a way to handle this nicely.
+			sizes[i] = 0
+			continue
+		}
 		sizes[i], err = strconv.Atoi(items[i])
 		if err != nil {
 			return nil, err
@@ -166,6 +171,9 @@ func fieldType(field reflect.StructField) (reflect.Type, error) {
 		if field.Type.Elem().Kind() == reflect.Slice {
 			if len(sizes) > 1 {
 				innerData := reflect.ArrayOf(sizes[1], field.Type.Elem().Elem())
+				if sizes[0] == 0 {
+					return reflect.SliceOf(innerData), nil
+				}
 				return reflect.ArrayOf(sizes[0], innerData), nil
 			} else {
 				innerData := reflect.ArrayOf(sizes[0], field.Type.Elem().Elem())
