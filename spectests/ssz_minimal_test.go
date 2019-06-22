@@ -8,10 +8,12 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/prysmaticlabs/go-ssz"
+	pb "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
+	"github.com/prysmaticlabs/prysm/shared/testutil"
 )
 
 func TestYaml(t *testing.T) {
-	file, err := ioutil.ReadFile("./yaml/ssz_minimal_zero_formatted.yaml")
+	file, err := ioutil.ReadFile("ssz_minimal_zero.yaml")
 	if err != nil {
 		t.Fatalf("Could not load file %v", err)
 	}
@@ -159,8 +161,19 @@ func TestYaml(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			pbCrosslink := &pb.Crosslink{}
+			if err := testutil.ConvertToPb(testCase.Crosslink.Value, pbCrosslink); err != nil {
+				t.Fatal(err)
+			}
+			pbRoot, err := ssz.HashTreeRoot(pbCrosslink)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.Crosslink.Root) {
 				t.Fatalf("Expected crosslink %#x, received %#x", testCase.Crosslink.Root, root[:])
+			}
+			if !bytes.Equal(pbRoot[:], testCase.Crosslink.Root) {
+				t.Fatalf("Expected crosslink %#x, received %#x", testCase.Crosslink.Root, pbRoot[:])
 			}
 			if !bytes.Equal(encoded, testCase.Crosslink.Serialized) {
 				t.Fatalf("Expected crosslink %#x, received %#x", testCase.Crosslink.Serialized, encoded)
