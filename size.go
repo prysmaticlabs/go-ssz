@@ -1,7 +1,6 @@
 package ssz
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 )
@@ -119,17 +118,12 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 			if err != nil {
 				return 0
 			}
-			fmt.Println("--Running")
-			fmt.Println(typ.Field(i).Name)
-			fmt.Println(fType)
 			if isVariableSizeType(fType) {
 				varSize := determineVariableSize(val.Field(i), fType)
 				totalSize += varSize + uint64(BytesPerLengthOffset)
-                fmt.Printf("Is variable: %v\n", totalSize)
 			} else {
 				varSize := determineFixedSize(val.Field(i), fType)
 				totalSize += varSize
-				fmt.Printf("Is fixed: %v\n", totalSize)
 			}
 		}
 		return totalSize

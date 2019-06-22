@@ -11,7 +11,7 @@ import (
 )
 
 func TestYaml(t *testing.T) {
-	file, err := ioutil.ReadFile("ssz_minimal_one_formatted.yaml")
+	file, err := ioutil.ReadFile("./yaml/ssz_minimal_zero_formatted.yaml")
 	if err != nil {
 		t.Fatalf("Could not load file %v", err)
 	}
@@ -147,7 +147,7 @@ func TestYaml(t *testing.T) {
 				t.Fatalf("Expected beacon state %#x, received %#x", testCase.BeaconState.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.BeaconState.Serialized) {
-               t.Fatal("Serializations do not match")
+				t.Fatal("Serializations do not match")
 			}
 		}
 		if !isEmpty(testCase.Crosslink.Value) {

@@ -198,9 +198,6 @@ func makeCompositeSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 				nextOffsetVal := input[nextIndex : nextIndex+uint64(BytesPerLengthOffset)]
 				nextOffset = startOffset + uint64(binary.LittleEndian.Uint32(nextOffsetVal))
 			}
-			if currentOffset > nextOffset {
-				return 0, errors.New("offsets must be increasing")
-			}
 			// We grow the slice's size to accommodate a new element being unmarshald.
 			makeSliceType(typ, val, i+1)
 			if _, err := elemSSZUtils.unmarshaler(input[currentOffset:nextOffset], val.Index(i), 0); err != nil {
@@ -303,6 +300,7 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 				fixedSizes[i] = 0
 			}
 		}
+		fmt.Println(fixedSizes)
 
 		offsets := make([]uint64, 0)
 		offsetIndexCounter := startOffset
@@ -316,12 +314,15 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 			}
 		}
 		offsets = append(offsets, endOffset)
+		fmt.Println(offsets)
 
 		offsetIndex := uint64(0)
 		for i := 0; i < len(fields); i++ {
 			f := fields[i]
 			fieldSize := fixedSizes[i]
 			if fieldSize > 0 {
+				fmt.Println("is fixed field")
+				fmt.Println(currentIndex)
 				nextIndex = currentIndex + fieldSize
 				if _, err := f.sszUtils.unmarshaler(input[currentIndex:nextIndex], val.Field(i), 0); err != nil {
 					return 0, err

@@ -2,3 +2,4 @@
 bazel-*
 .idea
 .ijwb
+spectests/yaml/*.yaml
