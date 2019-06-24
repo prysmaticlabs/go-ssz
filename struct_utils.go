@@ -59,7 +59,7 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 
 		// We determine the SSZ utils for the field, including its respective
 		// marshaler, unmarshaler, and hasher.
-		utils, err := cachedSSZUtilsNoAcquireLock(f.Type)
+		utils, err := cachedSSZUtilsNoAcquireLock(fieldType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 		}
