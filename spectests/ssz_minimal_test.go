@@ -31,12 +31,11 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.Attestation.Root) {
-				t.Fatalf("Expected attestation %#x, received %#x", testCase.Attestation.Root, root[:])
+				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Attestation.Serialized) {
-				t.Fatalf("Expected attestation %#x, received %#x", testCase.Attestation.Serialized, encoded)
+				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Serialized, encoded)
 			}
-
 		}
 		if !isEmpty(testCase.AttestationData.Value) {
 			encoded, err := ssz.Marshal(testCase.AttestationData.Value)
@@ -48,10 +47,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.AttestationData.Root) {
-				t.Fatalf("Expected attestation data %#x, received %#x", testCase.AttestationData.Root, root[:])
+				t.Errorf("Expected attestation data %#x, received %#x", testCase.AttestationData.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.AttestationData.Serialized) {
-				t.Fatalf("Expected attestation data %#x, received %#x", testCase.AttestationData.Serialized, encoded)
+				t.Errorf("Expected attestation data %#x, received %#x", testCase.AttestationData.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.AttestationDataAndCustodyBit.Value) {
@@ -64,10 +63,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.AttestationDataAndCustodyBit.Root) {
-				t.Fatalf("Expected attestation custody bit %#x, received %#x", testCase.AttestationDataAndCustodyBit.Root, root[:])
+				t.Errorf("Expected attestation custody bit %#x, received %#x", testCase.AttestationDataAndCustodyBit.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.AttestationDataAndCustodyBit.Serialized) {
-				t.Fatalf("Expected attestation custody bit %#x, received %#x", testCase.AttestationDataAndCustodyBit.Serialized, encoded)
+				t.Errorf("Expected attestation custody bit %#x, received %#x", testCase.AttestationDataAndCustodyBit.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.AttesterSlashing.Value) {
@@ -80,10 +79,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.AttesterSlashing.Root) {
-				t.Fatalf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Root, root[:])
+				t.Errorf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.AttesterSlashing.Serialized) {
-				t.Fatalf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Serialized, encoded)
+				t.Errorf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.BeaconBlock.Value) {
@@ -96,10 +95,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.BeaconBlock.Root) {
-				t.Fatalf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Root, root[:])
+				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.BeaconBlock.Serialized) {
-				t.Fatalf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Serialized, encoded)
+				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.BeaconBlockBody.Value) {
@@ -112,10 +111,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.BeaconBlockBody.Root) {
-				t.Fatalf("Expected %#x, received %#x", testCase.BeaconBlockBody.Root, root[:])
+				t.Errorf("Expected %#x, received %#x", testCase.BeaconBlockBody.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.BeaconBlockBody.Serialized) {
-				t.Fatalf("Expected %#x, received %#x", testCase.BeaconBlockBody.Serialized, encoded)
+				t.Errorf("Expected %#x, received %#x", testCase.BeaconBlockBody.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.BeaconBlockHeader.Value) {
@@ -128,10 +127,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.BeaconBlockHeader.Root) {
-				t.Fatalf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Root, root[:])
+				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.BeaconBlockHeader.Serialized) {
-				t.Fatalf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Serialized, encoded)
+				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.BeaconState.Value) {
@@ -144,10 +143,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.BeaconState.Root) {
-				t.Fatalf("Expected beacon state %#x, received %#x", testCase.BeaconState.Root, root[:])
+				t.Errorf("Expected beacon state %#x, received %#x", testCase.BeaconState.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.BeaconState.Serialized) {
-				t.Fatal("Serializations do not match")
+				t.Errorf("Serializations do not match")
 			}
 		}
 		if !isEmpty(testCase.Crosslink.Value) {
@@ -160,10 +159,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.Crosslink.Root) {
-				t.Fatalf("Expected crosslink %#x, received %#x", testCase.Crosslink.Root, root[:])
+				t.Errorf("Expected crosslink %#x, received %#x", testCase.Crosslink.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Crosslink.Serialized) {
-				t.Fatalf("Expected crosslink %#x, received %#x", testCase.Crosslink.Serialized, encoded)
+				t.Errorf("Expected crosslink %#x, received %#x", testCase.Crosslink.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.Deposit.Value) {
@@ -176,10 +175,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.Deposit.Root) {
-				t.Fatalf("Expected deposit %#x, received %#x", testCase.Deposit.Root, root[:])
+				t.Errorf("Expected deposit %#x, received %#x", testCase.Deposit.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Deposit.Serialized) {
-				t.Fatalf("Expected deposit %#x, received %#x", testCase.Deposit.Serialized, encoded)
+				t.Errorf("Expected deposit %#x, received %#x", testCase.Deposit.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.DepositData.Value) {
@@ -192,10 +191,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.DepositData.Root) {
-				t.Fatalf("Expected deposit data %#x, received %#x", testCase.DepositData.Root, root[:])
+				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.DepositData.Serialized) {
-				t.Fatalf("Expected deposit data %#x, received %#x", testCase.DepositData.Serialized, encoded)
+				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.Eth1Data.Value) {
@@ -208,10 +207,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.Eth1Data.Root) {
-				t.Fatalf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Root, root[:])
+				t.Errorf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Eth1Data.Serialized) {
-				t.Fatalf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Serialized, encoded)
+				t.Errorf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.Fork.Value) {
@@ -240,10 +239,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.HistoricalBatch.Root) {
-				t.Fatalf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Root, root[:])
+				t.Errorf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.HistoricalBatch.Serialized) {
-				t.Fatalf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Serialized, encoded)
+				t.Errorf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.IndexedAttestation.Value) {
@@ -256,10 +255,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.IndexedAttestation.Root) {
-				t.Fatalf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Root, root[:])
+				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.IndexedAttestation.Serialized) {
-				t.Fatalf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Serialized, encoded)
+				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.PendingAttestation.Value) {
@@ -272,10 +271,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.PendingAttestation.Root) {
-				t.Fatalf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Root, root[:])
+				t.Errorf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.PendingAttestation.Serialized) {
-				t.Fatalf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Serialized, encoded)
+				t.Errorf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.ProposerSlashing.Value) {
@@ -288,10 +287,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.ProposerSlashing.Root) {
-				t.Fatalf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Root, root[:])
+				t.Errorf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.ProposerSlashing.Serialized) {
-				t.Fatalf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Serialized, encoded)
+				t.Errorf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.Transfer.Value) {
@@ -304,10 +303,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.Transfer.Root) {
-				t.Fatalf("Expected transfer %#x, received %#x", testCase.Transfer.Root, root[:])
+				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Transfer.Serialized) {
-				t.Fatalf("Expected transfer %#x, received %#x", testCase.Transfer.Serialized, encoded)
+				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.Validator.Value) {
@@ -320,10 +319,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.Validator.Root) {
-				t.Fatalf("Expected validator %#x, received %#x", testCase.Validator.Root, root[:])
+				t.Errorf("Expected validator %#x, received %#x", testCase.Validator.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Validator.Serialized) {
-				t.Fatalf("Expected validator %#x, received %#x", testCase.Validator.Serialized, encoded)
+				t.Errorf("Expected validator %#x, received %#x", testCase.Validator.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.VoluntaryExit.Value) {
@@ -336,10 +335,10 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(root[:], testCase.VoluntaryExit.Root) {
-				t.Fatalf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Root, root[:])
+				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.VoluntaryExit.Serialized) {
-				t.Fatalf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Serialized, encoded)
+				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Serialized, encoded)
 			}
 		}
 	}
