@@ -101,11 +101,20 @@ func mixInLength(root [32]byte, length []byte) [32]byte {
 	return hash(append(root[:], length...))
 }
 
-// fast verification to check if an number if a power of two.
+// Fast verification to check if an number if a power of two.
 func isPowerTwo(n int) bool {
 	return n != 0 && (n&(n-1)) == 0
 }
 
+// Instantiates a reflect value which may not have a concrete type to have a concrete type
+// for unmarshaling. For example, we cannot unmarshal into a nil value - instead, it must have
+// a concrete type even if all of its values are zero values.
+func instantiateConcreteTypeForElement(val reflect.Value, typ reflect.Type) {
+	val.Set(reflect.New(typ))
+}
+
+// Grows a slice by 1 element and instantiates that new element with a concrete type
+// accordingly if it is set to a pointer.
 func growConcreteSliceType(val reflect.Value, typ reflect.Type, length int) {
 	newVal := reflect.MakeSlice(typ, length, length)
 	reflect.Copy(newVal, val)
@@ -113,10 +122,6 @@ func growConcreteSliceType(val reflect.Value, typ reflect.Type, length int) {
 	if val.Index(length-1).Kind() == reflect.Ptr {
 		instantiateConcreteTypeForElement(val.Index(length-1), typ.Elem().Elem())
 	}
-}
-
-func instantiateConcreteTypeForElement(val reflect.Value, typ reflect.Type) {
-	val.Set(reflect.New(typ))
 }
 
 // toBytes32 is a convenience method for converting a byte slice to a fix
