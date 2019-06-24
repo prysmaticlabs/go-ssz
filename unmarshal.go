@@ -127,13 +127,7 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		return nil, err
 	}
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
-		newVal := reflect.MakeSlice(val.Type(), 1, 1)
-		reflect.Copy(newVal, val)
-		val.Set(newVal)
-		if val.Index(0).Kind() == reflect.Ptr {
-			val.Index(0).Set(reflect.New(typ.Elem().Elem()))
-		}
-
+		growConcreteSliceType(val, typ, 1)
 		index := startOffset
 		index, err = elemSSZUtils.unmarshaler(input, val.Index(0), index)
 		if err != nil {
@@ -141,15 +135,9 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		}
 		elementSize := index - startOffset
 		endOffset := uint64(len(input)) / elementSize
-
-		newVal = reflect.MakeSlice(val.Type(), int(endOffset), int(endOffset))
-		reflect.Copy(newVal, val)
-		val.Set(newVal)
 		i := uint64(1)
 		for i < endOffset {
-			if val.Index(int(i)).Kind() == reflect.Ptr {
-				val.Index(int(i)).Set(reflect.New(typ.Elem().Elem()))
-			}
+			growConcreteSliceType(val, typ, int(i)+1)
 			index, err = elemSSZUtils.unmarshaler(input, val.Index(int(i)), index)
 			if err != nil {
 				return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
@@ -168,8 +156,7 @@ func makeCompositeSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		return nil, err
 	}
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
-		// TODO: Limitation, creating a list of type pointers creates a list of nil values.
-		makeSliceType(typ, val, 1)
+		growConcreteSliceType(val, typ, 1)
 		endOffset := uint64(len(input))
 
 		currentIndex := startOffset
@@ -187,8 +174,8 @@ func makeCompositeSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 				nextOffsetVal := input[nextIndex : nextIndex+BytesPerLengthOffset]
 				nextOffset = startOffset + uint64(binary.LittleEndian.Uint32(nextOffsetVal))
 			}
-			// We grow the slice's size to accommodate a new element being unmarshald.
-			makeSliceType(typ, val, i+1)
+			// We grow the slice's size to accommodate a new element being unmarshaled.
+			growConcreteSliceType(val, typ, i+1)
 			if _, err := elemSSZUtils.unmarshaler(input[currentOffset:nextOffset], val.Index(i), 0); err != nil {
 				return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
 			}
@@ -212,8 +199,8 @@ func makeBasicArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		index := startOffset
 		size := typ.Len()
 		for i < size {
-			if val.Index(int(i)).Kind() == reflect.Ptr {
-				val.Index(int(i)).Set(reflect.New(typ.Elem().Elem()))
+			if val.Index(i).Kind() == reflect.Ptr {
+				instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
 			}
 			index, err = elemSSZUtils.unmarshaler(input, val.Index(i), index)
 			if err != nil {
@@ -250,8 +237,8 @@ func makeCompositeArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 				nextOffsetVal := input[nextIndex : nextIndex+BytesPerLengthOffset]
 				nextOffset = startOffset + uint64(binary.LittleEndian.Uint32(nextOffsetVal))
 			}
-			if typ.Elem().Kind() == reflect.Ptr {
-				val.Index(i).Set(reflect.New(typ.Elem().Elem()))
+			if val.Index(i).Kind() == reflect.Ptr {
+				instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
 			}
 			if _, err := elemSSZUtils.unmarshaler(input[currentOffset:nextOffset], val.Index(i), 0); err != nil {
 				return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
@@ -279,7 +266,7 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		for i := 0; i < len(fixedSizes); i++ {
 			if !isVariableSizeType(fields[i].typ) {
 				if val.Field(i).Kind() == reflect.Ptr {
-					val.Field(i).Set(reflect.New(fields[i].typ.Elem()))
+					instantiateConcreteTypeForElement(val.Field(i), fields[i].typ.Elem())
 				}
 				fixedSz := determineFixedSize(val.Field(i), fields[i].typ)
 				if fixedSz > 0 {
@@ -308,7 +295,7 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 			f := fields[i]
 			fieldSize := fixedSizes[i]
 			if val.Field(i).Kind() == reflect.Ptr {
-				val.Field(i).Set(reflect.New(typ.Field(i).Type.Elem()))
+				instantiateConcreteTypeForElement(val.Field(i), fields[i].typ.Elem())
 			}
 			if fieldSize > 0 {
 				nextIndex = currentIndex + fieldSize

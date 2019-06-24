@@ -106,14 +106,17 @@ func isPowerTwo(n int) bool {
 	return n != 0 && (n&(n-1)) == 0
 }
 
-func makeSliceType(typ reflect.Type, val reflect.Value, length int) {
+func growConcreteSliceType(val reflect.Value, typ reflect.Type, length int) {
 	newVal := reflect.MakeSlice(typ, length, length)
 	reflect.Copy(newVal, val)
 	val.Set(newVal)
-	if typ.Elem().Kind() == reflect.Ptr {
-		tp := reflect.New(typ.Elem().Elem())
-		val.Index(length - 1).Set(tp)
+	if val.Index(length-1).Kind() == reflect.Ptr {
+		instantiateConcreteTypeForElement(val.Index(length-1), typ.Elem().Elem())
 	}
+}
+
+func instantiateConcreteTypeForElement(val reflect.Value, typ reflect.Type) {
+	val.Set(reflect.New(typ))
 }
 
 // toBytes32 is a convenience method for converting a byte slice to a fix
