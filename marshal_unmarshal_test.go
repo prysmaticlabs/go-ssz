@@ -74,7 +74,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: [3][]uint64{{1, 2}, {4, 5, 6}, {7}}, ptr: new([3][]uint64)},
 		{input: [][4]fork{{forkExample, forkExample, forkExample}}, ptr: new([][4]fork)},
 		{input: [2]fork{forkExample, forkExample}, ptr: new([2]fork)},
-		// // Pointer-type test cases.
+		// Pointer-type test cases.
 		{input: &forkExample, ptr: new(fork)},
 		{input: &nestedItemExample, ptr: new(nestedItem)},
 		{input: []*fork{&forkExample, &forkExample}, ptr: new([]*fork)},
