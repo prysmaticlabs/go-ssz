@@ -12,12 +12,6 @@ uint64
 bytes
 slice
 struct
-
-Types that can be implicitly supported:
-
-address:
-	use byte slice of length 20 instead
-hash:
-	use byte slice of length 32 instead if the hash is 32 bytes long, for example
+ptr
 */
 package ssz
