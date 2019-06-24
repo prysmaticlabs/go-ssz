@@ -143,13 +143,15 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		newVal := reflect.MakeSlice(val.Type(), 1, 1)
 		reflect.Copy(newVal, val)
 		val.Set(newVal)
+		if val.Index(0).Kind() == reflect.Ptr {
+			val.Index(0).Set(reflect.New(typ.Elem().Elem()))
+		}
 
 		index := startOffset
 		index, err = elemSSZUtils.unmarshaler(input, val.Index(0), index)
 		if err != nil {
 			return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
 		}
-		fmt.Printf("Index: %v\n", index)
 		elementSize := index - startOffset
 		endOffset := uint64(len(input)) / elementSize
 
@@ -158,6 +160,9 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		val.Set(newVal)
 		i := uint64(1)
 		for i < endOffset {
+			if val.Index(int(i)).Kind() == reflect.Ptr {
+				val.Index(int(i)).Set(reflect.New(typ.Elem().Elem()))
+			}
 			index, err = elemSSZUtils.unmarshaler(input, val.Index(int(i)), index)
 			if err != nil {
 				return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
@@ -220,6 +225,9 @@ func makeBasicArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		index := startOffset
 		size := typ.Len()
 		for i < size {
+			if val.Index(int(i)).Kind() == reflect.Ptr {
+				val.Index(int(i)).Set(reflect.New(typ.Elem().Elem()))
+			}
 			index, err = elemSSZUtils.unmarshaler(input, val.Index(i), index)
 			if err != nil {
 				return 0, fmt.Errorf("failed to unmarshal element of array: %v", err)

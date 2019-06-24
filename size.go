@@ -90,6 +90,8 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 			totalSize += determineFixedSize(val.Field(i), fType)
 		}
 		return totalSize
+	case kind == reflect.Ptr:
+		return determineFixedSize(val.Elem(), typ.Elem())
 	default:
 		return 0
 	}
