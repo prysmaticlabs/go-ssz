@@ -81,6 +81,7 @@ go_test(
         "helpers_test.go",
         "marshal_unmarshal_test.go",
         "signing_root_test.go",
+        "struct_utils_test.go",
     ],
     embed = [":go_default_library"],
 )
