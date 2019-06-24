@@ -13,10 +13,7 @@ go_library(
 
 go_test(
     name = "go_default_test",
-    srcs = [
-        "ssz_mainnet_test.go",
-        "ssz_minimal_test.go",
-    ],
+    srcs = ["ssz_spec_test.go"],
     embed = [":go_default_library"],
     deps = [
         "//:go_default_library",

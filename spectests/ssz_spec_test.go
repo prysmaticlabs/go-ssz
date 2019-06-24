@@ -52,11 +52,18 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.Attestation.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.Attestation.Root) {
 				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Attestation.Serialized) {
 				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.Attestation.SigningRoot) {
+				t.Errorf("Expected attestation signing root %#x, received %#x", testCase.Attestation.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.AttestationData.Value) {
@@ -116,11 +123,18 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlock.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.BeaconBlock.Root) {
 				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.BeaconBlock.Serialized) {
 				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.BeaconBlock.SigningRoot) {
+				t.Errorf("Expected beacon block signing root %#x, received %#x", testCase.BeaconBlock.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.BeaconBlockBody.Value) {
@@ -148,11 +162,18 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlockHeader.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.BeaconBlockHeader.Root) {
 				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.BeaconBlockHeader.Serialized) {
 				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.BeaconBlockHeader.SigningRoot) {
+				t.Errorf("Expected beacon block header signing root %#x, received %#x", testCase.BeaconBlockHeader.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.BeaconState.Value) {
@@ -212,11 +233,18 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.DepositData.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.DepositData.Root) {
 				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.DepositData.Serialized) {
 				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.DepositData.SigningRoot) {
+				t.Errorf("Expected deposit data signing root %#x, received %#x", testCase.DepositData.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.Eth1Data.Value) {
@@ -276,11 +304,18 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.IndexedAttestation.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.IndexedAttestation.Root) {
 				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.IndexedAttestation.Serialized) {
 				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.IndexedAttestation.SigningRoot) {
+				t.Errorf("Expected indexed attestation signing root %#x, received %#x", testCase.IndexedAttestation.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.PendingAttestation.Value) {
@@ -324,11 +359,18 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.Transfer.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.Transfer.Root) {
 				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Transfer.Serialized) {
 				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.Transfer.SigningRoot) {
+				t.Errorf("Expected transfer signing root %#x, received %#x", testCase.Transfer.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.Validator.Value) {
@@ -356,11 +398,18 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.VoluntaryExit.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.VoluntaryExit.Root) {
 				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.VoluntaryExit.Serialized) {
 				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.VoluntaryExit.SigningRoot) {
+				t.Errorf("Expected voluntary exit signing root %#x, received %#x", testCase.VoluntaryExit.SigningRoot, signingRoot)
 			}
 		}
 	}
@@ -377,11 +426,18 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.Attestation.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.Attestation.Root) {
 				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Attestation.Serialized) {
 				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.Attestation.SigningRoot) {
+				t.Errorf("Expected attestation signing root %#x, received %#x", testCase.Attestation.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.AttestationData.Value) {
@@ -441,11 +497,18 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlock.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.BeaconBlock.Root) {
 				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.BeaconBlock.Serialized) {
 				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.BeaconBlock.SigningRoot) {
+				t.Errorf("Expected beacon block signing root %#x, received %#x", testCase.BeaconBlock.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.BeaconBlockBody.Value) {
@@ -473,11 +536,18 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlockHeader.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.BeaconBlockHeader.Root) {
 				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.BeaconBlockHeader.Serialized) {
 				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.BeaconBlockHeader.SigningRoot) {
+				t.Errorf("Expected beacon block header signing root %#x, received %#x", testCase.BeaconBlockHeader.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.BeaconState.Value) {
@@ -537,11 +607,18 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.DepositData.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.DepositData.Root) {
 				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.DepositData.Serialized) {
 				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.DepositData.SigningRoot) {
+				t.Errorf("Expected deposit data signing root %#x, received %#x", testCase.DepositData.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.Eth1Data.Value) {
@@ -601,11 +678,18 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.IndexedAttestation.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.IndexedAttestation.Root) {
 				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.IndexedAttestation.Serialized) {
 				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.IndexedAttestation.SigningRoot) {
+				t.Errorf("Expected indexed attestation signing root %#x, received %#x", testCase.IndexedAttestation.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.PendingAttestation.Value) {
@@ -649,11 +733,18 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.Transfer.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.Transfer.Root) {
 				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Transfer.Serialized) {
 				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.Transfer.SigningRoot) {
+				t.Errorf("Expected transfer signing root %#x, received %#x", testCase.Transfer.SigningRoot, signingRoot)
 			}
 		}
 		if !isEmpty(testCase.Validator.Value) {
@@ -681,11 +772,18 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			signingRoot, err := ssz.SigningRoot(testCase.VoluntaryExit.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !bytes.Equal(root[:], testCase.VoluntaryExit.Root) {
 				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.VoluntaryExit.Serialized) {
 				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Serialized, encoded)
+			}
+			if !bytes.Equal(signingRoot[:], testCase.VoluntaryExit.SigningRoot) {
+				t.Errorf("Expected voluntary exit signing root %#x, received %#x", testCase.VoluntaryExit.SigningRoot, signingRoot)
 			}
 		}
 	}
