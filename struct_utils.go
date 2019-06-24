@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+// We use a question mark in ssz struct tags to specify a ssz field should have
+// unbounded size, which is useful when describing slices of arrays such as [][32]byte.
+// The ssz struct tag for such field type would be `ssz:"size=?,32"`
+var unboundedSSZFieldSizeMarker = "?"
+
 // field defines a custom wrapper around a struct field which
 // include the respective sszUtils for that particular field type,
 // giving easy access to its marshaler, unmarshaler, and tree hasher.
@@ -42,58 +47,57 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 		}
 		// fieldType parses the struct's tags to check if there are any ssz tags
 		// which specify a field should be treated as fixed-size by the marshaler.
-		fType, err := fieldType(f)
-		if err != nil {
-			return nil, err
+		fieldType := f.Type
+		if fieldSizeTags, exists := parseSSZFieldTags(f); exists {
+			fieldType = inferFieldTypeFromTags(fieldSizeTags)
 		}
+
+		// We determine the SSZ utils for the field, including its respective
+		// marshaler, unmarshaler, and hasher.
 		utils, err := cachedSSZUtilsNoAcquireLock(f.Type)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 		}
 		name := f.Name
-		fields = append(fields, field{index: i, name: name, sszUtils: utils, typ: fType})
+		fields = append(fields, field{index: i, name: name, sszUtils: utils, typ: fieldType})
 	}
 	return fields, nil
 }
 
-func sszTagSizes(tag string) ([]int, error) {
+func parseSSZFieldTags(field reflect.StructField) ([]int, bool) {
+	tag, exists := field.Tag.Lookup("ssz")
+	if !exists {
+		return nil, false
+	}
 	sizeStartIndex := strings.IndexRune(tag, '=')
 	items := strings.Split(tag[sizeStartIndex+1:], ",")
 	sizes := make([]int, len(items))
 	var err error
 	for i := 0; i < len(items); i++ {
-		if items[i] == "?" {
-			// TODO: find a way to handle this nicely.
+		// If a field is unbounded, we mark it with a size of 0.
+		if items[i] == unboundedSSZFieldSizeMarker {
 			sizes[i] = 0
 			continue
 		}
 		sizes[i], err = strconv.Atoi(items[i])
 		if err != nil {
-			return nil, err
+			return nil, false
 		}
 	}
-	return sizes, nil
+	return sizes, true
 }
 
-func fieldType(field reflect.StructField) (reflect.Type, error) {
-	item, exists := field.Tag.Lookup("ssz")
-	if exists {
-		sizes, err := sszTagSizes(item)
-		if err != nil {
-			return nil, err
-		}
-		if field.Type.Elem().Kind() == reflect.Slice {
-			if len(sizes) > 1 {
-				innerData := reflect.ArrayOf(sizes[1], field.Type.Elem().Elem())
-				if sizes[0] == 0 {
-					return reflect.SliceOf(innerData), nil
-				}
-				return reflect.ArrayOf(sizes[0], innerData), nil
+func inferFieldTypeFromTags(field reflect.StructField, sizes []int) reflect.Type {
+	if field.Type.Elem().Kind() == reflect.Slice {
+		if len(sizes) > 1 {
+			innerData := reflect.ArrayOf(sizes[1], field.Type.Elem().Elem())
+			if sizes[0] == 0 {
+				return reflect.SliceOf(innerData)
 			}
-			innerData := reflect.ArrayOf(sizes[0], field.Type.Elem().Elem())
-			return reflect.SliceOf(innerData), nil
+			return reflect.ArrayOf(sizes[0], innerData)
 		}
-		return reflect.ArrayOf(sizes[0], field.Type.Elem()), nil
+		innerData := reflect.ArrayOf(sizes[0], field.Type.Elem().Elem())
+		return reflect.SliceOf(innerData)
 	}
-	return field.Type, nil
+	return reflect.ArrayOf(sizes[0], field.Type.Elem())
 }
