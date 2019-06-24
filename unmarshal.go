@@ -2,44 +2,31 @@ package ssz
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"reflect"
 )
 
-// unmarshalError is what gets reported to the user in error case.
-type unmarshalError struct {
-	msg string
-	typ reflect.Type
-}
-
-func newUnmarshalError(msg string, typ reflect.Type) *unmarshalError {
-	return &unmarshalError{msg, typ}
-}
-
-func (err *unmarshalError) Error() string {
-	return fmt.Sprintf("unmarshal error: %s for output type %v", err.msg, err.typ)
-}
-
 // Unmarshal SSZ encoded data and output it into the object pointed by pointer val.
 func Unmarshal(input []byte, val interface{}) error {
 	if val == nil {
-		return newUnmarshalError("cannot unmarshal into nil", nil)
+		return errors.New("cannot unmarshal into untyped, nil value")
 	}
 	rval := reflect.ValueOf(val)
 	rtyp := rval.Type()
 	// val must be a pointer, otherwise we refuse to unmarshal
 	if rtyp.Kind() != reflect.Ptr {
-		return newUnmarshalError("can only unmarshal into pointer target", rtyp)
+		return errors.New("can only unmarshal into a pointer target")
 	}
 	if rval.IsNil() {
-		return newUnmarshalError("cannot output to pointer of nil", rtyp)
+		return errors.New("cannot output to pointer of nil value")
 	}
 	sszUtils, err := cachedSSZUtils(rval.Elem().Type())
 	if err != nil {
-		return newUnmarshalError(fmt.Sprint(err), rval.Elem().Type())
+		return fmt.Errorf("could not initialize unmarshaler for type: %v, %v", rval.Elem().Type(), err)
 	}
 	if _, err = sszUtils.unmarshaler(input, rval.Elem(), 0); err != nil {
-		return newUnmarshalError(fmt.Sprint(err), rval.Elem().Type())
+		return fmt.Errorf("could not unmarshal input into type: %v, %v", rval.Elem().Type(), err)
 	}
 	return nil
 }

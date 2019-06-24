@@ -2,39 +2,26 @@ package ssz
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"reflect"
 )
 
-// marshalError is what gets reported to the marshaler user in error case.
-type marshalError struct {
-	msg string
-	typ reflect.Type
-}
-
-func newMarshalError(msg string, typ reflect.Type) *marshalError {
-	return &marshalError{msg, typ}
-}
-
-func (err *marshalError) Error() string {
-	return fmt.Sprintf("marshal error: %s for input type %v", err.msg, err.typ)
-}
-
 // Marshal a value and output the result into a byte slice.
 func Marshal(val interface{}) ([]byte, error) {
 	if val == nil {
-		return nil, newMarshalError("untyped nil is not supported", nil)
+		return nil, errors.New("untyped-value nil cannot be marshaled")
 	}
 	rval := reflect.ValueOf(val)
 
-	// We pre-allocate a buffer-size depending on the value's size.
+	// We pre-allocate a buffer-size depending on the value's calculated total byte size.
 	buf := make([]byte, determineSize(rval))
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
-		return nil, newMarshalError(fmt.Sprint(err), rval.Type())
+		return nil, fmt.Errorf("could not initialize marshaler for type: %v", rval.Type())
 	}
 	if _, err = sszUtils.marshaler(rval, buf, 0 /* start offset */); err != nil {
-		return nil, newMarshalError(fmt.Sprint(err), rval.Type())
+		return nil, fmt.Errorf("failed to marshal for type: %v", rval.Type())
 	}
 	return buf, nil
 }
