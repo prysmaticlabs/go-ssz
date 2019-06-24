@@ -229,8 +229,9 @@ func getEncoding(val reflect.Value) ([]byte, error) {
 }
 
 // HashedEncoding returns the hash of the encoded object.
-func HashedEncoding(val reflect.Value) ([32]byte, error) {
-	encoding, err := getEncoding(val)
+func HashedEncoding(val interface{}) ([32]byte, error) {
+	rval := reflect.ValueOf(val)
+	encoding, err := getEncoding(rval)
 	if err != nil {
 		return [32]byte{}, err
 	}

@@ -3,7 +3,6 @@ package ssz
 import (
 	"bytes"
 	"log"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -47,7 +46,7 @@ func TestCache_byHash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := HashedEncoding(reflect.ValueOf(byteSl))
+	hs, err := HashedEncoding(byteSl)
 	if err != nil {
 		t.Fatal(err)
 	}
