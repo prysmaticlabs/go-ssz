@@ -31,7 +31,7 @@ func TestYamlSpecTests(t *testing.T) {
 				t.Fatalf("Failed to unmarshal: %v", err)
 			}
 			runMinimalSpecTestCases(t, s)
-		} else {
+		} else if strings.Contains(f.Name(), "mainnet") {
 			s := &SszMainnetTest{}
 			if err := yaml.Unmarshal(yamlFile, s); err != nil {
 				t.Fatalf("Failed to unmarshal: %v", err)
