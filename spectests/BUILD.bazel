@@ -15,6 +15,9 @@ go_test(
     name = "go_default_test",
     srcs = ["ssz_spec_test.go"],
     embed = [":go_default_library"],
+    data = glob([
+        "yaml/*.yaml",
+    ]),
     deps = [
         "//:go_default_library",
         "@com_github_ghodss_yaml//:go_default_library",
