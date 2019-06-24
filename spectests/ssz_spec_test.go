@@ -24,6 +24,7 @@ func TestYamlSpecTests(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		t.Logf("Running spec tests for: %s", f.Name())
 		if strings.Contains(f.Name(), "minimal") {
 			s := &SszMinimalTest{}
 			if err := yaml.Unmarshal(yamlFile, s); err != nil {
