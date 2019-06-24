@@ -35,14 +35,16 @@ func isVariableSizeType(typ reflect.Type) bool {
 	case kind == reflect.Struct:
 		for i := 0; i < typ.NumField(); i++ {
 			f := typ.Field(i)
-			if strings.Contains(f.Name, "XXX") {
-				continue
-			}
-			fType, err := fieldType(f)
+			fieldType := f.Type
+			fieldSizeTags, exists, err := parseSSZFieldTags(f)
 			if err != nil {
 				return false
 			}
-			if isVariableSizeType(fType) {
+			if exists {
+				// If the field does indeed specify ssz struct tags, we infer the field's type.
+				fieldType = inferFieldTypeFromTags(f, fieldSizeTags)
+			}
+			if isVariableSizeType(fieldType) {
 				return true
 			}
 		}
@@ -83,11 +85,16 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 			if strings.Contains(f.Name, "XXX") {
 				continue
 			}
-			fType, err := fieldType(f)
+			fieldType := f.Type
+			fieldSizeTags, exists, err := parseSSZFieldTags(f)
 			if err != nil {
 				return 0
 			}
-			totalSize += determineFixedSize(val.Field(i), fType)
+			if exists {
+				// If the field does indeed specify ssz struct tags, we infer the field's type.
+				fieldType = inferFieldTypeFromTags(f, fieldSizeTags)
+			}
+			totalSize += determineFixedSize(val.Field(i), fieldType)
 		}
 		return totalSize
 	case kind == reflect.Ptr:
@@ -116,15 +123,21 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
 		for i := 0; i < typ.NumField(); i++ {
-			fType, err := fieldType(typ.Field(i))
+			f := typ.Field(i)
+			fieldType := f.Type
+			fieldSizeTags, exists, err := parseSSZFieldTags(f)
 			if err != nil {
 				return 0
 			}
-			if isVariableSizeType(fType) {
-				varSize := determineVariableSize(val.Field(i), fType)
+			if exists {
+				// If the field does indeed specify ssz struct tags, we infer the field's type.
+				fieldType = inferFieldTypeFromTags(f, fieldSizeTags)
+			}
+			if isVariableSizeType(fieldType) {
+				varSize := determineVariableSize(val.Field(i), fieldType)
 				totalSize += varSize + BytesPerLengthOffset
 			} else {
-				varSize := determineFixedSize(val.Field(i), fType)
+				varSize := determineFixedSize(val.Field(i), fieldType)
 				totalSize += varSize
 			}
 		}

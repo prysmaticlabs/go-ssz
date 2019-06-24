@@ -48,8 +48,13 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 		// fieldType parses the struct's tags to check if there are any ssz tags
 		// which specify a field should be treated as fixed-size by the marshaler.
 		fieldType := f.Type
-		if fieldSizeTags, exists := parseSSZFieldTags(f); exists {
-			fieldType = inferFieldTypeFromTags(fieldSizeTags)
+		fieldSizeTags, exists, err := parseSSZFieldTags(f)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse ssz struct field tags: %v", err)
+		}
+		if exists {
+			// If the field does indeed specify ssz struct tags, we infer the field's type.
+			fieldType = inferFieldTypeFromTags(f, fieldSizeTags)
 		}
 
 		// We determine the SSZ utils for the field, including its respective
@@ -64,10 +69,10 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 	return fields, nil
 }
 
-func parseSSZFieldTags(field reflect.StructField) ([]int, bool) {
+func parseSSZFieldTags(field reflect.StructField) ([]int, bool, error) {
 	tag, exists := field.Tag.Lookup("ssz")
 	if !exists {
-		return nil, false
+		return nil, false, nil
 	}
 	sizeStartIndex := strings.IndexRune(tag, '=')
 	items := strings.Split(tag[sizeStartIndex+1:], ",")
@@ -81,10 +86,10 @@ func parseSSZFieldTags(field reflect.StructField) ([]int, bool) {
 		}
 		sizes[i], err = strconv.Atoi(items[i])
 		if err != nil {
-			return nil, false
+			return nil, false, err
 		}
 	}
-	return sizes, true
+	return sizes, true, nil
 }
 
 func inferFieldTypeFromTags(field reflect.StructField, sizes []int) reflect.Type {
