@@ -291,6 +291,9 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 
 		for i := 0; i < len(fixedSizes); i++ {
 			if !isVariableSizeType(fields[i].typ) {
+				if val.Field(i).Kind() == reflect.Ptr {
+					val.Field(i).Set(reflect.New(fields[i].typ.Elem()))
+				}
 				fixedSz := determineFixedSize(val.Field(i), fields[i].typ)
 				if fixedSz > 0 {
 					fixedSizes[i] = fixedSz
@@ -317,6 +320,9 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		for i := 0; i < len(fields); i++ {
 			f := fields[i]
 			fieldSize := fixedSizes[i]
+			if val.Field(i).Kind() == reflect.Ptr {
+				val.Field(i).Set(reflect.New(typ.Field(i).Type.Elem()))
+			}
 			if fieldSize > 0 {
 				nextIndex = currentIndex + fieldSize
 				if _, err := f.sszUtils.unmarshaler(input[currentIndex:nextIndex], val.Field(i), 0); err != nil {
@@ -327,9 +333,6 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 			} else {
 				firstOff := offsets[offsetIndex]
 				nextOff := offsets[offsetIndex+1]
-				if val.Field(i).Kind() == reflect.Ptr {
-					val.Field(i).Set(reflect.New(typ.Field(i).Type.Elem()))
-				}
 				if _, err := f.sszUtils.unmarshaler(input[firstOff:nextOff], val.Field(i), 0); err != nil {
 					return 0, err
 				}
