@@ -68,18 +68,6 @@ func BenchmarkMainnetBeaconState_HashTreeRoot(b *testing.B) {
 	}
 }
 
-func BenchmarkMainnetBeaconState_SigningRoot(b *testing.B) {
-	b.StopTimer()
-	s := &SszMainnetBeaconState{}
-	populateStructFromYaml(b, "./yaml/ssz_bench_state.yaml", s)
-	b.StartTimer()
-	for n := 0; n < b.N; n++ {
-		if _, err := ssz.SigningRoot(s.Value); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
-
 func populateStructFromYaml(t testing.TB, fPath string, val interface{}) {
 	yamlFile, err := ioutil.ReadFile(fPath)
 	if err != nil {
