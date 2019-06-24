@@ -13,13 +13,15 @@ go_library(
 
 go_test(
     name = "go_default_test",
-    srcs = ["ssz_spec_test.go"],
+    srcs = [
+        "ssz_spec_bench_test.go",
+        "ssz_spec_test.go",
+    ],
+    data = ["@eth2_spec_tests//:test_data", "yaml/ssz_bench_block.yaml", "yaml/ssz_bench_state.yaml"],
     embed = [":go_default_library"],
-    data = glob([
-        "yaml/*.yaml",
-    ]),
     deps = [
         "//:go_default_library",
         "@com_github_ghodss_yaml//:go_default_library",
+        "@io_bazel_rules_go//go/tools/bazel:go_default_library",
     ],
 )
