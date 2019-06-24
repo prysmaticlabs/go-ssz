@@ -95,7 +95,7 @@ type field struct {
 // truncateLast removes the last value of a struct, usually the signature,
 // in order to hash only the data the signature field is intended to represent.
 func truncateLast(typ reflect.Type) (fields []field, err error) {
-	fields, err = marshalerStructFields(typ)
+	fields, err = structFields(typ)
 	if err != nil {
 		return nil, err
 	}
