@@ -102,27 +102,7 @@ func truncateLast(typ reflect.Type) (fields []field, err error) {
 	return fields[:len(fields)-1], nil
 }
 
-func marshalerStructFields(typ reflect.Type) (fields []field, err error) {
-	for i := 0; i < typ.NumField(); i++ {
-		f := typ.Field(i)
-		if strings.Contains(f.Name, "XXX") {
-			continue
-		}
-		fType, err := fieldType(f)
-		if err != nil {
-			return nil, err
-		}
-		utils, err := cachedSSZUtilsNoAcquireLock(fType)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
-		}
-		name := f.Name
-		fields = append(fields, field{index: i, name: name, sszUtils: utils, typ: fType})
-	}
-	return fields, nil
-}
-
-func unmarshalerStructFields(typ reflect.Type) (fields []field, err error) {
+func structFields(typ reflect.Type) (fields []field, err error) {
 	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)
 		if strings.Contains(f.Name, "XXX") {
@@ -175,10 +155,9 @@ func fieldType(field reflect.StructField) (reflect.Type, error) {
 					return reflect.SliceOf(innerData), nil
 				}
 				return reflect.ArrayOf(sizes[0], innerData), nil
-			} else {
-				innerData := reflect.ArrayOf(sizes[0], field.Type.Elem().Elem())
-				return reflect.SliceOf(innerData), nil
 			}
+			innerData := reflect.ArrayOf(sizes[0], field.Type.Elem().Elem())
+			return reflect.SliceOf(innerData), nil
 		}
 		return reflect.ArrayOf(sizes[0], field.Type.Elem()), nil
 	}

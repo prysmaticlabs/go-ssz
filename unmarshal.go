@@ -279,7 +279,7 @@ func makeCompositeArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 }
 
 func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
-	fields, err := unmarshalerStructFields(typ)
+	fields, err := structFields(typ)
 	if err != nil {
 		return nil, err
 	}

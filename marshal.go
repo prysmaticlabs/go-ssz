@@ -193,7 +193,7 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 }
 
 func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
-	fields, err := marshalerStructFields(typ)
+	fields, err := structFields(typ)
 	if err != nil {
 		return nil, err
 	}
