@@ -187,17 +187,17 @@ func makeCompositeSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 
 		currentIndex := startOffset
 		nextIndex := currentIndex
-		offsetVal := input[startOffset : startOffset+uint64(BytesPerLengthOffset)]
+		offsetVal := input[startOffset : startOffset+BytesPerLengthOffset]
 		firstOffset := startOffset + uint64(binary.LittleEndian.Uint32(offsetVal))
 		currentOffset := firstOffset
 		nextOffset := currentOffset
 		i := 0
 		for currentIndex < firstOffset {
-			nextIndex = currentIndex + uint64(BytesPerLengthOffset)
+			nextIndex = currentIndex + BytesPerLengthOffset
 			if nextIndex == firstOffset {
 				nextOffset = endOffset
 			} else {
-				nextOffsetVal := input[nextIndex : nextIndex+uint64(BytesPerLengthOffset)]
+				nextOffsetVal := input[nextIndex : nextIndex+BytesPerLengthOffset]
 				nextOffset = startOffset + uint64(binary.LittleEndian.Uint32(nextOffsetVal))
 			}
 			// We grow the slice's size to accommodate a new element being unmarshald.
@@ -248,7 +248,7 @@ func makeCompositeArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
 		currentIndex := startOffset
 		nextIndex := currentIndex
-		offsetVal := input[startOffset : startOffset+uint64(BytesPerLengthOffset)]
+		offsetVal := input[startOffset : startOffset+BytesPerLengthOffset]
 		firstOffset := startOffset + uint64(binary.LittleEndian.Uint32(offsetVal))
 		currentOffset := firstOffset
 		nextOffset := currentOffset
@@ -256,11 +256,11 @@ func makeCompositeArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 
 		i := 0
 		for currentIndex < firstOffset {
-			nextIndex = currentIndex + uint64(BytesPerLengthOffset)
+			nextIndex = currentIndex + BytesPerLengthOffset
 			if nextIndex == firstOffset {
 				nextOffset = endOffset
 			} else {
-				nextOffsetVal := input[nextIndex : nextIndex+uint64(BytesPerLengthOffset)]
+				nextOffsetVal := input[nextIndex : nextIndex+BytesPerLengthOffset]
 				nextOffset = startOffset + uint64(binary.LittleEndian.Uint32(nextOffsetVal))
 			}
 			if typ.Elem().Kind() == reflect.Ptr {
@@ -309,9 +309,9 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 			if item > 0 {
 				offsetIndexCounter += item
 			} else {
-				offsetVal := input[offsetIndexCounter : offsetIndexCounter+uint64(BytesPerLengthOffset)]
+				offsetVal := input[offsetIndexCounter : offsetIndexCounter+BytesPerLengthOffset]
 				offsets = append(offsets, startOffset+uint64(binary.LittleEndian.Uint32(offsetVal)))
-				offsetIndexCounter += uint64(BytesPerLengthOffset)
+				offsetIndexCounter += BytesPerLengthOffset
 			}
 		}
 		offsets = append(offsets, endOffset)
@@ -337,7 +337,7 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 					return 0, err
 				}
 				offsetIndex++
-				currentIndex += uint64(BytesPerLengthOffset)
+				currentIndex += BytesPerLengthOffset
 			}
 		}
 		return currentIndex, nil

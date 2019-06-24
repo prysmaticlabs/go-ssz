@@ -107,7 +107,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 		for i := 0; i < val.Len(); i++ {
 			varSize := determineSize(val.Index(i))
 			if isVariableSizeType(typ.Elem()) {
-				totalSize += varSize + uint64(BytesPerLengthOffset)
+				totalSize += varSize + BytesPerLengthOffset
 			} else {
 				totalSize += varSize
 			}
@@ -122,7 +122,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 			}
 			if isVariableSizeType(fType) {
 				varSize := determineVariableSize(val.Field(i), fType)
-				totalSize += varSize + uint64(BytesPerLengthOffset)
+				totalSize += varSize + BytesPerLengthOffset
 			} else {
 				varSize := determineFixedSize(val.Field(i), fType)
 				totalSize += varSize

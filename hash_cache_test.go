@@ -2,6 +2,7 @@ package ssz
 
 import (
 	"bytes"
+	"encoding/binary"
 	"log"
 	"testing"
 	"time"
@@ -111,8 +112,9 @@ func TestBlockCache_maxSize(t *testing.T) {
 	maxCacheSize := int64(10000)
 	cache := newHashCache(maxCacheSize)
 	for i := uint64(0); i < uint64(maxCacheSize+1025); i++ {
-
-		if err := cache.AddRoot(toBytes32(bytes4(i)), []byte{1}); err != nil {
+		rootNum := make([]byte, 8)
+		binary.LittleEndian.PutUint64(rootNum, i)
+		if err := cache.AddRoot(toBytes32(rootNum[:4]), []byte{1}); err != nil {
 			t.Fatal(err)
 		}
 	}

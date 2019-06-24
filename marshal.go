@@ -167,7 +167,7 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 			}
 		} else {
 			fixedIndex := index
-			currentOffsetIndex := startOffset + uint64(val.Len()*BytesPerLengthOffset)
+			currentOffsetIndex := startOffset + uint64(val.Len())*BytesPerLengthOffset
 			nextOffsetIndex := currentOffsetIndex
 			// If the elements are variable size, we need to include offset indices
 			// in the serialized output list.
@@ -179,11 +179,11 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 				// Write the offset.
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
-				copy(buf[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
+				copy(buf[fixedIndex:fixedIndex+BytesPerLengthOffset], offsetBuf)
 
 				// We increase the offset indices accordingly.
 				currentOffsetIndex = nextOffsetIndex
-				fixedIndex += uint64(BytesPerLengthOffset)
+				fixedIndex += BytesPerLengthOffset
 			}
 			index = currentOffsetIndex
 		}
@@ -204,7 +204,7 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		// are variable or fixed-size fields.
 		for _, f := range fields {
 			if isVariableSizeType(f.typ) {
-				fixedLength += uint64(BytesPerLengthOffset)
+				fixedLength += BytesPerLengthOffset
 			} else {
 				fixedLength += determineFixedSize(val.Field(f.index), f.typ)
 			}
@@ -226,11 +226,11 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 				// Write the offset.
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
-				copy(buf[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
+				copy(buf[fixedIndex:fixedIndex+BytesPerLengthOffset], offsetBuf)
 
 				// We increase the offset indices accordingly.
 				currentOffsetIndex = nextOffsetIndex
-				fixedIndex += uint64(BytesPerLengthOffset)
+				fixedIndex += BytesPerLengthOffset
 			}
 		}
 		return currentOffsetIndex, nil
