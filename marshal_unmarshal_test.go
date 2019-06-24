@@ -1,8 +1,10 @@
-package ssz
+package ssz_test
 
 import (
 	"reflect"
 	"testing"
+
+	ssz "github.com/prysmaticlabs/go-ssz"
 )
 
 type fork struct {
@@ -83,11 +85,11 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
 	}
 	for _, tt := range tests {
-		serializedItem, err := Marshal(tt.input)
+		serializedItem, err := ssz.Marshal(tt.input)
 		if err != nil {
 			panic(err)
 		}
-		if err := Unmarshal(serializedItem, tt.ptr); err != nil {
+		if err := ssz.Unmarshal(serializedItem, tt.ptr); err != nil {
 			t.Fatal(err)
 		}
 		output := reflect.ValueOf(tt.ptr)

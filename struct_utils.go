@@ -7,6 +7,9 @@ import (
 	"strings"
 )
 
+// field defines a custom wrapper around a struct field which
+// include the respective sszUtils for that particular field type,
+// giving easy access to its marshaler, unmarshaler, and tree hasher.
 type field struct {
 	index    int
 	name     string
@@ -24,12 +27,21 @@ func truncateLast(typ reflect.Type) (fields []field, err error) {
 	return fields[:len(fields)-1], nil
 }
 
+// structFields iterates over the raw fields of a struct, ignoring XXX protobuf fields,
+// and determines the necessary ssz utils such as the marshaler, unmarshaler, and tree hasher
+// for that particular struct field. Then, it returns a slice of field wrappers containing
+// the necessary SSZ utils and field type information.
 func structFields(typ reflect.Type) (fields []field, err error) {
+	if typ.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("expected a struct kind input, received kind: %v", typ.Kind())
+	}
 	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)
 		if strings.Contains(f.Name, "XXX") {
 			continue
 		}
+		// fieldType parses the struct's tags to check if there are any ssz tags
+		// which specify a field should be treated as fixed-size by the marshaler.
 		fType, err := fieldType(f)
 		if err != nil {
 			return nil, err
