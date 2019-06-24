@@ -113,7 +113,7 @@ func instantiateConcreteTypeForElement(val reflect.Value, typ reflect.Type) {
 	val.Set(reflect.New(typ))
 }
 
-// Grows a slice by 1 element and instantiates that new element with a concrete type
+// Grows a slice to a new length and instantiates the element at length-1 with a concrete type
 // accordingly if it is set to a pointer.
 func growConcreteSliceType(val reflect.Value, typ reflect.Type, length int) {
 	newVal := reflect.MakeSlice(typ, length, length)
