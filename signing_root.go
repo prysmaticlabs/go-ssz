@@ -33,11 +33,11 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 func truncateAndHash(val reflect.Value) ([32]byte, error) {
 	truncated, err := truncateLast(val.Type())
 	if err != nil {
-		return [32]byte{}, newHashError(fmt.Sprint(err), val.Type())
+		return [32]byte{}, err
 	}
 	hasher, err := makeFieldsHasher(truncated)
 	if err != nil {
-		return [32]byte{}, newHashError(fmt.Sprint(err), val.Type())
+		return [32]byte{}, err
 	}
 	var output [32]byte
 	if useCache {
@@ -46,7 +46,7 @@ func truncateAndHash(val reflect.Value) ([32]byte, error) {
 		output, err = hasher(val)
 	}
 	if err != nil {
-		return [32]byte{}, newHashError(fmt.Sprint(err), val.Type())
+		return [32]byte{}, err
 	}
 	return output, nil
 }

@@ -8,6 +8,20 @@ import (
 )
 
 // Marshal a value and output the result into a byte slice.
+// Given a struct with the following fields, one can marshal it as follows:
+//   type exampleStruct1 struct {
+// 	   Field1 uint8
+// 	   Field2 []byte
+//   }
+//
+//   e1 := exampleStruct1{
+//     Field1: 10,
+//     Field2: []byte{1, 2, 3, 4},
+//   }
+//   encoded, err := Marshal(e1)
+//   if err != nil {
+//     return fmt.Errorf("failed to marshal: %v", err)
+//   }
 func Marshal(val interface{}) ([]byte, error) {
 	if val == nil {
 		return nil, errors.New("untyped-value nil cannot be marshaled")
