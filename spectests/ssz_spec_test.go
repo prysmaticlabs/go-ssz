@@ -35,6 +35,15 @@ func TestYamlGenericSpecTests(t *testing.T) {
 		}
 		for _, testCase := range s.TestCases {
 			switch testCase.Type {
+			case "uint8":
+				num, _ := strconv.ParseUint(testCase.Value, 10, 8)
+				encoded, err := ssz.Marshal(uint8(num))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !bytes.Equal(encoded, testCase.Ssz) {
+					t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
+				}
 			case "uint16":
 				num, _ := strconv.ParseUint(testCase.Value, 10, 16)
 				encoded, err := ssz.Marshal(uint16(num))
@@ -53,7 +62,17 @@ func TestYamlGenericSpecTests(t *testing.T) {
 				if !bytes.Equal(encoded, testCase.Ssz) {
 					t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
 				}
+			case "uint64":
+				num, _ := strconv.ParseUint(testCase.Value, 10, 64)
+				encoded, err := ssz.Marshal(num)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !bytes.Equal(encoded, testCase.Ssz) {
+					t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
+				}
 			default:
+				// Other types, uint128 and higher are not supported by go-ssz...
 			}
 
 		}
