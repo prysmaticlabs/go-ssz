@@ -14,6 +14,7 @@ type SszGenericTest struct {
 		Type  string   `json:"type"`
 		Valid bool     `json:"valid"`
 		Value string   `json:"value"`
+		Ssz   []byte   `json:"ssz"`
 		Tags  []string `json:"tags"`
 	} `json:"test_cases"`
 }
