@@ -11,19 +11,19 @@ var useCache bool
 
 // HashTreeRoot determines the root hash using SSZ's merkleization.
 // Given a struct with the following fields, one can tree hash it as follows:
-//   type exampleStruct1 struct {
-// 	   Field1 uint8
-// 	   Field2 []byte
-//   }
+//  type exampleStruct struct {
+// 	    Field1 uint8
+// 	    Field2 []byte
+//  }
 //
-//   e1 := exampleStruct1{
-//     Field1: 10,
-//     Field2: []byte{1, 2, 3, 4},
-//   }
-//   encoded, err := HashTreeRoot(e1)
-//   if err != nil {
-//     return fmt.Errorf("failed to marshal: %v", err)
-//   }
+//  ex := exampleStruct{
+//      Field1: 10,
+//      Field2: []byte{1, 2, 3, 4},
+//  }
+//  encoded, err := HashTreeRoot(ex)
+//  if err != nil {
+//      return fmt.Errorf("failed to marshal: %v", err)
+//  }
 func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if val == nil {
 		return [32]byte{}, errors.New("untyped nil is not supported")
