@@ -31,6 +31,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error)
 ## Usage
 
 Say you have a struct like this
+
 ```go
 type exampleStruct1 struct {
 	Field1 uint8
@@ -39,6 +40,7 @@ type exampleStruct1 struct {
 ````
 
 Now you can encode this object like this
+
 ```go
 e1 := exampleStruct1{
     Field1: 10,
@@ -49,6 +51,29 @@ if err != nil {
     return fmt.Errorf("failed to marshal: %v", err)
 }
 ```
+
+One can also specify the specific size of a struct's field by using
+ssz-specific field tags as follows:
+
+```go
+type exampleStruct struct {
+    Field1 uint8
+    Field2 []byte `ssz:"size=32"`
+}
+```
+
+This will treat `Field2` as as [32]byte array when marshaling. For unbounded
+fields or multidimensional slices, ssz size tags can also be used as follows:
+
+```go
+type exampleStruct struct {
+    Field1 uint8
+    Field2 [][]byte `ssz:"size=?,32"`
+}
+```
+
+This will treat `Field2` as type [][32]byte when marshaling a
+struct of that type.
 
 Similarly, you can unmarshal encoded bytes into its original form:
 
@@ -61,6 +86,7 @@ reflect.DeepEqual(e1, e2) // Returns true as e2 now has the same content as e1.
 ```
 
 To calculate tree-hash root of the object run:
+
 ```go
 root, err := HashTreeRoot(e1)
 if err != nil {
