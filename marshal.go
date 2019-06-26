@@ -2,39 +2,59 @@ package ssz
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"reflect"
 )
 
-// marshalError is what gets reported to the marshaler user in error case.
-type marshalError struct {
-	msg string
-	typ reflect.Type
-}
-
-func newMarshalError(msg string, typ reflect.Type) *marshalError {
-	return &marshalError{msg, typ}
-}
-
-func (err *marshalError) Error() string {
-	return fmt.Sprintf("marshal error: %s for input type %v", err.msg, err.typ)
-}
-
 // Marshal a value and output the result into a byte slice.
+// Given a struct with the following fields, one can marshal it as follows:
+//  type exampleStruct struct {
+//      Field1 uint8
+//      Field2 []byte
+//  }
+//
+//  ex := exampleStruct{
+//      Field1: 10,
+//      Field2: []byte{1, 2, 3, 4},
+//  }
+//  encoded, err := Marshal(ex)
+//  if err != nil {
+//      return fmt.Errorf("failed to marshal: %v", err)
+//  }
+//
+// One can also specify the specific size of a struct's field by using
+// ssz-specific field tags as follows:
+//
+//  type exampleStruct struct {
+//      Field1 uint8
+//      Field2 []byte `ssz:"size=32"`
+//  }
+//
+// This will treat `Field2` as as [32]byte array when marshaling. For unbounded
+// fields or multidimensional slices, ssz size tags can also be used as follows:
+//
+//  type exampleStruct struct {
+//      Field1 uint8
+//      Field2 [][]byte `ssz:"size=?,32"`
+//  }
+//
+// This will treat `Field2` as type [][32]byte when marshaling a
+// struct of that type.
 func Marshal(val interface{}) ([]byte, error) {
 	if val == nil {
-		return nil, newMarshalError("untyped nil is not supported", nil)
+		return nil, errors.New("untyped-value nil cannot be marshaled")
 	}
 	rval := reflect.ValueOf(val)
 
-	// We pre-allocate a buffer-size depending on the value's size.
+	// We pre-allocate a buffer-size depending on the value's calculated total byte size.
 	buf := make([]byte, determineSize(rval))
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
-		return nil, newMarshalError(fmt.Sprint(err), rval.Type())
+		return nil, fmt.Errorf("could not initialize marshaler for type: %v", rval.Type())
 	}
 	if _, err = sszUtils.marshaler(rval, buf, 0 /* start offset */); err != nil {
-		return nil, newMarshalError(fmt.Sprint(err), rval.Type())
+		return nil, fmt.Errorf("failed to marshal for type: %v", rval.Type())
 	}
 	return buf, nil
 }
@@ -59,6 +79,8 @@ func makeMarshaler(typ reflect.Type) (marshaler, error) {
 	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
 		return makeBasicSliceMarshaler(typ)
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
+		return makeBasicSliceMarshaler(typ)
+	case kind == reflect.Slice && !isVariableSizeType(typ.Elem()):
 		return makeBasicSliceMarshaler(typ)
 	case kind == reflect.Slice || kind == reflect.Array:
 		return makeCompositeSliceMarshaler(typ)
@@ -154,7 +176,7 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 	marshaler := func(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 		index := startOffset
 		var err error
-		if !isVariableSizeType(val, typ.Elem()) {
+		if !isVariableSizeType(typ) {
 			for i := 0; i < val.Len(); i++ {
 				// If each element is not variable size, we simply encode sequentially and write
 				// into the buffer at the last index we wrote at.
@@ -165,7 +187,7 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 			}
 		} else {
 			fixedIndex := index
-			currentOffsetIndex := startOffset + uint64(val.Len()*BytesPerLengthOffset)
+			currentOffsetIndex := startOffset + uint64(val.Len())*BytesPerLengthOffset
 			nextOffsetIndex := currentOffsetIndex
 			// If the elements are variable size, we need to include offset indices
 			// in the serialized output list.
@@ -177,11 +199,11 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 				// Write the offset.
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
-				copy(buf[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
+				copy(buf[fixedIndex:fixedIndex+BytesPerLengthOffset], offsetBuf)
 
 				// We increase the offset indices accordingly.
 				currentOffsetIndex = nextOffsetIndex
-				fixedIndex += uint64(BytesPerLengthOffset)
+				fixedIndex += BytesPerLengthOffset
 			}
 			index = currentOffsetIndex
 		}
@@ -191,7 +213,7 @@ func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
 }
 
 func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
-	fields, err := marshalerStructFields(typ)
+	fields, err := structFields(typ)
 	if err != nil {
 		return nil, err
 	}
@@ -200,9 +222,9 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		fixedLength := uint64(0)
 		// For every field, we add up the total length of the items depending if they
 		// are variable or fixed-size fields.
-		for i, f := range fields {
-			if isVariableSizeType(val.Field(i), f.typ) {
-				fixedLength += uint64(BytesPerLengthOffset)
+		for _, f := range fields {
+			if isVariableSizeType(f.typ) {
+				fixedLength += BytesPerLengthOffset
 			} else {
 				fixedLength += determineFixedSize(val.Field(f.index), f.typ)
 			}
@@ -211,7 +233,7 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		nextOffsetIndex := currentOffsetIndex
 		var err error
 		for i, f := range fields {
-			if !isVariableSizeType(val.Field(i), f.typ) {
+			if !isVariableSizeType(f.typ) {
 				fixedIndex, err = f.sszUtils.marshaler(val.Field(i), buf, fixedIndex)
 				if err != nil {
 					return 0, err
@@ -224,11 +246,11 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 				// Write the offset.
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
-				copy(buf[fixedIndex:fixedIndex+uint64(BytesPerLengthOffset)], offsetBuf)
+				copy(buf[fixedIndex:fixedIndex+BytesPerLengthOffset], offsetBuf)
 
 				// We increase the offset indices accordingly.
 				currentOffsetIndex = nextOffsetIndex
-				fixedIndex += uint64(BytesPerLengthOffset)
+				fixedIndex += BytesPerLengthOffset
 			}
 		}
 		return currentOffsetIndex, nil

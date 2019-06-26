@@ -1,8 +1,10 @@
-package ssz
+package ssz_test
 
 import (
 	"reflect"
 	"testing"
+
+	ssz "github.com/prysmaticlabs/go-ssz"
 )
 
 type fork struct {
@@ -17,30 +19,20 @@ type nestedItem struct {
 	Field3 [3]byte
 }
 
-type prysmState struct {
-	HeadRoot []uint64 `ssz:"size=32"`
-	ForkType []byte   `ssz:"size=4"`
-	Epoch    uint64
-}
-
-func TestMarshalUnmarshal(t *testing.T) {
-	forkExample := fork{
-		PreviousVersion: [4]byte{2, 3, 4, 1},
+var (
+	forkExample = fork{
+		PreviousVersion: [4]byte{1, 2, 3, 4},
 		CurrentVersion:  [4]byte{5, 6, 7, 8},
 		Epoch:           5,
 	}
-	nestedItemExample := nestedItem{
+	nestedItemExample = nestedItem{
 		Field1: []uint64{1, 2, 3, 4},
 		Field2: &forkExample,
 		Field3: [3]byte{32, 33, 34},
 	}
-	headRoot := [32]uint64{3, 4, 5}
-	forkType := [4]byte{6, 7}
-	stateExample := prysmState{
-		HeadRoot: headRoot[:],
-		ForkType: forkType[:],
-		Epoch:    5,
-	}
+)
+
+func TestMarshalUnmarshal(t *testing.T) {
 	tests := []struct {
 		input interface{}
 		ptr   interface{}
@@ -76,7 +68,6 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
 		// Struct decoding test cases.
 		{input: forkExample, ptr: new(fork)},
-		{input: forkExample, ptr: new(fork)},
 		// Non-basic type slice/array test cases.
 		{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
 		{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
@@ -84,6 +75,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: [][3]uint64{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}, ptr: new([][3]uint64)},
 		{input: [3][]uint64{{1, 2}, {4, 5, 6}, {7}}, ptr: new([3][]uint64)},
 		{input: [][4]fork{{forkExample, forkExample, forkExample}}, ptr: new([][4]fork)},
+		{input: [2]fork{forkExample, forkExample}, ptr: new([2]fork)},
 		// Pointer-type test cases.
 		{input: &forkExample, ptr: new(fork)},
 		{input: &nestedItemExample, ptr: new(nestedItem)},
@@ -91,14 +83,13 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: []*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([]*nestedItem)},
 		{input: [2]*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([2]*nestedItem)},
 		{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
-		{input: stateExample, ptr: new(prysmState)},
 	}
 	for _, tt := range tests {
-		serializedItem, err := Marshal(tt.input)
+		serializedItem, err := ssz.Marshal(tt.input)
 		if err != nil {
 			panic(err)
 		}
-		if err := Unmarshal(serializedItem, tt.ptr); err != nil {
+		if err := ssz.Unmarshal(serializedItem, tt.ptr); err != nil {
 			t.Fatal(err)
 		}
 		output := reflect.ValueOf(tt.ptr)

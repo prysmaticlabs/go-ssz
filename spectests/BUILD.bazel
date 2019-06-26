@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    testonly = True,
+    srcs = [
+        "ssz_mainnet.yaml.go",
+        "ssz_minimal.yaml.go",
+    ],
+    importpath = "github.com/prysmaticlabs/go-ssz/spectests",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "ssz_spec_bench_test.go",
+        "ssz_spec_test.go",
+    ],
+    data = [
+        "@eth2_spec_tests//:test_data",
+        "yaml/ssz_bench_block.yaml",
+        "yaml/ssz_bench_state.yaml",
+    ],
+    embed = [":go_default_library"],
+    deps = [
+        "//:go_default_library",
+        "@com_github_ghodss_yaml//:go_default_library",
+        "@io_bazel_rules_go//go/tools/bazel:go_default_library",
+    ],
+)

@@ -2,7 +2,6 @@ package ssz
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -69,18 +68,18 @@ func (b *hashCacheS) RootByEncodedHash(h common.Hash) (bool, *root, error) {
 func (b *hashCacheS) lookup(rval reflect.Value, hasher hasher) ([32]byte, error) {
 	hs, err := HashedEncoding(rval.Interface())
 	if err != nil {
-		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
+		return [32]byte{}, err
 	}
 	exists, fetchedInfo, err := b.RootByEncodedHash(hs)
 	if err != nil {
-		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
+		return [32]byte{}, err
 	}
 	if exists {
 		return toBytes32(fetchedInfo.MerkleRoot), nil
 	}
 	res, err := hasher(rval)
 	if err != nil {
-		return [32]byte{}, newHashError(fmt.Sprint(err), reflect.TypeOf(rval))
+		return [32]byte{}, err
 	}
 	err = b.AddRoot(hs, res[:])
 	if err != nil {

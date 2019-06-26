@@ -29,6 +29,21 @@ load("@com_github_prysmaticlabs_go_ssz//:deps.bzl", "go_ssz_dependencies")
 go_ssz_dependencies()
 
 http_archive(
+    name = "eth2_spec_tests",
+    build_file_content = """
+filegroup(
+    name = "test_data",
+    srcs = glob([
+        "**/*.yaml",
+    ]),
+    visibility = ["//visibility:public"],
+)
+    """,
+    sha256 = "56847989737e816ab7d23f3bb2422347dfa81271bae81a94de512c01461fab25",
+    url = "https://github.com/prysmaticlabs/eth2.0-spec-tests/releases/download/v0.7.1/base64_encoded_archive.tar.gz",
+)
+
+http_archive(
     name = "io_kubernetes_build",
     sha256 = "4a8384320fba401cbf21fef177aa113ed8fe35952ace98e00b796cac87ae7868",
     strip_prefix = "repo-infra-df02ded38f9506e5bbcbf21702034b4fef815f2f",
@@ -49,3 +64,15 @@ go_repository(
 
 # Do not add go dependencies here. They must be added in deps.bzl to provide
 # dependencies to downstream bazel projects.
+
+go_repository(
+    name = "com_github_ghodss_yaml",
+    commit = "25d852aebe32c875e9c044af3eef9c7dc6bc777f",
+    importpath = "github.com/ghodss/yaml",
+)
+
+go_repository(
+    name = "in_gopkg_yaml_v2",
+    commit = "51d6538a90f86fe93ac480b35f37b2be17fef232",
+    importpath = "gopkg.in/yaml.v2",
+)

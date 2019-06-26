@@ -2,34 +2,36 @@ package ssz
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"reflect"
 )
 
 var useCache bool
 
-type hashError struct {
-	msg string
-	typ reflect.Type
-}
-
-func (err *hashError) Error() string {
-	return fmt.Sprintf("hash error: %s for input type %v", err.msg, err.typ)
-}
-
-func newHashError(msg string, typ reflect.Type) *hashError {
-	return &hashError{msg, typ}
-}
-
 // HashTreeRoot determines the root hash using SSZ's merkleization.
+// Given a struct with the following fields, one can tree hash it as follows:
+//  type exampleStruct struct {
+//      Field1 uint8
+//      Field2 []byte
+//  }
+//
+//  ex := exampleStruct{
+//      Field1: 10,
+//      Field2: []byte{1, 2, 3, 4},
+//  }
+//  encoded, err := HashTreeRoot(ex)
+//  if err != nil {
+//      return fmt.Errorf("failed to marshal: %v", err)
+//  }
 func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if val == nil {
-		return [32]byte{}, newHashError("untyped nil is not supported", nil)
+		return [32]byte{}, errors.New("untyped nil is not supported")
 	}
 	rval := reflect.ValueOf(val)
 	sszUtils, err := cachedSSZUtils(rval.Type())
 	if err != nil {
-		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
+		return [32]byte{}, fmt.Errorf("could not get ssz utils for type: %v: %v", rval.Type(), err)
 	}
 	var output [32]byte
 	if useCache {
@@ -38,7 +40,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 		output, err = sszUtils.hasher(rval)
 	}
 	if err != nil {
-		return [32]byte{}, newHashError(fmt.Sprint(err), rval.Type())
+		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
 	}
 	return output, nil
 }
@@ -174,7 +176,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeStructHasher(typ reflect.Type) (hasher, error) {
-	fields, err := marshalerStructFields(typ)
+	fields, err := structFields(typ)
 	if err != nil {
 		return nil, err
 	}

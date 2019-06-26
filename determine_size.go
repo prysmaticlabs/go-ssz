@@ -21,7 +21,7 @@ func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
 	return kind == reflect.Slice && isBasicType(typ.Elem().Kind())
 }
 
-func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
+func isVariableSizeType(typ reflect.Type) bool {
 	kind := typ.Kind()
 	switch {
 	case isBasicType(kind):
@@ -31,11 +31,21 @@ func isVariableSizeType(val reflect.Value, typ reflect.Type) bool {
 	case kind == reflect.Slice:
 		return true
 	case kind == reflect.Array:
-		return isVariableSizeType(val, typ.Elem())
+		return isVariableSizeType(typ.Elem())
 	case kind == reflect.Struct:
-		return true
+		for i := 0; i < typ.NumField(); i++ {
+			f := typ.Field(i)
+			fType, err := determineFieldType(f)
+			if err != nil {
+				return false
+			}
+			if isVariableSizeType(fType) {
+				return true
+			}
+		}
+		return false
 	case kind == reflect.Ptr:
-		return true
+		return isVariableSizeType(typ.Elem())
 	}
 	return false
 }
@@ -58,7 +68,11 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return uint64(val.Len())
 	case kind == reflect.Array || kind == reflect.Slice:
-		return determineFixedSize(val, typ.Elem()) * uint64(typ.Len())
+		var num uint64
+		for i := 0; i < typ.Len(); i++ {
+			num += determineFixedSize(val.Index(i), typ.Elem())
+		}
+		return num
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
 		for i := 0; i < typ.NumField(); i++ {
@@ -66,13 +80,15 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 			if strings.Contains(f.Name, "XXX") {
 				continue
 			}
-			fType, err := fieldType(f)
+			fType, err := determineFieldType(f)
 			if err != nil {
 				return 0
 			}
 			totalSize += determineFixedSize(val.Field(i), fType)
 		}
 		return totalSize
+	case kind == reflect.Ptr:
+		return determineFixedSize(val.Elem(), typ.Elem())
 	default:
 		return 0
 	}
@@ -87,8 +103,8 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 		totalSize := uint64(0)
 		for i := 0; i < val.Len(); i++ {
 			varSize := determineSize(val.Index(i))
-			if isVariableSizeType(val.Index(i), val.Index(i).Type()) {
-				totalSize += varSize + uint64(BytesPerLengthOffset)
+			if isVariableSizeType(typ.Elem()) {
+				totalSize += varSize + BytesPerLengthOffset
 			} else {
 				totalSize += varSize
 			}
@@ -97,13 +113,14 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
 		for i := 0; i < typ.NumField(); i++ {
-			fType, err := fieldType(typ.Field(i))
+			f := typ.Field(i)
+			fType, err := determineFieldType(f)
 			if err != nil {
 				return 0
 			}
-			if isVariableSizeType(val.Field(i), fType) {
+			if isVariableSizeType(fType) {
 				varSize := determineVariableSize(val.Field(i), fType)
-				totalSize += varSize + uint64(BytesPerLengthOffset)
+				totalSize += varSize + BytesPerLengthOffset
 			} else {
 				varSize := determineFixedSize(val.Field(i), fType)
 				totalSize += varSize
@@ -121,7 +138,7 @@ func determineSize(val reflect.Value) uint64 {
 	if val.Kind() == reflect.Ptr {
 		return determineSize(val.Elem())
 	}
-	if isVariableSizeType(val, val.Type()) {
+	if isVariableSizeType(val.Type()) {
 		return determineVariableSize(val, val.Type())
 	}
 	return determineFixedSize(val, val.Type())

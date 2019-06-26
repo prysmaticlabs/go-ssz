@@ -2,7 +2,15 @@ package ssz
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"reflect"
+)
+
+var (
+	// BytesPerChunk for an SSZ serialized object.
+	BytesPerChunk = 32
+	// BytesPerLengthOffset defines a constant for off-setting serialized chunks.
+	BytesPerLengthOffset = uint64(4)
 )
 
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
@@ -93,17 +101,49 @@ func mixInLength(root [32]byte, length []byte) [32]byte {
 	return hash(append(root[:], length...))
 }
 
-// fast verification to check if an number if a power of two.
+// Fast verification to check if an number if a power of two.
 func isPowerTwo(n int) bool {
 	return n != 0 && (n&(n-1)) == 0
 }
 
-func makeSliceType(typ reflect.Type, val reflect.Value, length int) {
+// Instantiates a reflect value which may not have a concrete type to have a concrete type
+// for unmarshaling. For example, we cannot unmarshal into a nil value - instead, it must have
+// a concrete type even if all of its values are zero values.
+func instantiateConcreteTypeForElement(val reflect.Value, typ reflect.Type) {
+	val.Set(reflect.New(typ))
+}
+
+// Grows a slice to a new length and instantiates the element at length-1 with a concrete type
+// accordingly if it is set to a pointer.
+func growConcreteSliceType(val reflect.Value, typ reflect.Type, length int) {
 	newVal := reflect.MakeSlice(typ, length, length)
 	reflect.Copy(newVal, val)
 	val.Set(newVal)
-	if typ.Elem().Kind() == reflect.Ptr {
-		tp := reflect.New(typ.Elem().Elem())
-		val.Index(length - 1).Set(tp)
+	if val.Index(length-1).Kind() == reflect.Ptr {
+		instantiateConcreteTypeForElement(val.Index(length-1), typ.Elem().Elem())
 	}
+}
+
+// toBytes32 is a convenience method for converting a byte slice to a fix
+// sized 32 byte array. This method will truncate the input if it is larger
+// than 32 bytes.
+func toBytes32(x []byte) [32]byte {
+	var y [32]byte
+	copy(y[:], x)
+	return y
+}
+
+// hash defines a function that returns the sha256 hash of the data passed in.
+func hash(data []byte) [32]byte {
+	var hash [32]byte
+
+	h := sha256.New()
+	// The hash interface never returns an error, for that reason
+	// we are not handling the error below. For reference, it is
+	// stated here https://golang.org/pkg/hash/#Hash
+	// #nosec G104
+	h.Write(data)
+	h.Sum(hash[:0])
+
+	return hash
 }
