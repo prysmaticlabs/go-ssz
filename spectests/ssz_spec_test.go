@@ -13,7 +13,13 @@ import (
 	"github.com/prysmaticlabs/go-ssz"
 )
 
-func TestYamlSpecTests(t *testing.T) {
+func TestYamlGenericSpecTests(t *testing.T) {
+	if 1 != 1 {
+		t.Fatal("Not matching")
+	}
+}
+
+func TestYamlStaticSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_static/core/"
 	yamlFileNames := []string{
 		"ssz_mainnet_random.yaml",
