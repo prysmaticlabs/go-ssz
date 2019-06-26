@@ -12,8 +12,8 @@ var useCache bool
 // HashTreeRoot determines the root hash using SSZ's merkleization.
 // Given a struct with the following fields, one can tree hash it as follows:
 //  type exampleStruct struct {
-// 	    Field1 uint8
-// 	    Field2 []byte
+//      Field1 uint8
+//      Field2 []byte
 //  }
 //
 //  ex := exampleStruct{

@@ -10,8 +10,8 @@ import (
 // Marshal a value and output the result into a byte slice.
 // Given a struct with the following fields, one can marshal it as follows:
 //  type exampleStruct struct {
-// 	    Field1 uint8
-// 	    Field2 []byte
+//      Field1 uint8
+//      Field2 []byte
 //  }
 //
 //  ex := exampleStruct{
@@ -27,16 +27,16 @@ import (
 // ssz-specific field tags as follows:
 //
 //  type exampleStruct struct {
-// 	    Field1 uint8
-// 	    Field2 []byte `ssz:"size=32"`
+//      Field1 uint8
+//      Field2 []byte `ssz:"size=32"`
 //  }
 //
 // This will treat `Field2` as as [32]byte array when marshaling. For unbounded
 // fields or multidimensional slices, ssz size tags can also be used as follows:
 //
 //  type exampleStruct struct {
-// 	    Field1 uint8
-// 	    Field2 [][]byte `ssz:"size=?,32"`
+//      Field1 uint8
+//      Field2 [][]byte `ssz:"size=?,32"`
 //  }
 //
 // This will treat `Field2` as type [][32]byte when marshaling a

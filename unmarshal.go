@@ -11,7 +11,7 @@ import (
 // Given a struct with the following fields, and some encoded bytes of type []byte,
 // one can then unmarshal the bytes into a pointer of the struct as follows:
 //  type exampleStruct1 struct {
-// 	    Field1 uint8
+//      Field1 uint8
 //      Field2 []byte
 //  }
 //
