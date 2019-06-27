@@ -34,8 +34,8 @@ Say you have a struct like this
 
 ```go
 type exampleStruct1 struct {
-	Field1 uint8
-	Field2 []byte
+    Field1 uint8
+    Field2 []byte
 }
 ````
 
