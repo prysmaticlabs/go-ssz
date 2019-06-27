@@ -17,6 +17,8 @@ import (
 func TestYamlGenericSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_generic/uint/"
 	yamlFileNames := []string{
+		"uint_bounds.yaml",
+		"uint_wrong_length.yaml",
 		"uint_random.yaml",
 	}
 	for _, f := range yamlFileNames {
@@ -36,45 +38,42 @@ func TestYamlGenericSpecTests(t *testing.T) {
 		for _, testCase := range s.TestCases {
 			switch testCase.Type {
 			case "uint8":
-				num, _ := strconv.ParseUint(testCase.Value, 10, 8)
-				encoded, err := ssz.Marshal(uint8(num))
-				if err != nil {
-					t.Fatal(err)
-				}
-				if !bytes.Equal(encoded, testCase.Ssz) {
-					t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
+				if testCase.Valid {
+					num, _ := strconv.ParseUint(testCase.Value, 10, 8)
+					compareEncoding(t, uint8(num), testCase.Ssz)
+				} else {
+					if _, err := strconv.ParseUint(testCase.Value, 10, 8); err == nil {
+						t.Error("Expected error, received nil")
+					}
 				}
 			case "uint16":
-				num, _ := strconv.ParseUint(testCase.Value, 10, 16)
-				encoded, err := ssz.Marshal(uint16(num))
-				if err != nil {
-					t.Fatal(err)
-				}
-				if !bytes.Equal(encoded, testCase.Ssz) {
-					t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
+				if testCase.Valid {
+					num, _ := strconv.ParseUint(testCase.Value, 10, 16)
+					compareEncoding(t, uint16(num), testCase.Ssz)
+				} else {
+					if _, err := strconv.ParseUint(testCase.Value, 10, 16); err == nil {
+						t.Error("Expected error, received nil")
+					}
 				}
 			case "uint32":
-				num, _ := strconv.ParseUint(testCase.Value, 10, 32)
-				encoded, err := ssz.Marshal(uint32(num))
-				if err != nil {
-					t.Fatal(err)
-				}
-				if !bytes.Equal(encoded, testCase.Ssz) {
-					t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
+				if testCase.Valid {
+					num, _ := strconv.ParseUint(testCase.Value, 10, 32)
+					compareEncoding(t, uint32(num), testCase.Ssz)
+				} else {
+					if _, err := strconv.ParseUint(testCase.Value, 10, 32); err == nil {
+						t.Error("Expected error, received nil")
+					}
 				}
 			case "uint64":
-				num, _ := strconv.ParseUint(testCase.Value, 10, 64)
-				encoded, err := ssz.Marshal(num)
-				if err != nil {
-					t.Fatal(err)
+				if testCase.Valid {
+					num, _ := strconv.ParseUint(testCase.Value, 10, 64)
+					compareEncoding(t, num, testCase.Ssz)
+				} else {
+					if _, err := strconv.ParseUint(testCase.Value, 10, 64); err == nil {
+						t.Error("Expected error, received nil")
+					}
 				}
-				if !bytes.Equal(encoded, testCase.Ssz) {
-					t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
-				}
-			default:
-				// Other types, uint128 and higher are not supported by go-ssz...
 			}
-
 		}
 	}
 }
@@ -874,4 +873,14 @@ func isEmpty(item interface{}) bool {
 		}
 	}
 	return true
+}
+
+func compareEncoding(t *testing.T, val interface{}, expected []byte) {
+	encoded, err := ssz.Marshal(val)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, expected) {
+		t.Errorf("Expected %v, received %v", expected, encoded)
+	}
 }
