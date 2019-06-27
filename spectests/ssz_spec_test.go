@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -13,7 +14,71 @@ import (
 	"github.com/prysmaticlabs/go-ssz"
 )
 
-func TestYamlSpecTests(t *testing.T) {
+func TestYamlGenericSpecTests(t *testing.T) {
+	topPath := "/eth2_spec_tests/tests/ssz_generic/uint/"
+	yamlFileNames := []string{
+		"uint_bounds.yaml",
+		"uint_wrong_length.yaml",
+		"uint_random.yaml",
+	}
+	for _, f := range yamlFileNames {
+		fullName := path.Join(topPath, f)
+		fPath, err := bazel.Runfile(fullName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		yamlFile, err := ioutil.ReadFile(fPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		s := &SszGenericTest{}
+		if err := yaml.Unmarshal(yamlFile, s); err != nil {
+			t.Fatalf("Failed to unmarshal: %v", err)
+		}
+		for _, testCase := range s.TestCases {
+			switch testCase.Type {
+			case "uint8":
+				if testCase.Valid {
+					num, _ := strconv.ParseUint(testCase.Value, 10, 8)
+					compareEncoding(t, uint8(num), testCase.Ssz)
+				} else {
+					if _, err := strconv.ParseUint(testCase.Value, 10, 8); err == nil {
+						t.Error("Expected error, received nil")
+					}
+				}
+			case "uint16":
+				if testCase.Valid {
+					num, _ := strconv.ParseUint(testCase.Value, 10, 16)
+					compareEncoding(t, uint16(num), testCase.Ssz)
+				} else {
+					if _, err := strconv.ParseUint(testCase.Value, 10, 16); err == nil {
+						t.Error("Expected error, received nil")
+					}
+				}
+			case "uint32":
+				if testCase.Valid {
+					num, _ := strconv.ParseUint(testCase.Value, 10, 32)
+					compareEncoding(t, uint32(num), testCase.Ssz)
+				} else {
+					if _, err := strconv.ParseUint(testCase.Value, 10, 32); err == nil {
+						t.Error("Expected error, received nil")
+					}
+				}
+			case "uint64":
+				if testCase.Valid {
+					num, _ := strconv.ParseUint(testCase.Value, 10, 64)
+					compareEncoding(t, num, testCase.Ssz)
+				} else {
+					if _, err := strconv.ParseUint(testCase.Value, 10, 64); err == nil {
+						t.Error("Expected error, received nil")
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestYamlStaticSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_static/core/"
 	yamlFileNames := []string{
 		"ssz_mainnet_random.yaml",
@@ -808,4 +873,14 @@ func isEmpty(item interface{}) bool {
 		}
 	}
 	return true
+}
+
+func compareEncoding(t *testing.T, val interface{}, expected []byte) {
+	encoded, err := ssz.Marshal(val)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, expected) {
+		t.Errorf("Expected %v, received %v", expected, encoded)
+	}
 }
