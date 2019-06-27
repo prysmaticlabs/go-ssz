@@ -29,16 +29,16 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 		return [32]byte{}, errors.New("untyped nil is not supported")
 	}
 	rval := reflect.ValueOf(val)
-	sszUtils, err := cachedSSZUtils(rval.Type())
+	sszUtils, err := cachedSSZUtilsNoAcquireLock(rval.Type())
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("could not get ssz utils for type: %v: %v", rval.Type(), err)
 	}
 	var output [32]byte
-	if useCache {
-		output, err = hashCache.lookup(rval, sszUtils.hasher)
-	} else {
-		output, err = sszUtils.hasher(rval)
-	}
+	// if useCache {
+	// 	output, err = hashCache.lookup(rval, sszUtils.hasher)
+	// } else {
+	output, err = sszUtils.hasher(rval)
+	// }
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
 	}
