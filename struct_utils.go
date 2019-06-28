@@ -115,3 +115,21 @@ func inferFieldTypeFromSizeTags(field reflect.StructField, sizes []int) reflect.
 	}
 	return currentType
 }
+
+func growSliceFromSizeTags(val reflect.Value, sizes []int) reflect.Value {
+	innerType := val.Type()
+	for i := 1; i < len(sizes); i++ {
+		innerType = innerType.Elem()
+	}
+	currentType := innerType
+	currentElement := val
+	for i := len(sizes) - 1; i >= 0; i-- {
+		if sizes[i] == 0 {
+			currentElement = reflect.MakeSlice(currentType, 0, 0)
+		} else {
+			currentElement = reflect.MakeSlice(currentType, sizes[i], sizes[i])
+		}
+		currentType = reflect.SliceOf(currentElement.Type())
+	}
+	return currentElement
+}

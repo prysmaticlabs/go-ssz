@@ -208,7 +208,7 @@ func makeBasicArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
 		i := 0
 		index := startOffset
-		size := typ.Len()
+		size := val.Cap()
 		for i < size {
 			if val.Index(i).Kind() == reflect.Ptr {
 				instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
@@ -279,7 +279,25 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 				if val.Field(i).Kind() == reflect.Ptr {
 					instantiateConcreteTypeForElement(val.Field(i), fields[i].typ.Elem())
 				}
-				fixedSz := determineFixedSize(val.Field(i), fields[i].typ)
+				concreteVal := val.Field(i)
+				sszSizeTags, hasTags, err := parseSSZFieldTags(typ.Field(i))
+				if err != nil {
+					return 0, err
+				}
+				if hasTags {
+					concreteType := inferFieldTypeFromSizeTags(typ.Field(i), sszSizeTags)
+					concreteVal = reflect.New(concreteType).Elem()
+					// If the item is a slice, we grow it accordingly based on the size tags.
+					if val.Field(i).Kind() == reflect.Slice {
+						result := growSliceFromSizeTags(val.Field(i), sszSizeTags)
+						val.Field(i).Set(result)
+						if fields[i].name == "LatestRandaoMixes" {
+							fmt.Println(result.Len())
+							fmt.Println(result.Index(0).Len())
+						}
+					}
+				}
+				fixedSz := determineFixedSize(concreteVal, fields[i].typ)
 				if fixedSz > 0 {
 					fixedSizes[i] = fixedSz
 				}
@@ -308,6 +326,8 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 			if val.Field(i).Kind() == reflect.Ptr {
 				instantiateConcreteTypeForElement(val.Field(i), fields[i].typ.Elem())
 			}
+			// fmt.Println("---In the actual unmarshaling")
+			// fmt.Println(fields[i].name)
 			if fieldSize > 0 {
 				nextIndex = currentIndex + fieldSize
 				if _, err := f.sszUtils.unmarshaler(input[currentIndex:nextIndex], val.Field(i), 0); err != nil {

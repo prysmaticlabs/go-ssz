@@ -12,6 +12,14 @@ go_library(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+    name = "bench_data",
+    srcs = glob([
+        "yaml/*.yaml",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
 go_test(
     name = "go_default_test",
     srcs = [
@@ -20,8 +28,7 @@ go_test(
     ],
     data = [
         "@eth2_spec_tests//:test_data",
-        "yaml/ssz_bench_block.yaml",
-        "yaml/ssz_bench_state.yaml",
+        "bench_data",
     ],
     embed = [":go_default_library"],
     deps = [

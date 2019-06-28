@@ -14,6 +14,27 @@ import (
 	"github.com/prysmaticlabs/go-ssz"
 )
 
+func TestYamlStateRoundTrip(t *testing.T) {
+	s := &SszMainnetBeaconState{}
+	fPath, err := bazel.Runfile("/com_github_prysmaticlabs_go_ssz/spectests/yaml/ssz_single_state.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	populateStructFromYaml(t, fPath, s)
+	encoded, err := ssz.Marshal(s.Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, s.Serialized) {
+		t.Error("Failed to encode")
+	}
+
+	var decoded MainnetState
+	if err := ssz.Unmarshal(encoded, &decoded); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestYamlGenericSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_generic/uint/"
 	yamlFileNames := []string{
