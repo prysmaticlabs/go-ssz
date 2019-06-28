@@ -19,6 +19,11 @@ type nestedItem struct {
 	Field3 [3]byte
 }
 
+type varItem struct {
+	Field2 []uint16
+	Field3 []uint16
+}
+
 var (
 	forkExample = fork{
 		PreviousVersion: [4]byte{1, 2, 3, 4},
@@ -29,6 +34,10 @@ var (
 		Field1: []uint64{1, 2, 3, 4},
 		Field2: &forkExample,
 		Field3: [3]byte{32, 33, 34},
+	}
+	varItemExample = varItem{
+		Field2: []uint16{},
+		Field3: []uint16{2, 3},
 	}
 )
 
@@ -68,6 +77,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
 		// Struct decoding test cases.
 		{input: forkExample, ptr: new(fork)},
+		{input: varItemExample, ptr: new(varItem)},
 		// Non-basic type slice/array test cases.
 		{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
 		{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
@@ -96,11 +106,13 @@ func TestMarshalUnmarshal(t *testing.T) {
 		inputVal := reflect.ValueOf(tt.input)
 		if inputVal.Kind() == reflect.Ptr {
 			if !reflect.DeepEqual(output.Interface(), tt.input) {
-				t.Errorf("Expected %d, received %d", tt.input, output.Interface())
+				t.Errorf("Expected %v, received %v", tt.input, output.Interface())
 			}
 		} else {
-			if !reflect.DeepEqual(output.Elem().Interface(), tt.input) {
-				t.Errorf("Expected %d, received %d", tt.input, output.Elem().Interface())
+			got := output.Elem().Interface()
+			want := tt.input
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("Did not unmarshal properly: wanted %v, received %v", tt.input, output.Elem().Interface())
 			}
 		}
 	}

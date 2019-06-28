@@ -41,10 +41,9 @@ func TestYamlBlockRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// if !bytes.Equal(encoded, s.Serialized) {
-	// 	t.Error("Failed to encode")
-	// }
-
+	if !bytes.Equal(encoded, s.Serialized) {
+		t.Error("Failed to encode")
+	}
 	var decoded MainnetBlock
 	if err := ssz.Unmarshal(encoded, &decoded); err != nil {
 		t.Error(err)

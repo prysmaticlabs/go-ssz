@@ -138,6 +138,11 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		return nil, err
 	}
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+		if len(input) == 0 {
+			newVal := reflect.MakeSlice(typ, 0, 0)
+			val.Set(newVal)
+			return 0, nil
+		}
 		growConcreteSliceType(val, typ, 1)
 		index := startOffset
 		index, err = elemSSZUtils.unmarshaler(input, val.Index(0), index)
@@ -314,7 +319,6 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 			}
 		}
 		offsets = append(offsets, endOffset)
-
 		offsetIndex := uint64(0)
 		for i := 0; i < len(fields); i++ {
 			f := fields[i]
