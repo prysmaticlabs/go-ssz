@@ -116,20 +116,36 @@ func inferFieldTypeFromSizeTags(field reflect.StructField, sizes []int) reflect.
 	return currentType
 }
 
+func growSlice(val reflect.Value, sizes []int) reflect.Value {
+	finalValue := reflect.MakeSlice(val.Type(), sizes[0], sizes[0])
+	for i := 0; i < sizes[0]; i++ {
+		finalValue.Index(i).Set(reflect.MakeSlice(finalValue.Index(0).Type(), sizes[1], sizes[1]))
+	}
+	return finalValue
+}
+
 func growSliceFromSizeTags(val reflect.Value, sizes []int) reflect.Value {
 	innerType := val.Type()
-	for i := 1; i < len(sizes); i++ {
+	for i := 0; i < len(sizes); i++ {
 		innerType = innerType.Elem()
 	}
-	currentType := innerType
-	currentElement := val
+	currentElement := reflect.New(innerType).Elem()
+	fmt.Println("--before")
+	fmt.Println(currentElement.Type())
 	for i := len(sizes) - 1; i >= 0; i-- {
 		if sizes[i] == 0 {
-			currentElement = reflect.MakeSlice(currentType, 0, 0)
+			currentElement = reflect.MakeSlice(reflect.SliceOf(currentElement.Type()), 0, 0)
 		} else {
-			currentElement = reflect.MakeSlice(currentType, sizes[i], sizes[i])
+			currentElement = reflect.MakeSlice(reflect.SliceOf(currentElement.Type()), sizes[i], sizes[i])
+			fmt.Println("--in func")
+			fmt.Println(currentElement.Type())
+			fmt.Println(currentElement.Len())
 		}
-		currentType = reflect.SliceOf(currentElement.Type())
 	}
+	fmt.Println("--out")
+	fmt.Println(currentElement.Type())
+	fmt.Println(currentElement.Len())
+	fmt.Println(currentElement.Index(0).Len())
+	fmt.Println("--end")
 	return currentElement
 }

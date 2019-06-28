@@ -289,11 +289,15 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 					concreteVal = reflect.New(concreteType).Elem()
 					// If the item is a slice, we grow it accordingly based on the size tags.
 					if val.Field(i).Kind() == reflect.Slice {
-						result := growSliceFromSizeTags(val.Field(i), sszSizeTags)
-						val.Field(i).Set(result)
 						if fields[i].name == "LatestRandaoMixes" {
+							result := growSlice(val.Field(i), sszSizeTags)
+							val.Field(i).Set(result)
 							fmt.Println(result.Len())
-							fmt.Println(result.Index(0).Len())
+							fmt.Println(result.Index(0).Cap())
+							panic("hi")
+						} else {
+							result := growSliceFromSizeTags(val.Field(i), sszSizeTags)
+							val.Field(i).Set(result)
 						}
 					}
 				}
