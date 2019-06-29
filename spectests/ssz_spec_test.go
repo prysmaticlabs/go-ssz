@@ -16,11 +16,7 @@ import (
 
 func TestYamlStateRoundTrip(t *testing.T) {
 	s := &SszMainnetBeaconState{}
-	fPath, err := bazel.Runfile("/com_github_prysmaticlabs_go_ssz/spectests/yaml/ssz_single_state.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	populateStructFromYaml(t, fPath, s)
+	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
 	encoded, err := ssz.Marshal(s.Value)
 	if err != nil {
 		t.Fatal(err)
@@ -37,11 +33,7 @@ func TestYamlStateRoundTrip(t *testing.T) {
 
 func TestYamlBlockRoundTrip(t *testing.T) {
 	s := &SszMainnetBlock{}
-	fPath, err := bazel.Runfile("/com_github_prysmaticlabs_go_ssz/spectests/yaml/ssz_single_block.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	populateStructFromYaml(t, fPath, s)
+	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
 	encoded, err := ssz.Marshal(s.Value)
 	if err != nil {
 		t.Fatal(err)
