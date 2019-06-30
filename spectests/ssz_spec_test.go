@@ -14,40 +14,68 @@ import (
 	"github.com/prysmaticlabs/go-ssz"
 )
 
-func TestYamlStateRoundTrip(t *testing.T) {
-	s := &SszMainnetBeaconState{}
-	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
-	encoded, err := ssz.Marshal(s.Value)
+type comparisonConfig struct {
+	val                 interface{}
+	unmarshalTarget     interface{}
+	expected            []byte
+	expectedRoot        []byte
+	expectedSigningRoot []byte
+}
+
+func compareEncodingGeneral(t *testing.T, cfg *comparisonConfig) {
+	encoded, err := ssz.Marshal(cfg.val)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(encoded, s.Serialized) {
+	if !bytes.Equal(encoded, cfg.expected) {
 		t.Error("Failed to encode")
 	}
-
-	var decoded MainnetState
-	if err := ssz.Unmarshal(encoded, &decoded); err != nil {
-		t.Error(err)
+	if err := ssz.Unmarshal(encoded, cfg.unmarshalTarget); err != nil {
+		t.Fatal(err)
 	}
+	concreteValue := reflect.ValueOf(cfg.unmarshalTarget).Elem().Interface()
+	t.Log(reflect.ValueOf(cfg.unmarshalTarget).Elem().Type())
+	if !reflect.DeepEqual(concreteValue, cfg.val) {
+		t.Error("Unmarshaled encoding did not match original value")
+	}
+	root, err := ssz.HashTreeRoot(cfg.val)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(root[:], cfg.expectedRoot) {
+		t.Errorf("Expected hash tree root %#x, received %#x", cfg.expectedRoot, root[:])
+	}
+	if cfg.expectedSigningRoot != nil {
+		signingRoot, err := ssz.SigningRoot(cfg.val)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(signingRoot[:], cfg.expectedSigningRoot) {
+			t.Errorf("Expected signing root %#x, received %#x", cfg.expectedSigningRoot, signingRoot)
+		}
+	}
+}
+
+func TestYamlStateRoundTrip(t *testing.T) {
+	s := &SszMainnetBeaconState{}
+	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
+	compareEncodingGeneral(t, &comparisonConfig{
+		val:             s.Value,
+		unmarshalTarget: new(MainnetState),
+		expected:        s.Serialized,
+		expectedRoot:    s.Root,
+	})
 }
 
 func TestYamlBlockRoundTrip(t *testing.T) {
 	s := &SszMainnetBlock{}
 	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
-	encoded, err := ssz.Marshal(s.Value)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(encoded, s.Serialized) {
-		t.Error("Failed to encode")
-	}
-	var decoded MainnetBlock
-	if err := ssz.Unmarshal(encoded, &decoded); err != nil {
-		t.Error(err)
-	}
-	if !reflect.DeepEqual(decoded, s.Value) {
-		t.Fatal("Does not match")
-	}
+	compareEncodingGeneral(t, &comparisonConfig{
+		val:             s.Value,
+		unmarshalTarget: new(MainnetBlock),
+		expected:        s.Serialized,
+		expectedRoot:    s.Root,
+	})
 }
 
 func TestYamlGenericSpecTests(t *testing.T) {
@@ -156,26 +184,35 @@ func TestYamlStaticSpecTests(t *testing.T) {
 func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 	for _, testCase := range s.TestCases {
 		if !isEmpty(testCase.Attestation.Value) {
+			// compareEncodingGeneral(t, &comparisonConfig{
+			// 	val:             testCase.Attestation.Value,
+			// 	unmarshalTarget: new(MinimalAttestation),
+			// 	expected:        testCase.Attestation.Serialized,
+			// 	expectedRoot:    testCase.Attestation.Root,
+			// })
 			encoded, err := ssz.Marshal(testCase.Attestation.Value)
 			if err != nil {
 				t.Fatal(err)
+			}
+			var decoded MinimalAttestation
+			if err := ssz.Unmarshal(encoded, &decoded); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(testCase.Attestation.Value, decoded) {
+				t.Log(reflect.ValueOf(testCase.Attestation.Value).Type())
+				t.Log(" ")
+				t.Log(reflect.ValueOf(decoded).Type())
+				t.Fatal("Att failed to unmarshal matching")
 			}
 			root, err := ssz.HashTreeRoot(testCase.Attestation.Value)
 			if err != nil {
 				t.Fatal(err)
 			}
-			signingRoot, err := ssz.SigningRoot(testCase.Attestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
 			if !bytes.Equal(root[:], testCase.Attestation.Root) {
-				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Root, root[:])
+				t.Errorf("Expected attestation data %#x, received %#x", testCase.Attestation.Root, root[:])
 			}
 			if !bytes.Equal(encoded, testCase.Attestation.Serialized) {
-				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.Attestation.SigningRoot) {
-				t.Errorf("Expected attestation signing root %#x, received %#x", testCase.Attestation.SigningRoot, signingRoot)
+				t.Errorf("Expected attestation data %#x, received %#x", testCase.Attestation.Serialized, encoded)
 			}
 		}
 		if !isEmpty(testCase.AttestationData.Value) {
