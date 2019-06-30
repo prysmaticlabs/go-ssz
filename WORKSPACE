@@ -76,3 +76,9 @@ go_repository(
     commit = "51d6538a90f86fe93ac480b35f37b2be17fef232",  # v2.2.2
     importpath = "gopkg.in/yaml.v2",
 )
+
+go_repository(
+    name = "in_gopkg_d4l3k_messagediff_v1",
+    commit = "29f32d820d112dbd66e58492a6ffb7cc3106312b",
+    importpath = "gopkg.in/d4l3k/messagediff.v1",
+)
