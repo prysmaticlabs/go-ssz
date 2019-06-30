@@ -14,6 +14,42 @@ import (
 	"github.com/prysmaticlabs/go-ssz"
 )
 
+func TestYamlStateRoundTrip(t *testing.T) {
+	s := &SszMainnetBeaconState{}
+	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
+	encoded, err := ssz.Marshal(s.Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, s.Serialized) {
+		t.Error("Failed to encode")
+	}
+
+	var decoded MainnetState
+	if err := ssz.Unmarshal(encoded, &decoded); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestYamlBlockRoundTrip(t *testing.T) {
+	s := &SszMainnetBlock{}
+	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
+	encoded, err := ssz.Marshal(s.Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, s.Serialized) {
+		t.Error("Failed to encode")
+	}
+	var decoded MainnetBlock
+	if err := ssz.Unmarshal(encoded, &decoded); err != nil {
+		t.Error(err)
+	}
+	if !reflect.DeepEqual(decoded, s.Value) {
+		t.Fatal("Does not match")
+	}
+}
+
 func TestYamlGenericSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_generic/uint/"
 	yamlFileNames := []string{

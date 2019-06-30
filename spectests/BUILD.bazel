@@ -20,8 +20,8 @@ go_test(
     ],
     data = [
         "@eth2_spec_tests//:test_data",
-        "yaml/ssz_bench_block.yaml",
-        "yaml/ssz_bench_state.yaml",
+        "yaml/ssz_single_block.yaml",
+        "yaml/ssz_single_state.yaml",
     ],
     embed = [":go_default_library"],
     deps = [

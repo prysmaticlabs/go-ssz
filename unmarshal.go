@@ -138,7 +138,32 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		return nil, err
 	}
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
-		growConcreteSliceType(val, typ, 1)
+		if len(input) == 0 {
+			newVal := reflect.MakeSlice(val.Type(), 0, 0)
+			val.Set(newVal)
+			return 0, nil
+		}
+		growConcreteSliceType(val, val.Type(), 1)
+		// If there are struct tags that specify a different type, we handle accordingly.
+		if val.Type() != typ {
+			sizes := []int{1}
+			innerElement := typ.Elem()
+			for {
+				if innerElement.Kind() == reflect.Slice {
+					sizes = append(sizes, 0)
+					innerElement = innerElement.Elem()
+				} else if innerElement.Kind() == reflect.Array {
+					sizes = append(sizes, innerElement.Len())
+					innerElement = innerElement.Elem()
+				} else {
+					break
+				}
+			}
+			// If the item is a slice, we grow it accordingly based on the size tags.
+			result := growSliceFromSizeTags(val, sizes)
+			val.Set(result)
+		}
+
 		index := startOffset
 		index, err = elemSSZUtils.unmarshaler(input, val.Index(0), index)
 		if err != nil {
@@ -148,7 +173,7 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		endOffset := uint64(len(input)) / elementSize
 		i := uint64(1)
 		for i < endOffset {
-			growConcreteSliceType(val, typ, int(i)+1)
+			growConcreteSliceType(val, val.Type(), int(i)+1)
 			index, err = elemSSZUtils.unmarshaler(input, val.Index(int(i)), index)
 			if err != nil {
 				return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
@@ -208,7 +233,7 @@ func makeBasicArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
 		i := 0
 		index := startOffset
-		size := typ.Len()
+		size := val.Cap()
 		for i < size {
 			if val.Index(i).Kind() == reflect.Ptr {
 				instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
@@ -279,7 +304,21 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 				if val.Field(i).Kind() == reflect.Ptr {
 					instantiateConcreteTypeForElement(val.Field(i), fields[i].typ.Elem())
 				}
-				fixedSz := determineFixedSize(val.Field(i), fields[i].typ)
+				concreteVal := val.Field(i)
+				sszSizeTags, hasTags, err := parseSSZFieldTags(typ.Field(i))
+				if err != nil {
+					return 0, err
+				}
+				if hasTags {
+					concreteType := inferFieldTypeFromSizeTags(typ.Field(i), sszSizeTags)
+					concreteVal = reflect.New(concreteType).Elem()
+					// If the item is a slice, we grow it accordingly based on the size tags.
+					if val.Field(i).Kind() == reflect.Slice {
+						result := growSliceFromSizeTags(val.Field(i), sszSizeTags)
+						val.Field(i).Set(result)
+					}
+				}
+				fixedSz := determineFixedSize(concreteVal, fields[i].typ)
 				if fixedSz > 0 {
 					fixedSizes[i] = fixedSz
 				}
@@ -300,7 +339,6 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 			}
 		}
 		offsets = append(offsets, endOffset)
-
 		offsetIndex := uint64(0)
 		for i := 0; i < len(fields); i++ {
 			f := fields[i]
