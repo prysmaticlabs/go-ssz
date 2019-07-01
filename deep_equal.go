@@ -1,3 +1,10 @@
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+//
+// This file extends Go's reflect.DeepEqual function into a ssz.DeepEqual
+// function that is compliant with the supported types of ssz and its
+// intricacies when determining equality of empty values.
 package ssz
 
 import (
@@ -33,7 +40,7 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 	// hard(t) needs to return true for at least one of the types in the cycle.
 	hard := func(k reflect.Kind) bool {
 		switch k {
-		case reflect.Map, reflect.Slice, reflect.Ptr, reflect.Interface:
+		case reflect.Slice, reflect.Ptr, reflect.Interface:
 			return true
 		}
 		return false
@@ -68,6 +75,7 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 		}
 		return true
 	case reflect.Slice:
+		// TODO: modify this part.
 		if v1.IsNil() != v2.IsNil() {
 			return false
 		}
@@ -100,30 +108,10 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 			}
 		}
 		return true
-	case reflect.Map:
-		if v1.IsNil() != v2.IsNil() {
-			return false
-		}
-		if v1.Len() != v2.Len() {
-			return false
-		}
-		if v1.Pointer() == v2.Pointer() {
-			return true
-		}
-		for _, k := range v1.MapKeys() {
-			val1 := v1.MapIndex(k)
-			val2 := v2.MapIndex(k)
-			if !val1.IsValid() || !val2.IsValid() || !deepValueEqual(val1, val2, visited, depth+1) {
-				return false
-			}
-		}
-		return true
-	case reflect.Func:
-		if v1.IsNil() && v2.IsNil() {
-			return true
-		}
-		// Can't do better than this:
-		return false
+	case reflect.Uint:
+		return v1.Interface().(uint) == v2.Interface().(uint)
+	case reflect.Bool:
+		return v1.Interface().(bool) == v2.Interface().(bool)
 	default:
 		return false
 	}
@@ -142,20 +130,13 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 //
 // Interface values are deeply equal if they hold deeply equal concrete values.
 //
-// Map values are deeply equal when all of the following are true:
-// they are both nil or both non-nil, they have the same length,
-// and either they are the same map object or their corresponding keys
-// (matched using Go equality) map to deeply equal values.
-//
 // Pointer values are deeply equal if they are equal using Go's == operator
 // or if they point to deeply equal values.
 //
 // Slice values are deeply equal when all of the following are true:
-// they are both nil or both non-nil, they have the same length,
-// and either they point to the same initial entry of the same underlying array
+// they are both nil or both non-nil, one is nil and the other is empty or vice-versa,
+//  they have the same length, and either they point to the same initial entry of the same array
 // (that is, &x[0] == &y[0]) or their corresponding elements (up to length) are deeply equal.
-// Note that a non-nil empty slice and a nil slice (for example, []byte{} and []byte(nil))
-// are not deeply equal.
 //
 // Other values - numbers, bools, strings, and channels - are deeply equal
 // if they are equal using Go's == operator.
@@ -167,6 +148,7 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 // or because it is a floating-point NaN value (not equal to itself in floating-point comparison),
 // or because it is an array, struct, or interface containing
 // such a value.
+//
 // On the other hand, pointer values are always equal to themselves,
 // even if they point at or contain such problematic values,
 // because they compare equal using Go's == operator, and that
