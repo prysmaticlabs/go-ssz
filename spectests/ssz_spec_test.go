@@ -541,6 +541,7 @@ func compareSSZEncoding(t *testing.T, cfg *sszComparisonConfig) {
 	concreteValue := reflect.ValueOf(cfg.unmarshalTarget).Elem().Interface()
 	if !ssz.DeepEqual(concreteValue, cfg.val) {
 		t.Error("Unmarshaled encoding did not match original value")
+		t.Log(concreteValue)
 	}
 	root, err := ssz.HashTreeRoot(cfg.val)
 	if err != nil {
