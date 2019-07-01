@@ -192,6 +192,11 @@ func makeCompositeSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		return nil, err
 	}
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+		if len(input) == 0 {
+			newVal := reflect.MakeSlice(val.Type(), 0, 0)
+			val.Set(newVal)
+			return 0, nil
+		}
 		growConcreteSliceType(val, typ, 1)
 		endOffset := uint64(len(input))
 
