@@ -34,8 +34,7 @@ func compareEncodingGeneral(t *testing.T, cfg *comparisonConfig) {
 		t.Fatal(err)
 	}
 	concreteValue := reflect.ValueOf(cfg.unmarshalTarget).Elem().Interface()
-	t.Log(reflect.ValueOf(cfg.unmarshalTarget).Elem().Type())
-	if !reflect.DeepEqual(concreteValue, cfg.val) {
+	if !ssz.DeepEqual(concreteValue, cfg.val) {
 		t.Error("Unmarshaled encoding did not match original value")
 	}
 	root, err := ssz.HashTreeRoot(cfg.val)
@@ -149,11 +148,11 @@ func TestYamlStaticSpecTests(t *testing.T) {
 		// "ssz_mainnet_random.yaml",
 		"ssz_minimal_lengthy.yaml",
 		"ssz_minimal_max.yaml",
-		// "ssz_minimal_nil.yaml",
-		// "ssz_minimal_one.yaml",
-		// "ssz_minimal_random.yaml",
-		// "ssz_minimal_random_chaos.yaml",
-		// "ssz_minimal_zero.yaml",
+		"ssz_minimal_nil.yaml",
+		"ssz_minimal_one.yaml",
+		"ssz_minimal_random.yaml",
+		"ssz_minimal_random_chaos.yaml",
+		"ssz_minimal_zero.yaml",
 	}
 	for _, f := range yamlFileNames {
 		fullName := path.Join(topPath, f)
@@ -185,34 +184,12 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 	for _, testCase := range s.TestCases {
 		if !isEmpty(testCase.Attestation.Value) {
 			compareEncodingGeneral(t, &comparisonConfig{
-				val:             testCase.Attestation.Value,
-				unmarshalTarget: new(MinimalAttestation),
-				expected:        testCase.Attestation.Serialized,
-				expectedRoot:    testCase.Attestation.Root,
+				val:                 testCase.Attestation.Value,
+				unmarshalTarget:     new(MinimalAttestation),
+				expected:            testCase.Attestation.Serialized,
+				expectedRoot:        testCase.Attestation.Root,
+				expectedSigningRoot: testCase.Attestation.SigningRoot,
 			})
-			// encoded, err := ssz.Marshal(testCase.Attestation.Value)
-			// if err != nil {
-			// 	t.Fatal(err)
-			// }
-			// var decoded MinimalAttestation
-			// if err := ssz.Unmarshal(encoded, &decoded); err != nil {
-			// 	t.Fatal(err)
-			// }
-			// if !reflect.DeepEqual(testCase.Attestation.Value, decoded) {
-			// 	diff, _ := messagediff.PrettyDiff(decoded, testCase.Attestation.Value)
-			// 	t.Log(diff)
-			// 	t.Fatal("Att failed to unmarshal matching")
-			// }
-			// root, err := ssz.HashTreeRoot(testCase.Attestation.Value)
-			// if err != nil {
-			// 	t.Fatal(err)
-			// }
-			// if !bytes.Equal(root[:], testCase.Attestation.Root) {
-			// 	t.Errorf("Expected attestation data %#x, received %#x", testCase.Attestation.Root, root[:])
-			// }
-			// if !bytes.Equal(encoded, testCase.Attestation.Serialized) {
-			// 	t.Errorf("Expected attestation data %#x, received %#x", testCase.Attestation.Serialized, encoded)
-			// }
 		}
 		if !isEmpty(testCase.AttestationData.Value) {
 			compareEncodingGeneral(t, &comparisonConfig{
@@ -221,20 +198,6 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 				expected:        testCase.AttestationData.Serialized,
 				expectedRoot:    testCase.AttestationData.Root,
 			})
-			// encoded, err := ssz.Marshal(testCase.AttestationData.Value)
-			// if err != nil {
-			// 	t.Fatal(err)
-			// }
-			// root, err := ssz.HashTreeRoot(testCase.AttestationData.Value)
-			// if err != nil {
-			// 	t.Fatal(err)
-			// }
-			// if !bytes.Equal(root[:], testCase.AttestationData.Root) {
-			// 	t.Errorf("Expected attestation data %#x, received %#x", testCase.AttestationData.Root, root[:])
-			// }
-			// if !bytes.Equal(encoded, testCase.AttestationData.Serialized) {
-			// 	t.Errorf("Expected attestation data %#x, received %#x", testCase.AttestationData.Serialized, encoded)
-			// }
 		}
 		if !isEmpty(testCase.AttestationDataAndCustodyBit.Value) {
 			compareEncodingGeneral(t, &comparisonConfig{
@@ -245,82 +208,38 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.AttesterSlashing.Value) {
-			encoded, err := ssz.Marshal(testCase.AttesterSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.AttesterSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.AttesterSlashing.Root) {
-				t.Errorf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.AttesterSlashing.Serialized) {
-				t.Errorf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Serialized, encoded)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.AttesterSlashing.Value,
+				unmarshalTarget: new(MinimalAttesterSlashing),
+				expected:        testCase.AttesterSlashing.Serialized,
+				expectedRoot:    testCase.AttesterSlashing.Root,
+			})
 		}
-		if !isEmpty(testCase.BeaconBlock.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconBlock.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlock.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlock.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlock.Root) {
-				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlock.Serialized) {
-				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.BeaconBlock.SigningRoot) {
-				t.Errorf("Expected beacon block signing root %#x, received %#x", testCase.BeaconBlock.SigningRoot, signingRoot)
-			}
-		}
-		if !isEmpty(testCase.BeaconBlockBody.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconBlockBody.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlockBody.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlockBody.Root) {
-				t.Errorf("Expected %#x, received %#x", testCase.BeaconBlockBody.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlockBody.Serialized) {
-				t.Errorf("Expected %#x, received %#x", testCase.BeaconBlockBody.Serialized, encoded)
-			}
-		}
+		// if !isEmpty(testCase.BeaconBlock.Value) {
+		// 	compareEncodingGeneral(t, &comparisonConfig{
+		// 		val:                 testCase.BeaconBlock.Value,
+		// 		unmarshalTarget:     new(MinimalBlock),
+		// 		expected:            testCase.BeaconBlock.Serialized,
+		// 		expectedRoot:        testCase.BeaconBlock.Root,
+		// 		expectedSigningRoot: testCase.BeaconBlock.SigningRoot,
+		// 	})
+		// }
+		// if !isEmpty(testCase.BeaconBlockBody.Value) {
+		// 	compareEncodingGeneral(t, &comparisonConfig{
+		// 		val:             testCase.BeaconBlockBody.Value,
+		// 		unmarshalTarget: new(MinimalBlockBody),
+		// 		expected:        testCase.BeaconBlockBody.Serialized,
+		// 		expectedRoot:    testCase.BeaconBlockBody.Root,
+		// 	})
+		// }
 		if !isEmpty(testCase.BeaconBlockHeader.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconBlockHeader.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlockHeader.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlockHeader.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlockHeader.Root) {
-				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlockHeader.Serialized) {
-				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.BeaconBlockHeader.SigningRoot) {
-				t.Errorf("Expected beacon block header signing root %#x, received %#x", testCase.BeaconBlockHeader.SigningRoot, signingRoot)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:                 testCase.BeaconBlockHeader.Value,
+				unmarshalTarget:     new(MinimalBlockHeader),
+				expected:            testCase.BeaconBlockHeader.Serialized,
+				expectedRoot:        testCase.BeaconBlockHeader.Root,
+				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.BeaconState.Value) {
 			encoded, err := ssz.Marshal(testCase.BeaconState.Value)
