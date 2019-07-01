@@ -75,9 +75,14 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 		}
 		return true
 	case reflect.Slice:
-		// TODO: modify this part.
-		if v1.IsNil() != v2.IsNil() {
-			return false
+		if v1.IsNil() && v2.Len() == 0 {
+			return true
+		}
+		if v1.Len() == 0 && v2.IsNil() {
+			return true
+		}
+		if v1.IsNil() && v2.IsNil() {
+			return true
 		}
 		if v1.Len() != v2.Len() {
 			return false
@@ -108,8 +113,14 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 			}
 		}
 		return true
-	case reflect.Uint:
-		return v1.Interface().(uint) == v2.Interface().(uint)
+	case reflect.Uint64:
+		return v1.Interface().(uint64) == v2.Interface().(uint64)
+	case reflect.Uint32:
+		return v1.Interface().(uint32) == v2.Interface().(uint32)
+	case reflect.Uint16:
+		return v1.Interface().(uint16) == v2.Interface().(uint16)
+	case reflect.Uint8:
+		return v1.Interface().(uint8) == v2.Interface().(uint8)
 	case reflect.Bool:
 		return v1.Interface().(bool) == v2.Interface().(bool)
 	default:
@@ -117,8 +128,9 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 	}
 }
 
-// DeepEqual reports whether x and y are ``deeply equal,'' defined as follows.
-// Two values of identical type are deeply equal if one of the following cases applies.
+// DeepEqual reports whether two SSZ-able values x and y are ``deeply equal,'' defined as follows:
+// Two values of identical type are deeply equal if one of the following cases applies:
+//
 // Values of distinct types are never deeply equal.
 //
 // Array values are deeply equal when their corresponding elements are deeply equal.
@@ -126,16 +138,14 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 // Struct values are deeply equal if their corresponding fields,
 // both exported and unexported, are deeply equal.
 //
-// Func values are deeply equal if both are nil; otherwise they are not deeply equal.
-//
 // Interface values are deeply equal if they hold deeply equal concrete values.
 //
 // Pointer values are deeply equal if they are equal using Go's == operator
 // or if they point to deeply equal values.
 //
 // Slice values are deeply equal when all of the following are true:
-// they are both nil or both non-nil, one is nil and the other is empty or vice-versa,
-//  they have the same length, and either they point to the same initial entry of the same array
+// they are both nil, one is nil and the other is empty or vice-versa,
+// they have the same length, and either they point to the same initial entry of the same array
 // (that is, &x[0] == &y[0]) or their corresponding elements (up to length) are deeply equal.
 //
 // Other values - numbers, bools, strings, and channels - are deeply equal
@@ -162,6 +172,9 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 // values that have been compared before, it treats the values as
 // equal rather than examining the values to which they point.
 // This ensures that DeepEqual terminates.
+//
+// Credits go to the Go team as this is an extension of the official Go source code's
+// reflect.DeepEqual function to handle special SSZ edge cases.
 func DeepEqual(x, y interface{}) bool {
 	if x == nil || y == nil {
 		return x == y

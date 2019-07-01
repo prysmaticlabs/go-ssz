@@ -39,6 +39,9 @@ var (
 		Field2: []uint16{},
 		Field3: []uint16{2, 3},
 	}
+	varItemAmbiguous = varItem{
+		Field3: []uint16{4, 5},
+	}
 )
 
 func TestMarshalUnmarshal(t *testing.T) {
@@ -77,7 +80,9 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
 		// Struct decoding test cases.
 		{input: forkExample, ptr: new(fork)},
+		{input: nestedItemExample, ptr: new(nestedItem)},
 		{input: varItemExample, ptr: new(varItem)},
+		{input: varItemAmbiguous, ptr: new(varItem)},
 		// Non-basic type slice/array test cases.
 		{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
 		{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
@@ -105,13 +110,13 @@ func TestMarshalUnmarshal(t *testing.T) {
 		output := reflect.ValueOf(tt.ptr)
 		inputVal := reflect.ValueOf(tt.input)
 		if inputVal.Kind() == reflect.Ptr {
-			if !reflect.DeepEqual(output.Interface(), tt.input) {
+			if !ssz.DeepEqual(output.Interface(), tt.input) {
 				t.Errorf("Expected %v, received %v", tt.input, output.Interface())
 			}
 		} else {
 			got := output.Elem().Interface()
 			want := tt.input
-			if !reflect.DeepEqual(want, got) {
+			if !ssz.DeepEqual(want, got) {
 				t.Errorf("Did not unmarshal properly: wanted %v, received %v", tt.input, output.Elem().Interface())
 			}
 		}
