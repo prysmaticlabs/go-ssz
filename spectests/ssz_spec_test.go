@@ -14,7 +14,9 @@ import (
 	"github.com/prysmaticlabs/go-ssz"
 )
 
-type comparisonConfig struct {
+// sszComparisonConfig is used to specify the value to marshal, unmarshal into,
+// as well as the expected results from the spec test YAML files.
+type sszComparisonConfig struct {
 	val                 interface{}
 	unmarshalTarget     interface{}
 	expected            []byte
@@ -25,7 +27,7 @@ type comparisonConfig struct {
 func TestYamlStateRoundTrip(t *testing.T) {
 	s := &SszBenchmarkState{}
 	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
-	compareSSZEncoding(t, &comparisonConfig{
+	compareSSZEncoding(t, &sszComparisonConfig{
 		val:             s.Value,
 		unmarshalTarget: new(MainnetBeaconState),
 		expected:        s.Serialized,
@@ -36,7 +38,7 @@ func TestYamlStateRoundTrip(t *testing.T) {
 func TestYamlBlockRoundTrip(t *testing.T) {
 	s := &SszBenchmarkBlock{}
 	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
-	compareSSZEncoding(t, &comparisonConfig{
+	compareSSZEncoding(t, &sszComparisonConfig{
 		val:                 s.Value,
 		unmarshalTarget:     new(MainnetBlock),
 		expected:            s.Serialized,
@@ -136,14 +138,14 @@ func TestYamlGenericSpecTests(t *testing.T) {
 func TestYamlStaticSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_static/core/"
 	yamlFileNames := []string{
-		"ssz_mainnet_random.yaml",
-		"ssz_minimal_lengthy.yaml",
-		"ssz_minimal_max.yaml",
-		"ssz_minimal_nil.yaml",
-		"ssz_minimal_one.yaml",
-		"ssz_minimal_random.yaml",
-		"ssz_minimal_random_chaos.yaml",
-		"ssz_minimal_zero.yaml",
+		// "ssz_mainnet_random.yaml",
+		// "ssz_minimal_lengthy.yaml",
+		// "ssz_minimal_max.yaml",
+		// "ssz_minimal_nil.yaml",
+		// "ssz_minimal_one.yaml", // State passes here.
+		// "ssz_minimal_random.yaml",
+		// "ssz_minimal_random_chaos.yaml",
+		"ssz_minimal_zero.yaml", // TODO: Debug here.
 	}
 	for _, f := range yamlFileNames {
 		fullName := path.Join(topPath, f)
@@ -176,7 +178,7 @@ func TestYamlStaticSpecTests(t *testing.T) {
 func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 	for _, testCase := range s.TestCases {
 		if !isEmpty(testCase.Attestation.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.Attestation.Value,
 				unmarshalTarget:     new(MinimalAttestation),
 				expected:            testCase.Attestation.Serialized,
@@ -185,7 +187,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.AttestationData.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.AttestationData.Value,
 				unmarshalTarget: new(MinimalAttestationData),
 				expected:        testCase.AttestationData.Serialized,
@@ -193,7 +195,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.AttestationDataAndCustodyBit.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.AttestationDataAndCustodyBit.Value,
 				unmarshalTarget: new(MinimalAttestationAndCustodyBit),
 				expected:        testCase.AttestationDataAndCustodyBit.Serialized,
@@ -201,7 +203,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.AttesterSlashing.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.AttesterSlashing.Value,
 				unmarshalTarget: new(MinimalAttesterSlashing),
 				expected:        testCase.AttesterSlashing.Serialized,
@@ -209,7 +211,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.BeaconBlock.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.BeaconBlock.Value,
 				unmarshalTarget:     new(MinimalBlock),
 				expected:            testCase.BeaconBlock.Serialized,
@@ -218,7 +220,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.BeaconBlockBody.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.BeaconBlockBody.Value,
 				unmarshalTarget: new(MinimalBlockBody),
 				expected:        testCase.BeaconBlockBody.Serialized,
@@ -226,7 +228,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.BeaconBlockHeader.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.BeaconBlockHeader.Value,
 				unmarshalTarget:     new(MinimalBlockHeader),
 				expected:            testCase.BeaconBlockHeader.Serialized,
@@ -234,16 +236,16 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
 			})
 		}
-		// if !isEmpty(testCase.BeaconState.Value) {
-		// 	compareSSZEncoding(t, &comparisonConfig{
-		// 		val:             testCase.BeaconState.Value,
-		// 		unmarshalTarget: new(MinimalBeaconState),
-		// 		expected:        testCase.BeaconState.Serialized,
-		// 		expectedRoot:    testCase.BeaconState.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.BeaconState.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.BeaconState.Value,
+				unmarshalTarget: new(MinimalBeaconState),
+				expected:        testCase.BeaconState.Serialized,
+				expectedRoot:    testCase.BeaconState.Root,
+			})
+		}
 		if !isEmpty(testCase.Crosslink.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Crosslink.Value,
 				unmarshalTarget: new(MinimalCrosslink),
 				expected:        testCase.Crosslink.Serialized,
@@ -251,7 +253,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.Deposit.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Deposit.Value,
 				unmarshalTarget: new(MinimalDeposit),
 				expected:        testCase.Deposit.Serialized,
@@ -259,7 +261,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.DepositData.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.DepositData.Value,
 				unmarshalTarget: new(MinimalDepositData),
 				expected:        testCase.DepositData.Serialized,
@@ -267,7 +269,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.Eth1Data.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Eth1Data.Value,
 				unmarshalTarget: new(MinimalEth1Data),
 				expected:        testCase.Eth1Data.Serialized,
@@ -275,7 +277,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.Fork.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Fork.Value,
 				unmarshalTarget: new(MinimalFork),
 				expected:        testCase.Fork.Serialized,
@@ -283,7 +285,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.HistoricalBatch.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.HistoricalBatch.Value,
 				unmarshalTarget: new(MinimalHistoricalBatch),
 				expected:        testCase.HistoricalBatch.Serialized,
@@ -291,7 +293,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.IndexedAttestation.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.IndexedAttestation.Value,
 				unmarshalTarget:     new(MinimalIndexedAttestation),
 				expected:            testCase.IndexedAttestation.Serialized,
@@ -300,7 +302,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.PendingAttestation.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.PendingAttestation.Value,
 				unmarshalTarget: new(MinimalPendingAttestation),
 				expected:        testCase.PendingAttestation.Serialized,
@@ -308,7 +310,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.ProposerSlashing.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.ProposerSlashing.Value,
 				unmarshalTarget: new(MinimalProposerSlashing),
 				expected:        testCase.ProposerSlashing.Serialized,
@@ -316,7 +318,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.Transfer.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.Transfer.Value,
 				unmarshalTarget:     new(MinimalTransfer),
 				expected:            testCase.Transfer.Serialized,
@@ -325,7 +327,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.Validator.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Validator.Value,
 				unmarshalTarget: new(MinimalValidator),
 				expected:        testCase.Validator.Serialized,
@@ -333,7 +335,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.VoluntaryExit.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.VoluntaryExit.Value,
 				unmarshalTarget:     new(MinimalVoluntaryExit),
 				expected:            testCase.VoluntaryExit.Serialized,
@@ -347,7 +349,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 	for _, testCase := range s.TestCases {
 		if !isEmpty(testCase.Attestation.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.Attestation.Value,
 				unmarshalTarget:     new(MainnetAttestation),
 				expected:            testCase.Attestation.Serialized,
@@ -356,7 +358,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.AttestationData.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.AttestationData.Value,
 				unmarshalTarget: new(MainnetAttestationData),
 				expected:        testCase.AttestationData.Serialized,
@@ -364,7 +366,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.AttestationDataAndCustodyBit.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.AttestationDataAndCustodyBit.Value,
 				unmarshalTarget: new(MainnetAttestationAndCustodyBit),
 				expected:        testCase.AttestationDataAndCustodyBit.Serialized,
@@ -372,7 +374,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.AttesterSlashing.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.AttesterSlashing.Value,
 				unmarshalTarget: new(MainnetAttesterSlashing),
 				expected:        testCase.AttesterSlashing.Serialized,
@@ -380,7 +382,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.BeaconBlock.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.BeaconBlock.Value,
 				unmarshalTarget:     new(MainnetBlock),
 				expected:            testCase.BeaconBlock.Serialized,
@@ -389,7 +391,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.BeaconBlockBody.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.BeaconBlockBody.Value,
 				unmarshalTarget: new(MainnetBlockBody),
 				expected:        testCase.BeaconBlockBody.Serialized,
@@ -397,7 +399,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.BeaconBlockHeader.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.BeaconBlockHeader.Value,
 				unmarshalTarget:     new(MainnetBlockHeader),
 				expected:            testCase.BeaconBlockHeader.Serialized,
@@ -406,7 +408,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		// if !isEmpty(testCase.BeaconState.Value) {
-		// 	compareSSZEncoding(t, &comparisonConfig{
+		// 	compareSSZEncoding(t, &sszComparisonConfig{
 		// 		val:             testCase.BeaconState.Value,
 		// 		unmarshalTarget: new(MainnetBeaconState),
 		// 		expected:        testCase.BeaconState.Serialized,
@@ -414,7 +416,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 		// 	})
 		// }
 		if !isEmpty(testCase.Crosslink.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Crosslink.Value,
 				unmarshalTarget: new(MainnetCrosslink),
 				expected:        testCase.Crosslink.Serialized,
@@ -422,7 +424,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.Deposit.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Deposit.Value,
 				unmarshalTarget: new(MainnetDeposit),
 				expected:        testCase.Deposit.Serialized,
@@ -430,7 +432,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.DepositData.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.DepositData.Value,
 				unmarshalTarget: new(MainnetDepositData),
 				expected:        testCase.DepositData.Serialized,
@@ -438,7 +440,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.Eth1Data.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Eth1Data.Value,
 				unmarshalTarget: new(MainnetEth1Data),
 				expected:        testCase.Eth1Data.Serialized,
@@ -446,7 +448,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.Fork.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Fork.Value,
 				unmarshalTarget: new(MainnetFork),
 				expected:        testCase.Fork.Serialized,
@@ -454,7 +456,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.HistoricalBatch.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.HistoricalBatch.Value,
 				unmarshalTarget: new(MainnetHistoricalBatch),
 				expected:        testCase.HistoricalBatch.Serialized,
@@ -462,7 +464,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.IndexedAttestation.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.IndexedAttestation.Value,
 				unmarshalTarget:     new(MainnetIndexedAttestation),
 				expected:            testCase.IndexedAttestation.Serialized,
@@ -471,7 +473,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.PendingAttestation.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.PendingAttestation.Value,
 				unmarshalTarget: new(MainnetPendingAttestation),
 				expected:        testCase.PendingAttestation.Serialized,
@@ -479,7 +481,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.ProposerSlashing.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.ProposerSlashing.Value,
 				unmarshalTarget: new(MainnetProposerSlashing),
 				expected:        testCase.ProposerSlashing.Serialized,
@@ -487,7 +489,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.Transfer.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.Transfer.Value,
 				unmarshalTarget:     new(MainnetTransfer),
 				expected:            testCase.Transfer.Serialized,
@@ -496,7 +498,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.Validator.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Validator.Value,
 				unmarshalTarget: new(MainnetValidator),
 				expected:        testCase.Validator.Serialized,
@@ -504,7 +506,7 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 			})
 		}
 		if !isEmpty(testCase.VoluntaryExit.Value) {
-			compareSSZEncoding(t, &comparisonConfig{
+			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.VoluntaryExit.Value,
 				unmarshalTarget:     new(MainnetVoluntaryExit),
 				expected:            testCase.VoluntaryExit.Serialized,
@@ -525,7 +527,7 @@ func isEmpty(item interface{}) bool {
 	return true
 }
 
-func compareSSZEncoding(t *testing.T, cfg *comparisonConfig) {
+func compareSSZEncoding(t *testing.T, cfg *sszComparisonConfig) {
 	encoded, err := ssz.Marshal(cfg.val)
 	if err != nil {
 		t.Fatal(err)
