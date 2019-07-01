@@ -10,7 +10,7 @@ import (
 
 func BenchmarkMainnetBeaconBlock_Marshal(b *testing.B) {
 	b.StopTimer()
-	s := &SszMainnetBlock{}
+	s := &SszBenchmarkBlock{}
 	populateStructFromYaml(b, "./yaml/ssz_single_block.yaml", s)
 	b.StartTimer()
 	for n := 0; n < b.N; n++ {
@@ -22,7 +22,7 @@ func BenchmarkMainnetBeaconBlock_Marshal(b *testing.B) {
 
 func BenchmarkMainnetBeaconBlock_Unmarshal(b *testing.B) {
 	b.StopTimer()
-	s := &SszMainnetBlock{}
+	s := &SszBenchmarkBlock{}
 	populateStructFromYaml(b, "./yaml/ssz_single_block.yaml", s)
 	encoded, err := ssz.Marshal(s.Value)
 	if err != nil {
@@ -39,7 +39,7 @@ func BenchmarkMainnetBeaconBlock_Unmarshal(b *testing.B) {
 
 func BenchmarkMainnetBeaconBlock_HashTreeRoot(b *testing.B) {
 	b.StopTimer()
-	s := &SszMainnetBlock{}
+	s := &SszBenchmarkBlock{}
 	populateStructFromYaml(b, "./yaml/ssz_single_block.yaml", s)
 	b.StartTimer()
 	for n := 0; n < b.N; n++ {
@@ -51,7 +51,7 @@ func BenchmarkMainnetBeaconBlock_HashTreeRoot(b *testing.B) {
 
 func BenchmarkMainnetBeaconBlock_SigningRoot(b *testing.B) {
 	b.StopTimer()
-	s := &SszMainnetBlock{}
+	s := &SszBenchmarkBlock{}
 	populateStructFromYaml(b, "./yaml/ssz_single_block.yaml", s)
 	b.StartTimer()
 	for n := 0; n < b.N; n++ {
@@ -63,7 +63,7 @@ func BenchmarkMainnetBeaconBlock_SigningRoot(b *testing.B) {
 
 func BenchmarkMainnetBeaconState_Marshal(b *testing.B) {
 	b.StopTimer()
-	s := &SszMainnetBeaconState{}
+	s := &SszBenchmarkState{}
 	populateStructFromYaml(b, "./yaml/ssz_single_state.yaml", s)
 	b.StartTimer()
 	for n := 0; n < b.N; n++ {
@@ -75,13 +75,13 @@ func BenchmarkMainnetBeaconState_Marshal(b *testing.B) {
 
 func BenchmarkMainnetBeaconState_Unmarshal(b *testing.B) {
 	b.StopTimer()
-	s := &SszMainnetBeaconState{}
+	s := &SszBenchmarkState{}
 	populateStructFromYaml(b, "./yaml/ssz_single_state.yaml", s)
 	encoded, err := ssz.Marshal(s.Value)
 	if err != nil {
 		b.Fatal(err)
 	}
-	var target MainnetState
+	var target MainnetBeaconState
 	b.StartTimer()
 	for n := 0; n < b.N; n++ {
 		if err := ssz.Unmarshal(encoded, &target); err != nil {
@@ -92,7 +92,7 @@ func BenchmarkMainnetBeaconState_Unmarshal(b *testing.B) {
 
 func BenchmarkMainnetBeaconState_HashTreeRoot(b *testing.B) {
 	b.StopTimer()
-	s := &SszMainnetBeaconState{}
+	s := &SszBenchmarkState{}
 	populateStructFromYaml(b, "./yaml/ssz_single_state.yaml", s)
 	b.StartTimer()
 	for n := 0; n < b.N; n++ {
