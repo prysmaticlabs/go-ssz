@@ -16,60 +16,28 @@ type comparisonConfig struct {
 	expectedSigningRoot []byte
 }
 
-func compareEncodingGeneral(t *testing.T, cfg *comparisonConfig) {
-	encoded, err := ssz.Marshal(cfg.val)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(encoded, cfg.expected) {
-		t.Error("Failed to encode")
-	}
-	if err := ssz.Unmarshal(encoded, cfg.unmarshalTarget); err != nil {
-		t.Fatal(err)
-	}
-	concreteValue := reflect.ValueOf(cfg.unmarshalTarget).Elem().Interface()
-	if !ssz.DeepEqual(concreteValue, cfg.val) {
-		t.Error("Unmarshaled encoding did not match original value")
-	}
-	root, err := ssz.HashTreeRoot(cfg.val)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(root[:], cfg.expectedRoot) {
-		t.Errorf("Expected hash tree root %#x, received %#x", cfg.expectedRoot, root[:])
-	}
-	if cfg.expectedSigningRoot != nil {
-		signingRoot, err := ssz.SigningRoot(cfg.val)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !bytes.Equal(signingRoot[:], cfg.expectedSigningRoot) {
-			t.Errorf("Expected signing root %#x, received %#x", cfg.expectedSigningRoot, signingRoot)
-		}
-	}
-}
-
 // func TestYamlStateRoundTrip(t *testing.T) {
-// 	s := &MainnetBeaconState{}
+// 	s := &SszBenchmarkState{}
 // 	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
 // 	compareEncodingGeneral(t, &comparisonConfig{
-// 		val:             s,
+// 		val:             s.Value,
 // 		unmarshalTarget: new(MainnetBeaconState),
 // 		expected:        s.Serialized,
 // 		expectedRoot:    s.Root,
 // 	})
 // }
 
-// func TestYamlBlockRoundTrip(t *testing.T) {
-// 	s := &SszMainnetBlock{}
-// 	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
-// 	compareEncodingGeneral(t, &comparisonConfig{
-// 		val:             s.Value,
-// 		unmarshalTarget: new(MainnetBlock),
-// 		expected:        s.Serialized,
-// 		expectedRoot:    s.Root,
-// 	})
-// }
+func TestYamlBlockRoundTrip(t *testing.T) {
+	s := &SszBenchmarkBlock{}
+	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
+	compareEncodingGeneral(t, &comparisonConfig{
+		val:                 s.Value,
+		unmarshalTarget:     new(MainnetBlock),
+		expected:            s.Serialized,
+		expectedRoot:        s.Root,
+		expectedSigningRoot: s.SigningRoot,
+	})
+}
 
 // func TestYamlGenericSpecTests(t *testing.T) {
 // 	topPath := "/eth2_spec_tests/tests/ssz_generic/uint/"
@@ -737,5 +705,38 @@ func compareEncoding(t *testing.T, val interface{}, expected []byte) {
 	}
 	if !bytes.Equal(encoded, expected) {
 		t.Errorf("Expected %v, received %v", expected, encoded)
+	}
+}
+
+func compareEncodingGeneral(t *testing.T, cfg *comparisonConfig) {
+	encoded, err := ssz.Marshal(cfg.val)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, cfg.expected) {
+		t.Error("Failed to encode")
+	}
+	if err := ssz.Unmarshal(encoded, cfg.unmarshalTarget); err != nil {
+		t.Fatal(err)
+	}
+	concreteValue := reflect.ValueOf(cfg.unmarshalTarget).Elem().Interface()
+	if !ssz.DeepEqual(concreteValue, cfg.val) {
+		t.Error("Unmarshaled encoding did not match original value")
+	}
+	root, err := ssz.HashTreeRoot(cfg.val)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(root[:], cfg.expectedRoot) {
+		t.Errorf("Expected hash tree root %#x, received %#x", cfg.expectedRoot, root[:])
+	}
+	if cfg.expectedSigningRoot != nil {
+		signingRoot, err := ssz.SigningRoot(cfg.val)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(signingRoot[:], cfg.expectedSigningRoot) {
+			t.Errorf("Expected signing root %#x, received %#x", cfg.expectedSigningRoot, signingRoot)
+		}
 	}
 }
