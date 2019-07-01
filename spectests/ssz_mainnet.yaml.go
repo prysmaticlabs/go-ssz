@@ -163,7 +163,7 @@ type MainnetBeaconState struct {
 	LatestBlockRoots          [][]byte                    `json:"latest_block_roots" ssz:"size=8192,32"`
 	LatestStateRoots          [][]byte                    `json:"latest_state_roots" ssz:"size=8192,32"`
 	LatestActiveIndexRoots    [][]byte                    `json:"latest_active_index_roots" ssz:"size=8192,32"`
-	LatestSlashedBalances     []uint64                    `json:"latest_slashed_balances" ssz:"size=64"`
+	LatestSlashedBalances     []uint64                    `json:"latest_slashed_balances" ssz:"size=8192"`
 	LatestBlockHeader         MainnetBlockHeader          `json:"latest_block_header"`
 	HistoricalRoots           [][]byte                    `json:"historical_roots" ssz:"size=?,32"`
 	LatestEth1Data            MainnetEth1Data             `json:"latest_eth1_data"`
