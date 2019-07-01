@@ -258,91 +258,44 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			}
 		}
 		if !isEmpty(testCase.Crosslink.Value) {
-			encoded, err := ssz.Marshal(testCase.Crosslink.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Crosslink.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Crosslink.Root) {
-				t.Errorf("Expected crosslink %#x, received %#x", testCase.Crosslink.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Crosslink.Serialized) {
-				t.Errorf("Expected crosslink %#x, received %#x", testCase.Crosslink.Serialized, encoded)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.Crosslink.Value,
+				unmarshalTarget: new(MinimalCrosslink),
+				expected:        testCase.Crosslink.Serialized,
+				expectedRoot:    testCase.Crosslink.Root,
+			})
 		}
 		if !isEmpty(testCase.Deposit.Value) {
-			encoded, err := ssz.Marshal(testCase.Deposit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Deposit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Deposit.Root) {
-				t.Errorf("Expected deposit %#x, received %#x", testCase.Deposit.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Deposit.Serialized) {
-				t.Errorf("Expected deposit %#x, received %#x", testCase.Deposit.Serialized, encoded)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.Deposit.Value,
+				unmarshalTarget: new(MinimalDeposit),
+				expected:        testCase.Deposit.Serialized,
+				expectedRoot:    testCase.Deposit.Root,
+			})
 		}
 		if !isEmpty(testCase.DepositData.Value) {
-			encoded, err := ssz.Marshal(testCase.DepositData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.DepositData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.DepositData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.DepositData.Root) {
-				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.DepositData.Serialized) {
-				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.DepositData.SigningRoot) {
-				t.Errorf("Expected deposit data signing root %#x, received %#x", testCase.DepositData.SigningRoot, signingRoot)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.DepositData.Value,
+				unmarshalTarget: new(MinimalDepositData),
+				expected:        testCase.DepositData.Serialized,
+				expectedRoot:    testCase.DepositData.Root,
+			})
 		}
 		if !isEmpty(testCase.Eth1Data.Value) {
-			encoded, err := ssz.Marshal(testCase.Eth1Data.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Eth1Data.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Eth1Data.Root) {
-				t.Errorf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Eth1Data.Serialized) {
-				t.Errorf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Serialized, encoded)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.Eth1Data.Value,
+				unmarshalTarget: new(MinimalEth1Data),
+				expected:        testCase.Eth1Data.Serialized,
+				expectedRoot:    testCase.Eth1Data.Root,
+			})
 		}
 		if !isEmpty(testCase.Fork.Value) {
-			encoded, err := ssz.Marshal(testCase.Fork.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Fork.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Fork.Root) {
-				t.Errorf("Expected fork %#x, received %#x", testCase.Fork.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Fork.Serialized) {
-				t.Errorf("Expected fork %v, received %v", testCase.Fork.Serialized, encoded)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.Fork.Value,
+				unmarshalTarget: new(MinimalFork),
+				expected:        testCase.Fork.Serialized,
+				expectedRoot:    testCase.Fork.Root,
+			})
 		}
 		if !isEmpty(testCase.HistoricalBatch.Value) {
 			encoded, err := ssz.Marshal(testCase.HistoricalBatch.Value)
