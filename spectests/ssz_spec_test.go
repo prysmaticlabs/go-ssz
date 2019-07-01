@@ -241,22 +241,14 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
 			})
 		}
-		if !isEmpty(testCase.BeaconState.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconState.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconState.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconState.Root) {
-				t.Errorf("Expected beacon state %#x, received %#x", testCase.BeaconState.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconState.Serialized) {
-				t.Errorf("Serializations do not match")
-			}
-		}
+		// if !isEmpty(testCase.BeaconState.Value) {
+		// 	compareEncodingGeneral(t, &comparisonConfig{
+		// 		val:             testCase.BeaconState.Value,
+		// 		unmarshalTarget: new(MinimalBeaconState),
+		// 		expected:        testCase.BeaconState.Serialized,
+		// 		expectedRoot:    testCase.BeaconState.Root,
+		// 	})
+		// }
 		if !isEmpty(testCase.Crosslink.Value) {
 			compareEncodingGeneral(t, &comparisonConfig{
 				val:             testCase.Crosslink.Value,
@@ -298,137 +290,63 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.HistoricalBatch.Value) {
-			encoded, err := ssz.Marshal(testCase.HistoricalBatch.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.HistoricalBatch.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.HistoricalBatch.Root) {
-				t.Errorf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.HistoricalBatch.Serialized) {
-				t.Errorf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Serialized, encoded)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.HistoricalBatch.Value,
+				unmarshalTarget: new(MinimalHistoricalBatch),
+				expected:        testCase.HistoricalBatch.Serialized,
+				expectedRoot:    testCase.HistoricalBatch.Root,
+			})
 		}
 		if !isEmpty(testCase.IndexedAttestation.Value) {
-			encoded, err := ssz.Marshal(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.IndexedAttestation.Root) {
-				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.IndexedAttestation.Serialized) {
-				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.IndexedAttestation.SigningRoot) {
-				t.Errorf("Expected indexed attestation signing root %#x, received %#x", testCase.IndexedAttestation.SigningRoot, signingRoot)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:                 testCase.IndexedAttestation.Value,
+				unmarshalTarget:     new(MinimalIndexedAttestation),
+				expected:            testCase.IndexedAttestation.Serialized,
+				expectedRoot:        testCase.IndexedAttestation.Root,
+				expectedSigningRoot: testCase.IndexedAttestation.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.PendingAttestation.Value) {
-			encoded, err := ssz.Marshal(testCase.PendingAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.PendingAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.PendingAttestation.Root) {
-				t.Errorf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.PendingAttestation.Serialized) {
-				t.Errorf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Serialized, encoded)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.PendingAttestation.Value,
+				unmarshalTarget: new(MinimalPendingAttestation),
+				expected:        testCase.PendingAttestation.Serialized,
+				expectedRoot:    testCase.PendingAttestation.Root,
+			})
 		}
 		if !isEmpty(testCase.ProposerSlashing.Value) {
-			encoded, err := ssz.Marshal(testCase.ProposerSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.ProposerSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.ProposerSlashing.Root) {
-				t.Errorf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.ProposerSlashing.Serialized) {
-				t.Errorf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Serialized, encoded)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.ProposerSlashing.Value,
+				unmarshalTarget: new(MinimalProposerSlashing),
+				expected:        testCase.ProposerSlashing.Serialized,
+				expectedRoot:    testCase.ProposerSlashing.Root,
+			})
 		}
 		if !isEmpty(testCase.Transfer.Value) {
-			encoded, err := ssz.Marshal(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Transfer.Root) {
-				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Transfer.Serialized) {
-				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.Transfer.SigningRoot) {
-				t.Errorf("Expected transfer signing root %#x, received %#x", testCase.Transfer.SigningRoot, signingRoot)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:                 testCase.Transfer.Value,
+				unmarshalTarget:     new(MinimalTransfer),
+				expected:            testCase.Transfer.Serialized,
+				expectedRoot:        testCase.Transfer.Root,
+				expectedSigningRoot: testCase.Transfer.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.Validator.Value) {
-			encoded, err := ssz.Marshal(testCase.Validator.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Validator.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Validator.Root) {
-				t.Errorf("Expected validator %#x, received %#x", testCase.Validator.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Validator.Serialized) {
-				t.Errorf("Expected validator %#x, received %#x", testCase.Validator.Serialized, encoded)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:             testCase.Validator.Value,
+				unmarshalTarget: new(MinimalValidator),
+				expected:        testCase.Validator.Serialized,
+				expectedRoot:    testCase.Validator.Root,
+			})
 		}
 		if !isEmpty(testCase.VoluntaryExit.Value) {
-			encoded, err := ssz.Marshal(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.VoluntaryExit.Root) {
-				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.VoluntaryExit.Serialized) {
-				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.VoluntaryExit.SigningRoot) {
-				t.Errorf("Expected voluntary exit signing root %#x, received %#x", testCase.VoluntaryExit.SigningRoot, signingRoot)
-			}
+			compareEncodingGeneral(t, &comparisonConfig{
+				val:                 testCase.VoluntaryExit.Value,
+				unmarshalTarget:     new(MinimalVoluntaryExit),
+				expected:            testCase.VoluntaryExit.Serialized,
+				expectedRoot:        testCase.VoluntaryExit.Root,
+				expectedSigningRoot: testCase.VoluntaryExit.SigningRoot,
+			})
 		}
 	}
 }
