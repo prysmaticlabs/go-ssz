@@ -142,10 +142,10 @@ func TestYamlStaticSpecTests(t *testing.T) {
 		"ssz_minimal_lengthy.yaml",
 		"ssz_minimal_max.yaml",
 		"ssz_minimal_nil.yaml",
-		"ssz_minimal_one.yaml", // State passes here.
+		"ssz_minimal_one.yaml",
 		"ssz_minimal_random.yaml",
 		"ssz_minimal_random_chaos.yaml",
-		"ssz_minimal_zero.yaml", // TODO: Debug here.
+		"ssz_minimal_zero.yaml",
 	}
 	for _, f := range yamlFileNames {
 		fullName := path.Join(topPath, f)
