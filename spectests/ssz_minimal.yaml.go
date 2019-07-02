@@ -42,7 +42,7 @@ type MinimalAttestationData struct {
 
 type MinimalAttestationAndCustodyBit struct {
 	Data       MinimalAttestationData `json:"data"`
-	CustodyBit byte                   `json:"custody_bit"`
+	CustodyBit bool                   `json:"custody_bit"`
 }
 
 type MinimalIndexedAttestation struct {
