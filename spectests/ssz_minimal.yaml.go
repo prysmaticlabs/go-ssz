@@ -230,6 +230,16 @@ type SszMinimalTest struct {
 			Serialized []byte             `json:"serialized"`
 			Root       []byte             `json:"root" ssz:"size=32"`
 		} `json:"BeaconState,omitempty"`
+		Checkpoint struct {
+			Value      MinimalCheckpoint `json:"value"`
+			Serialized []byte            `json:"serialized"`
+			Root       []byte            `json:"root" ssz:"size=32"`
+		} `json:"Checkpoint,omitempty"`
+		CompactCommittee struct {
+			Value      MinimalCompactCommittee `json:"value"`
+			Serialized []byte                  `json:"serialized"`
+			Root       []byte                  `json:"root" ssz:"size=32"`
+		} `json:"CompactCommittee,omitempty"`
 		Crosslink struct {
 			Value      MinimalCrosslink `json:"value"`
 			Serialized []byte           `json:"serialized"`
