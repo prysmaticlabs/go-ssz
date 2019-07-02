@@ -39,8 +39,8 @@ filegroup(
     visibility = ["//visibility:public"],
 )
     """,
-    sha256 = "56847989737e816ab7d23f3bb2422347dfa81271bae81a94de512c01461fab25",
-    url = "https://github.com/prysmaticlabs/eth2.0-spec-tests/releases/download/v0.7.1/base64_encoded_archive.tar.gz",
+    sha256 = "7573fdd2855d3cb6a75852080eb34cba0ae43da8ab5eadfc96ab44419d91962a",
+    url = "https://prysmaticlabs.com/uploads/7573fd_base64_encoded_archive.tar.gz",
 )
 
 http_archive(

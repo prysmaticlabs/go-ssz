@@ -108,11 +108,12 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: []*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([]*nestedItem)},
 		{input: [2]*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([2]*nestedItem)},
 		{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
+		{input: example2, ptr: new(Example2)},
 	}
 	for _, tt := range tests {
 		serializedItem, err := ssz.Marshal(tt.input)
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		if err := ssz.Unmarshal(serializedItem, tt.ptr); err != nil {
 			t.Fatal(err)
