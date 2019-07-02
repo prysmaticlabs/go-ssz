@@ -83,19 +83,6 @@ type MinimalCompactCommittee struct {
 }
 
 // TODO Header
-
-type MinimalAttestation struct {
-	AggregationBitfield []byte                 `json:"aggregation_bitfield"`
-	Data                MinimalAttestationData `json:"data"`
-	CustodyBitfield     []byte                 `json:"custody_bitfield"`
-	Signature           []byte                 `json:"signature" ssz:"size=96"`
-}
-
-type MinimalAttesterSlashing struct {
-	Attestation1 MinimalIndexedAttestation `json:"attestation_1"`
-	Attestation2 MinimalIndexedAttestation `json:"attestation_2"`
-}
-
 type MinimalBlockHeader struct {
 	Slot       uint64 `json:"slot"`
 	ParentRoot []byte `json:"parent_root" ssz:"size=32"`
@@ -110,8 +97,20 @@ type MinimalProposerSlashing struct {
 	Header2       MinimalBlockHeader `json:"header_2"`
 }
 
+type MinimalAttesterSlashing struct {
+	Attestation1 MinimalIndexedAttestation `json:"attestation_1"`
+	Attestation2 MinimalIndexedAttestation `json:"attestation_2"`
+}
+
+type MinimalAttestation struct {
+	AggregationBits []byte                 `json:"aggregation_bitfield" ssz:"size=4096"`
+	Data            MinimalAttestationData `json:"data"`
+	CustodyBits     []byte                 `json:"custody_bitfield" ssz:"size=4096"`
+	Signature       []byte                 `json:"signature" ssz:"size=96"`
+}
+
 type MinimalDeposit struct {
-	Proof [][]byte           `json:"proof" ssz:"size=32,32"`
+	Proof [][]byte           `json:"proof" ssz:"size=33,32"`
 	Data  MinimalDepositData `json:"data"`
 }
 
@@ -152,33 +151,33 @@ type MinimalBlock struct {
 }
 
 type MinimalBeaconState struct {
-	Slot                      uint64                      `json:"slot"`
-	GenesisTime               uint64                      `json:"genesis_time"`
-	Fork                      MinimalFork                 `json:"fork"`
-	ValidatorRegistry         []MinimalValidator          `json:"validator_registry"`
-	Balances                  []uint64                    `json:"balances"`
-	LatestRandaoMixes         [][]byte                    `json:"latest_randao_mixes" ssz:"size=64,32"`
-	LatestStartShard          uint64                      `json:"latest_start_shard"`
+	Slot                   uint64             `json:"slot"`
+	GenesisTime            uint64             `json:"genesis_time"`
+	Fork                   MinimalFork        `json:"fork"`
+	LatestBlockHeader      MinimalBlockHeader `json:"latest_block_header"`
+	BlockRoots             [][]byte           `json:"latest_block_roots" ssz:"size=64,32"`
+	StateRoots             [][]byte           `json:"latest_state_roots" ssz:"size=64,32"`
+	HistoricalRoots        [][]byte           `json:"historical_roots" ssz:"size=?,32"`
+	Eth1Data               MinimalEth1Data    `json:"latest_eth1_data"`
+	Eth1DataVotes          []MinimalEth1Data  `json:"eth1_data_votes"`
+	Eth1DepositIndex       uint64             `json:"deposit_index"`
+	Validators             []MinimalValidator `json:"validator_registry"`
+	Balances               []uint64           `json:"balances"`
+	StartShard             uint64             `json:"latest_start_shard"`
+	RandaoMixes            [][]byte           `json:"latest_randao_mixes" ssz:"size=64,32"`
+	ActiveIndexRoots       [][]byte           `json:"latest_active_index_roots" ssz:"size=64,32"`
+	CompactCommitteesRoots [][]byte           `json:"compact_committees_roots" ssz:"size=64,32"`
+	Slashings              []uint64           `json:"latest_slashed_balances" ssz:"size=64"`
+
 	PreviousEpochAttestations []MinimalPendingAttestation `json:"previous_epoch_attestations"`
 	CurrentEpochAttestations  []MinimalPendingAttestation `json:"current_epoch_attestations"`
-	PreviousJustifiedEpoch    uint64                      `json:"previous_justified_epoch"`
-	CurrentJustifiedEpoch     uint64                      `json:"current_justified_epoch"`
-	PreviousJustifiedRoot     []byte                      `json:"previous_justified_root" ssz:"size=32"`
-	CurrentJustifiedRoot      []byte                      `json:"current_justified_root" ssz:"size=32"`
-	JustificationBitfield     uint64                      `json:"justification_bitfield"`
-	FinalizedEpoch            uint64                      `json:"finalized_epoch"`
-	FinalizedRoot             []byte                      `json:"finalized_root" ssz:"size=32"`
-	CurrentCrosslinks         []MinimalCrosslink          `json:"current_crosslinks" ssz:"size=8"`
 	PreviousCrosslinks        []MinimalCrosslink          `json:"previous_crosslinks" ssz:"size=8"`
-	LatestBlockRoots          [][]byte                    `json:"latest_block_roots" ssz:"size=64,32"`
-	LatestStateRoots          [][]byte                    `json:"latest_state_roots" ssz:"size=64,32"`
-	LatestActiveIndexRoots    [][]byte                    `json:"latest_active_index_roots" ssz:"size=64,32"`
-	LatestSlashedBalances     []uint64                    `json:"latest_slashed_balances" ssz:"size=64"`
-	LatestBlockHeader         MinimalBlockHeader          `json:"latest_block_header"`
-	HistoricalRoots           [][]byte                    `json:"historical_roots" ssz:"size=?,32"`
-	LatestEth1Data            MinimalEth1Data             `json:"latest_eth1_data"`
-	Eth1DataVotes             []MinimalEth1Data           `json:"eth1_data_votes"`
-	DepositIndex              uint64                      `json:"deposit_index"`
+	CurrentCrosslinks         []MinimalCrosslink          `json:"current_crosslinks" ssz:"size=8"`
+	JustificationBits         []byte                      `json:"justification_bitfield"`
+
+	PreviousJustifiedCheckpoint MinimalCheckpoint `json:"previous_justified_epoch"`
+	CurrentJustifiedCheckpoint  MinimalCheckpoint `json:"current_justified_epoch"`
+	FinalizedCheckpoint         MinimalCheckpoint `json:"finalized_checkpoint"`
 }
 type SszMinimalTest struct {
 	Title         string   `json:"title"`
