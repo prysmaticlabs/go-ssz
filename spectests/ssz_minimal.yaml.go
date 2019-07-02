@@ -40,15 +40,9 @@ type MinimalAttestationData struct {
 	Crosslink       MinimalCrosslink  `json:"crosslink"`
 }
 
-type MinimalAttestation struct {
-	AggregationBitfield []byte                 `json:"aggregation_bitfield"`
-	Data                MinimalAttestationData `json:"data"`
-	CustodyBitfield     []byte                 `json:"custody_bitfield"`
-	Signature           []byte                 `json:"signature" ssz:"size=96"`
-}
 type MinimalAttestationAndCustodyBit struct {
 	Data       MinimalAttestationData `json:"data"`
-	CustodyBit bool                   `json:"custody_bit"`
+	CustodyBit byte                   `json:"custody_bit"`
 }
 
 type MinimalIndexedAttestation struct {
@@ -65,15 +59,41 @@ type MinimalPendingAttestation struct {
 	ProposerIndex       uint64                 `json:"proposer_index"`
 }
 
-type MinimalAttesterSlashing struct {
-	Attestation1 MinimalIndexedAttestation `json:"attestation_1"`
-	Attestation2 MinimalIndexedAttestation `json:"attestation_2"`
-}
-
 type MinimalEth1Data struct {
 	DepositRoot  []byte `json:"deposit_root" ssz:"size=32"`
 	DepositCount uint64 `json:"deposit_count"`
 	BlockHash    []byte `json:"block_hash" ssz:"size=32"`
+}
+
+type MinimalHistoricalBatch struct {
+	BlockRoots [][]byte `json:"block_roots" ssz:"size=64,32"`
+	StateRoots [][]byte `json:"state_roots" ssz:"size=64,32"`
+}
+
+type MinimalDepositData struct {
+	Pubkey                []byte `json:"pubkey" ssz:"size=48"`
+	WithdrawalCredentials []byte `json:"withdrawal_credentials" ssz:"size=32"`
+	Amount                uint64 `json:"amount"`
+	Signature             []byte `json:"signature" ssz:"size=96"`
+}
+
+type MinimalCompactCommittee struct {
+	Pubkeys           []byte   `json:"pubkeys" ssz:"size=48"`
+	CompactValidators []uint64 `json:"compact_validators"`
+}
+
+// TODO Header
+
+type MinimalAttestation struct {
+	AggregationBitfield []byte                 `json:"aggregation_bitfield"`
+	Data                MinimalAttestationData `json:"data"`
+	CustodyBitfield     []byte                 `json:"custody_bitfield"`
+	Signature           []byte                 `json:"signature" ssz:"size=96"`
+}
+
+type MinimalAttesterSlashing struct {
+	Attestation1 MinimalIndexedAttestation `json:"attestation_1"`
+	Attestation2 MinimalIndexedAttestation `json:"attestation_2"`
 }
 
 type MinimalBlockHeader struct {
@@ -93,13 +113,6 @@ type MinimalProposerSlashing struct {
 type MinimalDeposit struct {
 	Proof [][]byte           `json:"proof" ssz:"size=32,32"`
 	Data  MinimalDepositData `json:"data"`
-}
-
-type MinimalDepositData struct {
-	Pubkey                []byte `json:"pubkey" ssz:"size=48"`
-	WithdrawalCredentials []byte `json:"withdrawal_credentials" ssz:"size=32"`
-	Amount                uint64 `json:"amount"`
-	Signature             []byte `json:"signature" ssz:"size=96"`
 }
 
 type MinimalVoluntaryExit struct {
@@ -136,11 +149,6 @@ type MinimalBlock struct {
 	StateRoot  []byte           `json:"state_root" ssz:"size=32"`
 	Body       MinimalBlockBody `json:"body"`
 	Signature  []byte           `json:"signature" ssz:"size=96"`
-}
-
-type MinimalHistoricalBatch struct {
-	BlockRoots [][]byte `json:"block_roots" ssz:"size=64,32"`
-	StateRoots [][]byte `json:"state_roots" ssz:"size=64,32"`
 }
 
 type MinimalBeaconState struct {
