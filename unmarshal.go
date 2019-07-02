@@ -143,7 +143,6 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 			val.Set(newVal)
 			return 0, nil
 		}
-		growConcreteSliceType(val, val.Type(), 1)
 		// If there are struct tags that specify a different type, we handle accordingly.
 		if val.Type() != typ {
 			sizes := []int{1}
@@ -161,7 +160,10 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 			}
 			// If the item is a slice, we grow it accordingly based on the size tags.
 			result := growSliceFromSizeTags(val, sizes)
+			reflect.Copy(result, val)
 			val.Set(result)
+		} else {
+			growConcreteSliceType(val, val.Type(), 1)
 		}
 
 		index := startOffset
@@ -169,11 +171,33 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		if err != nil {
 			return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
 		}
+
 		elementSize := index - startOffset
 		endOffset := uint64(len(input)) / elementSize
+		if val.Type() != typ {
+			sizes := []int{int(endOffset)}
+			innerElement := typ.Elem()
+			for {
+				if innerElement.Kind() == reflect.Slice {
+					sizes = append(sizes, 0)
+					innerElement = innerElement.Elem()
+				} else if innerElement.Kind() == reflect.Array {
+					sizes = append(sizes, innerElement.Len())
+					innerElement = innerElement.Elem()
+				} else {
+					break
+				}
+			}
+			// If the item is a slice, we grow it accordingly based on the size tags.
+			result := growSliceFromSizeTags(val, sizes)
+			reflect.Copy(result, val)
+			val.Set(result)
+		}
 		i := uint64(1)
 		for i < endOffset {
-			growConcreteSliceType(val, val.Type(), int(i)+1)
+			if val.Type() == typ {
+				growConcreteSliceType(val, val.Type(), int(i)+1)
+			}
 			index, err = elemSSZUtils.unmarshaler(input, val.Index(int(i)), index)
 			if err != nil {
 				return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
@@ -192,6 +216,11 @@ func makeCompositeSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		return nil, err
 	}
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
+		if len(input) == 0 {
+			newVal := reflect.MakeSlice(val.Type(), 0, 0)
+			val.Set(newVal)
+			return 0, nil
+		}
 		growConcreteSliceType(val, typ, 1)
 		endOffset := uint64(len(input))
 
@@ -233,7 +262,7 @@ func makeBasicArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 	unmarshaler := func(input []byte, val reflect.Value, startOffset uint64) (uint64, error) {
 		i := 0
 		index := startOffset
-		size := val.Cap()
+		size := val.Len()
 		for i < size {
 			if val.Index(i).Kind() == reflect.Ptr {
 				instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())

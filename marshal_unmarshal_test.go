@@ -24,6 +24,11 @@ type varItem struct {
 	Field3 []uint16
 }
 
+type nestedVarItem struct {
+	Field1 []varItem
+	Field2 uint64
+}
+
 var (
 	forkExample = fork{
 		PreviousVersion: [4]byte{1, 2, 3, 4},
@@ -34,6 +39,10 @@ var (
 		Field1: []uint64{1, 2, 3, 4},
 		Field2: &forkExample,
 		Field3: [3]byte{32, 33, 34},
+	}
+	nestedVarItemExample = nestedVarItem{
+		Field1: []varItem{},
+		Field2: 5,
 	}
 	varItemExample = varItem{
 		Field2: []uint16{},
@@ -81,6 +90,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		// Struct decoding test cases.
 		{input: forkExample, ptr: new(fork)},
 		{input: nestedItemExample, ptr: new(nestedItem)},
+		{input: nestedVarItemExample, ptr: new(nestedVarItem)},
 		{input: varItemExample, ptr: new(varItem)},
 		{input: varItemAmbiguous, ptr: new(varItem)},
 		// Non-basic type slice/array test cases.

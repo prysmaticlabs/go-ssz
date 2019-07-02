@@ -14,40 +14,37 @@ import (
 	"github.com/prysmaticlabs/go-ssz"
 )
 
-func TestYamlStateRoundTrip(t *testing.T) {
-	s := &SszMainnetBeaconState{}
-	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
-	encoded, err := ssz.Marshal(s.Value)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(encoded, s.Serialized) {
-		t.Error("Failed to encode")
-	}
+// sszComparisonConfig is used to specify the value to marshal, unmarshal into,
+// as well as the expected results from the spec test YAML files.
+type sszComparisonConfig struct {
+	val                 interface{}
+	unmarshalTarget     interface{}
+	expected            []byte
+	expectedRoot        []byte
+	expectedSigningRoot []byte
+}
 
-	var decoded MainnetState
-	if err := ssz.Unmarshal(encoded, &decoded); err != nil {
-		t.Error(err)
-	}
+func TestYamlStateRoundTrip(t *testing.T) {
+	s := &SszBenchmarkState{}
+	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
+	compareSSZEncoding(t, &sszComparisonConfig{
+		val:             s.Value,
+		unmarshalTarget: new(MainnetBeaconState),
+		expected:        s.Serialized,
+		expectedRoot:    s.Root,
+	})
 }
 
 func TestYamlBlockRoundTrip(t *testing.T) {
-	s := &SszMainnetBlock{}
+	s := &SszBenchmarkBlock{}
 	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
-	encoded, err := ssz.Marshal(s.Value)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(encoded, s.Serialized) {
-		t.Error("Failed to encode")
-	}
-	var decoded MainnetBlock
-	if err := ssz.Unmarshal(encoded, &decoded); err != nil {
-		t.Error(err)
-	}
-	if !reflect.DeepEqual(decoded, s.Value) {
-		t.Fatal("Does not match")
-	}
+	compareSSZEncoding(t, &sszComparisonConfig{
+		val:                 s.Value,
+		unmarshalTarget:     new(MainnetBlock),
+		expected:            s.Serialized,
+		expectedRoot:        s.Root,
+		expectedSigningRoot: s.SigningRoot,
+	})
 }
 
 func TestYamlGenericSpecTests(t *testing.T) {
@@ -76,7 +73,13 @@ func TestYamlGenericSpecTests(t *testing.T) {
 			case "uint8":
 				if testCase.Valid {
 					num, _ := strconv.ParseUint(testCase.Value, 10, 8)
-					compareEncoding(t, uint8(num), testCase.Ssz)
+					encoded, err := ssz.Marshal(uint8(num))
+					if err != nil {
+						t.Fatal(err)
+					}
+					if !bytes.Equal(encoded, testCase.Ssz) {
+						t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
+					}
 				} else {
 					if _, err := strconv.ParseUint(testCase.Value, 10, 8); err == nil {
 						t.Error("Expected error, received nil")
@@ -85,7 +88,13 @@ func TestYamlGenericSpecTests(t *testing.T) {
 			case "uint16":
 				if testCase.Valid {
 					num, _ := strconv.ParseUint(testCase.Value, 10, 16)
-					compareEncoding(t, uint16(num), testCase.Ssz)
+					encoded, err := ssz.Marshal(uint16(num))
+					if err != nil {
+						t.Fatal(err)
+					}
+					if !bytes.Equal(encoded, testCase.Ssz) {
+						t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
+					}
 				} else {
 					if _, err := strconv.ParseUint(testCase.Value, 10, 16); err == nil {
 						t.Error("Expected error, received nil")
@@ -94,7 +103,13 @@ func TestYamlGenericSpecTests(t *testing.T) {
 			case "uint32":
 				if testCase.Valid {
 					num, _ := strconv.ParseUint(testCase.Value, 10, 32)
-					compareEncoding(t, uint32(num), testCase.Ssz)
+					encoded, err := ssz.Marshal(uint32(num))
+					if err != nil {
+						t.Fatal(err)
+					}
+					if !bytes.Equal(encoded, testCase.Ssz) {
+						t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
+					}
 				} else {
 					if _, err := strconv.ParseUint(testCase.Value, 10, 32); err == nil {
 						t.Error("Expected error, received nil")
@@ -103,7 +118,13 @@ func TestYamlGenericSpecTests(t *testing.T) {
 			case "uint64":
 				if testCase.Valid {
 					num, _ := strconv.ParseUint(testCase.Value, 10, 64)
-					compareEncoding(t, num, testCase.Ssz)
+					encoded, err := ssz.Marshal(num)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if !bytes.Equal(encoded, testCase.Ssz) {
+						t.Errorf("Expected %v, received %v", testCase.Ssz, encoded)
+					}
 				} else {
 					if _, err := strconv.ParseUint(testCase.Value, 10, 64); err == nil {
 						t.Error("Expected error, received nil")
@@ -117,7 +138,6 @@ func TestYamlGenericSpecTests(t *testing.T) {
 func TestYamlStaticSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_static/core/"
 	yamlFileNames := []string{
-		"ssz_mainnet_random.yaml",
 		"ssz_mainnet_random.yaml",
 		"ssz_minimal_lengthy.yaml",
 		"ssz_minimal_max.yaml",
@@ -137,392 +157,191 @@ func TestYamlStaticSpecTests(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if strings.Contains(fPath, "minimal") {
-			s := &SszMinimalTest{}
-			if err := yaml.Unmarshal(yamlFile, s); err != nil {
-				t.Fatalf("Failed to unmarshal: %v", err)
+		t.Run(f, func(tt *testing.T) {
+			if strings.Contains(fPath, "minimal") {
+				s := &SszMinimalTest{}
+				if err := yaml.Unmarshal(yamlFile, s); err != nil {
+					t.Fatalf("Failed to unmarshal: %v", err)
+				}
+				runMinimalSpecTestCases(tt, s)
+			} else if strings.Contains(fPath, "mainnet") {
+				s := &SszMainnetTest{}
+				if err := yaml.Unmarshal(yamlFile, s); err != nil {
+					t.Fatalf("Failed to unmarshal: %v", err)
+				}
+				runMainnetSpecTestCases(tt, s)
 			}
-			runMinimalSpecTestCases(t, s)
-		} else if strings.Contains(fPath, "mainnet") {
-			s := &SszMainnetTest{}
-			if err := yaml.Unmarshal(yamlFile, s); err != nil {
-				t.Fatalf("Failed to unmarshal: %v", err)
-			}
-			runMainnetSpecTestCases(t, s)
-		}
+		})
 	}
 }
 
 func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 	for _, testCase := range s.TestCases {
 		if !isEmpty(testCase.Attestation.Value) {
-			encoded, err := ssz.Marshal(testCase.Attestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Attestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.Attestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Attestation.Root) {
-				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Attestation.Serialized) {
-				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.Attestation.SigningRoot) {
-				t.Errorf("Expected attestation signing root %#x, received %#x", testCase.Attestation.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.Attestation.Value,
+				unmarshalTarget:     new(MinimalAttestation),
+				expected:            testCase.Attestation.Serialized,
+				expectedRoot:        testCase.Attestation.Root,
+				expectedSigningRoot: testCase.Attestation.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.AttestationData.Value) {
-			encoded, err := ssz.Marshal(testCase.AttestationData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.AttestationData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.AttestationData.Root) {
-				t.Errorf("Expected attestation data %#x, received %#x", testCase.AttestationData.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.AttestationData.Serialized) {
-				t.Errorf("Expected attestation data %#x, received %#x", testCase.AttestationData.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttestationData.Value,
+				unmarshalTarget: new(MinimalAttestationData),
+				expected:        testCase.AttestationData.Serialized,
+				expectedRoot:    testCase.AttestationData.Root,
+			})
 		}
 		if !isEmpty(testCase.AttestationDataAndCustodyBit.Value) {
-			encoded, err := ssz.Marshal(testCase.AttestationDataAndCustodyBit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.AttestationDataAndCustodyBit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.AttestationDataAndCustodyBit.Root) {
-				t.Errorf("Expected attestation custody bit %#x, received %#x", testCase.AttestationDataAndCustodyBit.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.AttestationDataAndCustodyBit.Serialized) {
-				t.Errorf("Expected attestation custody bit %#x, received %#x", testCase.AttestationDataAndCustodyBit.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttestationDataAndCustodyBit.Value,
+				unmarshalTarget: new(MinimalAttestationAndCustodyBit),
+				expected:        testCase.AttestationDataAndCustodyBit.Serialized,
+				expectedRoot:    testCase.AttestationDataAndCustodyBit.Root,
+			})
 		}
 		if !isEmpty(testCase.AttesterSlashing.Value) {
-			encoded, err := ssz.Marshal(testCase.AttesterSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.AttesterSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.AttesterSlashing.Root) {
-				t.Errorf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.AttesterSlashing.Serialized) {
-				t.Errorf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttesterSlashing.Value,
+				unmarshalTarget: new(MinimalAttesterSlashing),
+				expected:        testCase.AttesterSlashing.Serialized,
+				expectedRoot:    testCase.AttesterSlashing.Root,
+			})
 		}
 		if !isEmpty(testCase.BeaconBlock.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconBlock.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlock.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlock.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlock.Root) {
-				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlock.Serialized) {
-				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.BeaconBlock.SigningRoot) {
-				t.Errorf("Expected beacon block signing root %#x, received %#x", testCase.BeaconBlock.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.BeaconBlock.Value,
+				unmarshalTarget:     new(MinimalBlock),
+				expected:            testCase.BeaconBlock.Serialized,
+				expectedRoot:        testCase.BeaconBlock.Root,
+				expectedSigningRoot: testCase.BeaconBlock.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.BeaconBlockBody.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconBlockBody.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlockBody.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlockBody.Root) {
-				t.Errorf("Expected %#x, received %#x", testCase.BeaconBlockBody.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlockBody.Serialized) {
-				t.Errorf("Expected %#x, received %#x", testCase.BeaconBlockBody.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.BeaconBlockBody.Value,
+				unmarshalTarget: new(MinimalBlockBody),
+				expected:        testCase.BeaconBlockBody.Serialized,
+				expectedRoot:    testCase.BeaconBlockBody.Root,
+			})
 		}
 		if !isEmpty(testCase.BeaconBlockHeader.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconBlockHeader.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlockHeader.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlockHeader.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlockHeader.Root) {
-				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlockHeader.Serialized) {
-				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.BeaconBlockHeader.SigningRoot) {
-				t.Errorf("Expected beacon block header signing root %#x, received %#x", testCase.BeaconBlockHeader.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.BeaconBlockHeader.Value,
+				unmarshalTarget:     new(MinimalBlockHeader),
+				expected:            testCase.BeaconBlockHeader.Serialized,
+				expectedRoot:        testCase.BeaconBlockHeader.Root,
+				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.BeaconState.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconState.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconState.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconState.Root) {
-				t.Errorf("Expected beacon state %#x, received %#x", testCase.BeaconState.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconState.Serialized) {
-				t.Errorf("Serializations do not match")
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.BeaconState.Value,
+				unmarshalTarget: new(MinimalBeaconState),
+				expected:        testCase.BeaconState.Serialized,
+				expectedRoot:    testCase.BeaconState.Root,
+			})
 		}
 		if !isEmpty(testCase.Crosslink.Value) {
-			encoded, err := ssz.Marshal(testCase.Crosslink.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Crosslink.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Crosslink.Root) {
-				t.Errorf("Expected crosslink %#x, received %#x", testCase.Crosslink.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Crosslink.Serialized) {
-				t.Errorf("Expected crosslink %#x, received %#x", testCase.Crosslink.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Crosslink.Value,
+				unmarshalTarget: new(MinimalCrosslink),
+				expected:        testCase.Crosslink.Serialized,
+				expectedRoot:    testCase.Crosslink.Root,
+			})
 		}
 		if !isEmpty(testCase.Deposit.Value) {
-			encoded, err := ssz.Marshal(testCase.Deposit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Deposit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Deposit.Root) {
-				t.Errorf("Expected deposit %#x, received %#x", testCase.Deposit.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Deposit.Serialized) {
-				t.Errorf("Expected deposit %#x, received %#x", testCase.Deposit.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Deposit.Value,
+				unmarshalTarget: new(MinimalDeposit),
+				expected:        testCase.Deposit.Serialized,
+				expectedRoot:    testCase.Deposit.Root,
+			})
 		}
 		if !isEmpty(testCase.DepositData.Value) {
-			encoded, err := ssz.Marshal(testCase.DepositData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.DepositData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.DepositData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.DepositData.Root) {
-				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.DepositData.Serialized) {
-				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.DepositData.SigningRoot) {
-				t.Errorf("Expected deposit data signing root %#x, received %#x", testCase.DepositData.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.DepositData.Value,
+				unmarshalTarget: new(MinimalDepositData),
+				expected:        testCase.DepositData.Serialized,
+				expectedRoot:    testCase.DepositData.Root,
+			})
 		}
 		if !isEmpty(testCase.Eth1Data.Value) {
-			encoded, err := ssz.Marshal(testCase.Eth1Data.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Eth1Data.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Eth1Data.Root) {
-				t.Errorf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Eth1Data.Serialized) {
-				t.Errorf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Eth1Data.Value,
+				unmarshalTarget: new(MinimalEth1Data),
+				expected:        testCase.Eth1Data.Serialized,
+				expectedRoot:    testCase.Eth1Data.Root,
+			})
 		}
 		if !isEmpty(testCase.Fork.Value) {
-			encoded, err := ssz.Marshal(testCase.Fork.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Fork.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Fork.Root) {
-				t.Errorf("Expected fork %#x, received %#x", testCase.Fork.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Fork.Serialized) {
-				t.Errorf("Expected fork %v, received %v", testCase.Fork.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Fork.Value,
+				unmarshalTarget: new(MinimalFork),
+				expected:        testCase.Fork.Serialized,
+				expectedRoot:    testCase.Fork.Root,
+			})
 		}
 		if !isEmpty(testCase.HistoricalBatch.Value) {
-			encoded, err := ssz.Marshal(testCase.HistoricalBatch.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.HistoricalBatch.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.HistoricalBatch.Root) {
-				t.Errorf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.HistoricalBatch.Serialized) {
-				t.Errorf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.HistoricalBatch.Value,
+				unmarshalTarget: new(MinimalHistoricalBatch),
+				expected:        testCase.HistoricalBatch.Serialized,
+				expectedRoot:    testCase.HistoricalBatch.Root,
+			})
 		}
 		if !isEmpty(testCase.IndexedAttestation.Value) {
-			encoded, err := ssz.Marshal(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.IndexedAttestation.Root) {
-				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.IndexedAttestation.Serialized) {
-				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.IndexedAttestation.SigningRoot) {
-				t.Errorf("Expected indexed attestation signing root %#x, received %#x", testCase.IndexedAttestation.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.IndexedAttestation.Value,
+				unmarshalTarget:     new(MinimalIndexedAttestation),
+				expected:            testCase.IndexedAttestation.Serialized,
+				expectedRoot:        testCase.IndexedAttestation.Root,
+				expectedSigningRoot: testCase.IndexedAttestation.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.PendingAttestation.Value) {
-			encoded, err := ssz.Marshal(testCase.PendingAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.PendingAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.PendingAttestation.Root) {
-				t.Errorf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.PendingAttestation.Serialized) {
-				t.Errorf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.PendingAttestation.Value,
+				unmarshalTarget: new(MinimalPendingAttestation),
+				expected:        testCase.PendingAttestation.Serialized,
+				expectedRoot:    testCase.PendingAttestation.Root,
+			})
 		}
 		if !isEmpty(testCase.ProposerSlashing.Value) {
-			encoded, err := ssz.Marshal(testCase.ProposerSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.ProposerSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.ProposerSlashing.Root) {
-				t.Errorf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.ProposerSlashing.Serialized) {
-				t.Errorf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.ProposerSlashing.Value,
+				unmarshalTarget: new(MinimalProposerSlashing),
+				expected:        testCase.ProposerSlashing.Serialized,
+				expectedRoot:    testCase.ProposerSlashing.Root,
+			})
 		}
 		if !isEmpty(testCase.Transfer.Value) {
-			encoded, err := ssz.Marshal(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Transfer.Root) {
-				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Transfer.Serialized) {
-				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.Transfer.SigningRoot) {
-				t.Errorf("Expected transfer signing root %#x, received %#x", testCase.Transfer.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.Transfer.Value,
+				unmarshalTarget:     new(MinimalTransfer),
+				expected:            testCase.Transfer.Serialized,
+				expectedRoot:        testCase.Transfer.Root,
+				expectedSigningRoot: testCase.Transfer.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.Validator.Value) {
-			encoded, err := ssz.Marshal(testCase.Validator.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Validator.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Validator.Root) {
-				t.Errorf("Expected validator %#x, received %#x", testCase.Validator.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Validator.Serialized) {
-				t.Errorf("Expected validator %#x, received %#x", testCase.Validator.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Validator.Value,
+				unmarshalTarget: new(MinimalValidator),
+				expected:        testCase.Validator.Serialized,
+				expectedRoot:    testCase.Validator.Root,
+			})
 		}
 		if !isEmpty(testCase.VoluntaryExit.Value) {
-			encoded, err := ssz.Marshal(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.VoluntaryExit.Root) {
-				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.VoluntaryExit.Serialized) {
-				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.VoluntaryExit.SigningRoot) {
-				t.Errorf("Expected voluntary exit signing root %#x, received %#x", testCase.VoluntaryExit.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.VoluntaryExit.Value,
+				unmarshalTarget:     new(MinimalVoluntaryExit),
+				expected:            testCase.VoluntaryExit.Serialized,
+				expectedRoot:        testCase.VoluntaryExit.Root,
+				expectedSigningRoot: testCase.VoluntaryExit.SigningRoot,
+			})
 		}
 	}
 }
@@ -530,373 +349,170 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 	for _, testCase := range s.TestCases {
 		if !isEmpty(testCase.Attestation.Value) {
-			encoded, err := ssz.Marshal(testCase.Attestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Attestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.Attestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Attestation.Root) {
-				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Attestation.Serialized) {
-				t.Errorf("Expected attestation %#x, received %#x", testCase.Attestation.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.Attestation.SigningRoot) {
-				t.Errorf("Expected attestation signing root %#x, received %#x", testCase.Attestation.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.Attestation.Value,
+				unmarshalTarget:     new(MainnetAttestation),
+				expected:            testCase.Attestation.Serialized,
+				expectedRoot:        testCase.Attestation.Root,
+				expectedSigningRoot: testCase.Attestation.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.AttestationData.Value) {
-			encoded, err := ssz.Marshal(testCase.AttestationData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.AttestationData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.AttestationData.Root) {
-				t.Errorf("Expected attestation data %#x, received %#x", testCase.AttestationData.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.AttestationData.Serialized) {
-				t.Errorf("Expected attestation data %#x, received %#x", testCase.AttestationData.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttestationData.Value,
+				unmarshalTarget: new(MainnetAttestationData),
+				expected:        testCase.AttestationData.Serialized,
+				expectedRoot:    testCase.AttestationData.Root,
+			})
 		}
 		if !isEmpty(testCase.AttestationDataAndCustodyBit.Value) {
-			encoded, err := ssz.Marshal(testCase.AttestationDataAndCustodyBit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.AttestationDataAndCustodyBit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.AttestationDataAndCustodyBit.Root) {
-				t.Errorf("Expected attestation custody bit %#x, received %#x", testCase.AttestationDataAndCustodyBit.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.AttestationDataAndCustodyBit.Serialized) {
-				t.Errorf("Expected attestation custody bit %#x, received %#x", testCase.AttestationDataAndCustodyBit.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttestationDataAndCustodyBit.Value,
+				unmarshalTarget: new(MainnetAttestationAndCustodyBit),
+				expected:        testCase.AttestationDataAndCustodyBit.Serialized,
+				expectedRoot:    testCase.AttestationDataAndCustodyBit.Root,
+			})
 		}
 		if !isEmpty(testCase.AttesterSlashing.Value) {
-			encoded, err := ssz.Marshal(testCase.AttesterSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.AttesterSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.AttesterSlashing.Root) {
-				t.Errorf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.AttesterSlashing.Serialized) {
-				t.Errorf("Expected attester slashing %#x, received %#x", testCase.AttesterSlashing.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttesterSlashing.Value,
+				unmarshalTarget: new(MainnetAttesterSlashing),
+				expected:        testCase.AttesterSlashing.Serialized,
+				expectedRoot:    testCase.AttesterSlashing.Root,
+			})
 		}
 		if !isEmpty(testCase.BeaconBlock.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconBlock.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlock.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlock.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlock.Root) {
-				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlock.Serialized) {
-				t.Errorf("Expected beacon block %#x, received %#x", testCase.BeaconBlock.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.BeaconBlock.SigningRoot) {
-				t.Errorf("Expected beacon block signing root %#x, received %#x", testCase.BeaconBlock.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.BeaconBlock.Value,
+				unmarshalTarget:     new(MainnetBlock),
+				expected:            testCase.BeaconBlock.Serialized,
+				expectedRoot:        testCase.BeaconBlock.Root,
+				expectedSigningRoot: testCase.BeaconBlock.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.BeaconBlockBody.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconBlockBody.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlockBody.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlockBody.Root) {
-				t.Errorf("Expected %#x, received %#x", testCase.BeaconBlockBody.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlockBody.Serialized) {
-				t.Errorf("Expected %#x, received %#x", testCase.BeaconBlockBody.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.BeaconBlockBody.Value,
+				unmarshalTarget: new(MainnetBlockBody),
+				expected:        testCase.BeaconBlockBody.Serialized,
+				expectedRoot:    testCase.BeaconBlockBody.Root,
+			})
 		}
 		if !isEmpty(testCase.BeaconBlockHeader.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconBlockHeader.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconBlockHeader.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.BeaconBlockHeader.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconBlockHeader.Root) {
-				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconBlockHeader.Serialized) {
-				t.Errorf("Expected block header %#x, received %#x", testCase.BeaconBlockHeader.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.BeaconBlockHeader.SigningRoot) {
-				t.Errorf("Expected beacon block header signing root %#x, received %#x", testCase.BeaconBlockHeader.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.BeaconBlockHeader.Value,
+				unmarshalTarget:     new(MainnetBlockHeader),
+				expected:            testCase.BeaconBlockHeader.Serialized,
+				expectedRoot:        testCase.BeaconBlockHeader.Root,
+				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.BeaconState.Value) {
-			encoded, err := ssz.Marshal(testCase.BeaconState.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.BeaconState.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.BeaconState.Root) {
-				t.Errorf("Expected beacon state %#x, received %#x", testCase.BeaconState.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.BeaconState.Serialized) {
-				t.Errorf("Serializations do not match")
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.BeaconState.Value,
+				unmarshalTarget: new(MainnetBeaconState),
+				expected:        testCase.BeaconState.Serialized,
+				expectedRoot:    testCase.BeaconState.Root,
+			})
 		}
 		if !isEmpty(testCase.Crosslink.Value) {
-			encoded, err := ssz.Marshal(testCase.Crosslink.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Crosslink.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Crosslink.Root) {
-				t.Errorf("Expected crosslink %#x, received %#x", testCase.Crosslink.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Crosslink.Serialized) {
-				t.Errorf("Expected crosslink %#x, received %#x", testCase.Crosslink.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Crosslink.Value,
+				unmarshalTarget: new(MainnetCrosslink),
+				expected:        testCase.Crosslink.Serialized,
+				expectedRoot:    testCase.Crosslink.Root,
+			})
 		}
 		if !isEmpty(testCase.Deposit.Value) {
-			encoded, err := ssz.Marshal(testCase.Deposit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Deposit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Deposit.Root) {
-				t.Errorf("Expected deposit %#x, received %#x", testCase.Deposit.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Deposit.Serialized) {
-				t.Errorf("Expected deposit %#x, received %#x", testCase.Deposit.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Deposit.Value,
+				unmarshalTarget: new(MainnetDeposit),
+				expected:        testCase.Deposit.Serialized,
+				expectedRoot:    testCase.Deposit.Root,
+			})
 		}
 		if !isEmpty(testCase.DepositData.Value) {
-			encoded, err := ssz.Marshal(testCase.DepositData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.DepositData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.DepositData.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.DepositData.Root) {
-				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.DepositData.Serialized) {
-				t.Errorf("Expected deposit data %#x, received %#x", testCase.DepositData.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.DepositData.SigningRoot) {
-				t.Errorf("Expected deposit data signing root %#x, received %#x", testCase.DepositData.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.DepositData.Value,
+				unmarshalTarget: new(MainnetDepositData),
+				expected:        testCase.DepositData.Serialized,
+				expectedRoot:    testCase.DepositData.Root,
+			})
 		}
 		if !isEmpty(testCase.Eth1Data.Value) {
-			encoded, err := ssz.Marshal(testCase.Eth1Data.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Eth1Data.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Eth1Data.Root) {
-				t.Errorf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Eth1Data.Serialized) {
-				t.Errorf("Expected eth1data %#x, received %#x", testCase.Eth1Data.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Eth1Data.Value,
+				unmarshalTarget: new(MainnetEth1Data),
+				expected:        testCase.Eth1Data.Serialized,
+				expectedRoot:    testCase.Eth1Data.Root,
+			})
 		}
 		if !isEmpty(testCase.Fork.Value) {
-			encoded, err := ssz.Marshal(testCase.Fork.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Fork.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Fork.Root) {
-				t.Errorf("Expected fork %#x, received %#x", testCase.Fork.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Fork.Serialized) {
-				t.Errorf("Expected fork %v, received %v", testCase.Fork.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Fork.Value,
+				unmarshalTarget: new(MainnetFork),
+				expected:        testCase.Fork.Serialized,
+				expectedRoot:    testCase.Fork.Root,
+			})
 		}
 		if !isEmpty(testCase.HistoricalBatch.Value) {
-			encoded, err := ssz.Marshal(testCase.HistoricalBatch.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.HistoricalBatch.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.HistoricalBatch.Root) {
-				t.Errorf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.HistoricalBatch.Serialized) {
-				t.Errorf("Expected historical batch %#x, received %#x", testCase.HistoricalBatch.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.HistoricalBatch.Value,
+				unmarshalTarget: new(MainnetHistoricalBatch),
+				expected:        testCase.HistoricalBatch.Serialized,
+				expectedRoot:    testCase.HistoricalBatch.Root,
+			})
 		}
 		if !isEmpty(testCase.IndexedAttestation.Value) {
-			encoded, err := ssz.Marshal(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.IndexedAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.IndexedAttestation.Root) {
-				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.IndexedAttestation.Serialized) {
-				t.Errorf("Expected indexed att %#x, received %#x", testCase.IndexedAttestation.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.IndexedAttestation.SigningRoot) {
-				t.Errorf("Expected indexed attestation signing root %#x, received %#x", testCase.IndexedAttestation.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.IndexedAttestation.Value,
+				unmarshalTarget:     new(MainnetIndexedAttestation),
+				expected:            testCase.IndexedAttestation.Serialized,
+				expectedRoot:        testCase.IndexedAttestation.Root,
+				expectedSigningRoot: testCase.IndexedAttestation.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.PendingAttestation.Value) {
-			encoded, err := ssz.Marshal(testCase.PendingAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.PendingAttestation.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.PendingAttestation.Root) {
-				t.Errorf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.PendingAttestation.Serialized) {
-				t.Errorf("Expected pending att %#x, received %#x", testCase.PendingAttestation.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.PendingAttestation.Value,
+				unmarshalTarget: new(MainnetPendingAttestation),
+				expected:        testCase.PendingAttestation.Serialized,
+				expectedRoot:    testCase.PendingAttestation.Root,
+			})
 		}
 		if !isEmpty(testCase.ProposerSlashing.Value) {
-			encoded, err := ssz.Marshal(testCase.ProposerSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.ProposerSlashing.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.ProposerSlashing.Root) {
-				t.Errorf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.ProposerSlashing.Serialized) {
-				t.Errorf("Expected proposer slashing %#x, received %#x", testCase.ProposerSlashing.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.ProposerSlashing.Value,
+				unmarshalTarget: new(MainnetProposerSlashing),
+				expected:        testCase.ProposerSlashing.Serialized,
+				expectedRoot:    testCase.ProposerSlashing.Root,
+			})
 		}
 		if !isEmpty(testCase.Transfer.Value) {
-			encoded, err := ssz.Marshal(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.Transfer.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Transfer.Root) {
-				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Transfer.Serialized) {
-				t.Errorf("Expected transfer %#x, received %#x", testCase.Transfer.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.Transfer.SigningRoot) {
-				t.Errorf("Expected transfer signing root %#x, received %#x", testCase.Transfer.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.Transfer.Value,
+				unmarshalTarget:     new(MainnetTransfer),
+				expected:            testCase.Transfer.Serialized,
+				expectedRoot:        testCase.Transfer.Root,
+				expectedSigningRoot: testCase.Transfer.SigningRoot,
+			})
 		}
 		if !isEmpty(testCase.Validator.Value) {
-			encoded, err := ssz.Marshal(testCase.Validator.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.Validator.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.Validator.Root) {
-				t.Errorf("Expected validator %#x, received %#x", testCase.Validator.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.Validator.Serialized) {
-				t.Errorf("Expected validator %#x, received %#x", testCase.Validator.Serialized, encoded)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Validator.Value,
+				unmarshalTarget: new(MainnetValidator),
+				expected:        testCase.Validator.Serialized,
+				expectedRoot:    testCase.Validator.Root,
+			})
 		}
 		if !isEmpty(testCase.VoluntaryExit.Value) {
-			encoded, err := ssz.Marshal(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			root, err := ssz.HashTreeRoot(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			signingRoot, err := ssz.SigningRoot(testCase.VoluntaryExit.Value)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.Equal(root[:], testCase.VoluntaryExit.Root) {
-				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Root, root[:])
-			}
-			if !bytes.Equal(encoded, testCase.VoluntaryExit.Serialized) {
-				t.Errorf("Expected voluntary exit %#x, received %#x", testCase.VoluntaryExit.Serialized, encoded)
-			}
-			if !bytes.Equal(signingRoot[:], testCase.VoluntaryExit.SigningRoot) {
-				t.Errorf("Expected voluntary exit signing root %#x, received %#x", testCase.VoluntaryExit.SigningRoot, signingRoot)
-			}
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.VoluntaryExit.Value,
+				unmarshalTarget:     new(MainnetVoluntaryExit),
+				expected:            testCase.VoluntaryExit.Serialized,
+				expectedRoot:        testCase.VoluntaryExit.Root,
+				expectedSigningRoot: testCase.VoluntaryExit.SigningRoot,
+			})
 		}
 	}
 }
@@ -911,12 +527,36 @@ func isEmpty(item interface{}) bool {
 	return true
 }
 
-func compareEncoding(t *testing.T, val interface{}, expected []byte) {
-	encoded, err := ssz.Marshal(val)
+func compareSSZEncoding(t *testing.T, cfg *sszComparisonConfig) {
+	encoded, err := ssz.Marshal(cfg.val)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(encoded, expected) {
-		t.Errorf("Expected %v, received %v", expected, encoded)
+	if !bytes.Equal(encoded, cfg.expected) {
+		t.Error("Failed to encode")
+	}
+	if err := ssz.Unmarshal(encoded, cfg.unmarshalTarget); err != nil {
+		t.Fatal(err)
+	}
+	concreteValue := reflect.ValueOf(cfg.unmarshalTarget).Elem().Interface()
+	if !ssz.DeepEqual(concreteValue, cfg.val) {
+		t.Error("Unmarshaled encoding did not match original value")
+		t.Log(cfg.val)
+	}
+	root, err := ssz.HashTreeRoot(cfg.val)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(root[:], cfg.expectedRoot) {
+		t.Errorf("Expected hash tree root %#x, received %#x", cfg.expectedRoot, root[:])
+	}
+	if cfg.expectedSigningRoot != nil {
+		signingRoot, err := ssz.SigningRoot(cfg.val)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(signingRoot[:], cfg.expectedSigningRoot) {
+			t.Errorf("Expected signing root %#x, received %#x", cfg.expectedSigningRoot, signingRoot)
+		}
 	}
 }

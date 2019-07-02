@@ -1,10 +1,3 @@
-// Copyright 2009 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-//
-// This file extends Go's reflect.DeepEqual function into a ssz.DeepEqual
-// function that is compliant with the supported types of ssz and its
-// intricacies when determining equality of empty values.
 package ssz
 
 import (
@@ -22,6 +15,14 @@ type visit struct {
 	typ reflect.Type
 }
 
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+//
+// This file extends Go's reflect.DeepEqual function into a ssz.DeepEqual
+// function that is compliant with the supported types of ssz and its
+// intricacies when determining equality of empty values.
+//
 // Tests for deep equality using reflected types. The map argument tracks
 // comparisons that have already been seen, which allows short circuiting on
 // recursive types.
