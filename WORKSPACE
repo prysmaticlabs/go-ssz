@@ -39,8 +39,8 @@ filegroup(
     visibility = ["//visibility:public"],
 )
     """,
-    sha256 = "7573fdd2855d3cb6a75852080eb34cba0ae43da8ab5eadfc96ab44419d91962a",
-    url = "https://prysmaticlabs.com/uploads/7573fd_base64_encoded_archive.tar.gz",
+    sha256 = "66893810c72fa80ed4320964e8f5c1c02c9e2e3b155d19d7ad4a8d87d5f5295e",
+    url = "http://prysmaticlabs.com/uploads/668938_base64_encoded_archive.tar.gz",
 )
 
 http_archive(
