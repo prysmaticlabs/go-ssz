@@ -78,12 +78,11 @@ func determineFieldType(field reflect.StructField) (reflect.Type, error) {
 }
 
 func parseSSZFieldTags(field reflect.StructField) ([]int, bool, error) {
-	tag, exists := field.Tag.Lookup("ssz")
+	tag, exists := field.Tag.Lookup("ssz-size")
 	if !exists {
 		return nil, false, nil
 	}
-	sizeStartIndex := strings.IndexRune(tag, '=')
-	items := strings.Split(tag[sizeStartIndex+1:], ",")
+	items := strings.Split(tag, ",")
 	sizes := make([]int, len(items))
 	var err error
 	for i := 0; i < len(items); i++ {
