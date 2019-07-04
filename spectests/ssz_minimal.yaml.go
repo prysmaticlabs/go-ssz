@@ -46,14 +46,14 @@ type MinimalAttestationAndCustodyBit struct {
 }
 
 type MinimalIndexedAttestation struct {
-	CustodyBit0Indices []uint64               `json:"custody_bit_0_indices"`
-	CustodyBit1Indices []uint64               `json:"custody_bit_1_indices"`
+	CustodyBit0Indices []uint64               `json:"custody_bit_0_indices" ssz:"max=4096"`
+	CustodyBit1Indices []uint64               `json:"custody_bit_1_indices" ssz:"max=4096"`
 	Data               MinimalAttestationData `json:"data"`
 	Signature          []byte                 `json:"signature" ssz:"size=96"`
 }
 
 type MinimalPendingAttestation struct {
-	AggregationBits []byte                 `json:"aggregation_bits"`
+	AggregationBits []byte                 `json:"aggregation_bits" ssz:"max=4096"`
 	Data            MinimalAttestationData `json:"data"`
 	InclusionDelay  uint64                 `json:"inclusion_delay"`
 	ProposerIndex   uint64                 `json:"proposer_index"`
@@ -78,8 +78,8 @@ type MinimalDepositData struct {
 }
 
 type MinimalCompactCommittee struct {
-	Pubkeys           [][]byte `json:"pubkeys" ssz:"size=?,48"`
-	CompactValidators []uint64 `json:"compact_validators"`
+	Pubkeys           [][]byte `json:"pubkeys" ssz:"size=?,48 max=4096"`
+	CompactValidators []uint64 `json:"compact_validators" ssz:"max=4096"`
 }
 
 type MinimalBlockHeader struct {
@@ -102,9 +102,9 @@ type MinimalAttesterSlashing struct {
 }
 
 type MinimalAttestation struct {
-	AggregationBits []byte                 `json:"aggregation_bits"`
+	AggregationBits []byte                 `json:"aggregation_bits" ssz:"max=4096"`
 	Data            MinimalAttestationData `json:"data"`
-	CustodyBits     []byte                 `json:"custody_bitfield"`
+	CustodyBits     []byte                 `json:"custody_bits" ssz:"max=4096"`
 	Signature       []byte                 `json:"signature" ssz:"size=96"`
 }
 
@@ -133,12 +133,12 @@ type MinimalBlockBody struct {
 	RandaoReveal      []byte                    `json:"randao_reveal" ssz:"size=96"`
 	Eth1Data          MinimalEth1Data           `json:"eth1_data"`
 	Graffiti          []byte                    `json:"graffiti" ssz:"size=32"`
-	ProposerSlashings []MinimalProposerSlashing `json:"proposer_slashings"`
-	AttesterSlashings []MinimalAttesterSlashing `json:"attester_slashings"`
-	Attestations      []MinimalAttestation      `json:"attestations"`
-	Deposits          []MinimalDeposit          `json:"deposits"`
-	VoluntaryExits    []MinimalVoluntaryExit    `json:"voluntary_exits"`
-	Transfers         []MinimalTransfer         `json:"transfers"`
+	ProposerSlashings []MinimalProposerSlashing `json:"proposer_slashings" ssz:"max=16"`
+	AttesterSlashings []MinimalAttesterSlashing `json:"attester_slashings" ssz:"max=1"`
+	Attestations      []MinimalAttestation      `json:"attestations" ssz:"max=128"`
+	Deposits          []MinimalDeposit          `json:"deposits" ssz:"max=16"`
+	VoluntaryExits    []MinimalVoluntaryExit    `json:"voluntary_exits" ssz:"max=16"`
+	Transfers         []MinimalTransfer         `json:"transfers" ssz:"max=0"`
 }
 
 type MinimalBlock struct {
@@ -156,20 +156,20 @@ type MinimalBeaconState struct {
 	LatestBlockHeader      MinimalBlockHeader `json:"latest_block_header"`
 	BlockRoots             [][]byte           `json:"block_roots" ssz:"size=64,32"`
 	StateRoots             [][]byte           `json:"state_roots" ssz:"size=64,32"`
-	HistoricalRoots        [][]byte           `json:"historical_roots" ssz:"size=?,32"`
+	HistoricalRoots        [][]byte           `json:"historical_roots" ssz:"size=?,32 max=16777216"`
 	Eth1Data               MinimalEth1Data    `json:"eth1_data"`
-	Eth1DataVotes          []MinimalEth1Data  `json:"eth1_data_votes"`
+	Eth1DataVotes          []MinimalEth1Data  `json:"eth1_data_votes" ssz:"max=16"`
 	Eth1DepositIndex       uint64             `json:"eth1_deposit_index"`
-	Validators             []MinimalValidator `json:"validators"`
-	Balances               []uint64           `json:"balances"`
+	Validators             []MinimalValidator `json:"validators" ssz:"max=1099511627776"`
+	Balances               []uint64           `json:"balances" ssz:"max=1099511627776"`
 	StartShard             uint64             `json:"start_shard"`
 	RandaoMixes            [][]byte           `json:"randao_mixes" ssz:"size=64,32"`
 	ActiveIndexRoots       [][]byte           `json:"active_index_roots" ssz:"size=64,32"`
 	CompactCommitteesRoots [][]byte           `json:"compact_committees_roots" ssz:"size=64,32"`
 	Slashings              []uint64           `json:"slashings" ssz:"size=64"`
 
-	PreviousEpochAttestations []MinimalPendingAttestation `json:"previous_epoch_attestations"`
-	CurrentEpochAttestations  []MinimalPendingAttestation `json:"current_epoch_attestations"`
+	PreviousEpochAttestations []MinimalPendingAttestation `json:"previous_epoch_attestations" ssz:"max=1024"`
+	CurrentEpochAttestations  []MinimalPendingAttestation `json:"current_epoch_attestations" ssz:"max=1024"`
 	PreviousCrosslinks        []MinimalCrosslink          `json:"previous_crosslinks" ssz:"size=8"`
 	CurrentCrosslinks         []MinimalCrosslink          `json:"current_crosslinks" ssz:"size=8"`
 	JustificationBits         []byte                      `json:"justification_bits" ssz:"size=4"`
