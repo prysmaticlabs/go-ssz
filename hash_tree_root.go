@@ -52,6 +52,8 @@ func makeHasher(typ reflect.Type) (hasher, error) {
 		return makeBasicTypeHasher(typ)
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
 		return makeBasicSliceHasher(typ)
+	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
+		return makeBasicSliceHasher(typ)
 	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
 		return makeCompositeSliceHasher(typ)
 	case kind == reflect.Array:
@@ -132,10 +134,16 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 	}
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		padding := uint64(0)
+		elemSize := uint64(0)
 		if val.Len() > 0 {
-			elemSize := determineFixedSize(val.Index(0), val.Index(0).Type())
+			if isBasicType(val.Index(0).Kind()) {
+				elemSize = determineFixedSize(val.Index(0), val.Index(0).Type())
+			} else {
+				elemSize = 32
+			}
 			padding = (maxCapacity*elemSize + 31) / 32
 		}
+		fmt.Println(padding)
 		encoded := make([]byte, determineSize(val))
 		if _, err = utils.marshaler(val, encoded, 0); err != nil {
 			return [32]byte{}, err
@@ -144,6 +152,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
+		fmt.Println(len(chunks))
 		buf := make([]byte, 32)
 		binary.PutUvarint(buf, uint64(val.Len()))
 		res := mixInLength(merkleize(chunks, padding), buf)

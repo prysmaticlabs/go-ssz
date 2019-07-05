@@ -177,15 +177,15 @@ func TestYamlStaticSpecTests(t *testing.T) {
 
 func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 	for _, testCase := range s.TestCases {
-		if !isEmpty(testCase.Attestation.Value) {
-			compareSSZEncoding(t, &sszComparisonConfig{
-				val:                 testCase.Attestation.Value,
-				unmarshalTarget:     new(MinimalAttestation),
-				expected:            testCase.Attestation.Serialized,
-				expectedRoot:        testCase.Attestation.Root,
-				expectedSigningRoot: testCase.Attestation.SigningRoot,
-			})
-		}
+		// if !isEmpty(testCase.Attestation.Value) {
+		// 	compareSSZEncoding(t, &sszComparisonConfig{
+		// 		val:                 testCase.Attestation.Value,
+		// 		unmarshalTarget:     new(MinimalAttestation),
+		// 		expected:            testCase.Attestation.Serialized,
+		// 		expectedRoot:        testCase.Attestation.Root,
+		// 		expectedSigningRoot: testCase.Attestation.SigningRoot,
+		// 	})
+		// }
 		// if !isEmpty(testCase.AttestationData.Value) {
 		// 	compareSSZEncoding(t, &sszComparisonConfig{
 		// 		val:             testCase.AttestationData.Value,
@@ -252,14 +252,14 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 		// 		expectedRoot:    testCase.Checkpoint.Root,
 		// 	})
 		// }
-		// if !isEmpty(testCase.CompactCommittee.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.CompactCommittee.Value,
-		// 		unmarshalTarget: new(MinimalCompactCommittee),
-		// 		expected:        testCase.CompactCommittee.Serialized,
-		// 		expectedRoot:    testCase.CompactCommittee.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.CompactCommittee.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.CompactCommittee.Value,
+				unmarshalTarget: new(MinimalCompactCommittee),
+				expected:        testCase.CompactCommittee.Serialized,
+				expectedRoot:    testCase.CompactCommittee.Root,
+			})
+		}
 		if !isEmpty(testCase.Crosslink.Value) {
 			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Crosslink.Value,
