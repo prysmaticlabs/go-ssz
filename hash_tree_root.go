@@ -85,6 +85,7 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 }
 
 func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
+	padding := (maxCapacity + 255) / 256
 	buf := val.Interface().([]byte)
 	bitfield := Bitlist(buf)
 	chunks, err := pack([][]byte{bitfield.Bytes()})
@@ -93,7 +94,7 @@ func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	}
 	length := make([]byte, 32)
 	binary.PutUvarint(length, bitfield.Len())
-	return mixInLength(merkleize(chunks, 16), length), nil
+	return mixInLength(merkleize(chunks, padding), length), nil
 }
 
 func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
