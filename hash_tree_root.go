@@ -128,7 +128,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
-	utils, err := cachedSSZUtilsNoAcquireLock(typ)
+	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, err
 	}
@@ -143,16 +143,18 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 			}
 			padding = (maxCapacity*elemSize + 31) / 32
 		}
-		fmt.Println(padding)
-		encoded := make([]byte, determineSize(val))
-		if _, err = utils.marshaler(val, encoded, 0); err != nil {
-			return [32]byte{}, err
+		var roots [][]byte
+		for i := 0; i < val.Len(); i++ {
+			r, err := utils.hasher(val.Index(i), 0)
+			if err != nil {
+				return [32]byte{}, err
+			}
+			roots = append(roots, r[:])
 		}
-		chunks, err := pack([][]byte{encoded})
+		chunks, err := pack(roots)
 		if err != nil {
 			return [32]byte{}, err
 		}
-		fmt.Println(len(chunks))
 		buf := make([]byte, 32)
 		binary.PutUvarint(buf, uint64(val.Len()))
 		res := mixInLength(merkleize(chunks, padding), buf)
