@@ -53,7 +53,7 @@ type MinimalIndexedAttestation struct {
 }
 
 type MinimalPendingAttestation struct {
-	AggregationBits []byte                 `json:"aggregation_bits" ssz-max:"16" ssz-kind:"bitlist"`
+	AggregationBits []byte                 `json:"aggregation_bits" ssz-max:"4096" ssz-kind:"bitlist"`
 	Data            MinimalAttestationData `json:"data"`
 	InclusionDelay  uint64                 `json:"inclusion_delay"`
 	ProposerIndex   uint64                 `json:"proposer_index"`
@@ -102,9 +102,9 @@ type MinimalAttesterSlashing struct {
 }
 
 type MinimalAttestation struct {
-	AggregationBits []byte                 `json:"aggregation_bits" ssz-max:"16" ssz-kind:"bitlist"`
+	AggregationBits []byte                 `json:"aggregation_bits" ssz-max:"4096" ssz-kind:"bitlist"`
 	Data            MinimalAttestationData `json:"data"`
-	CustodyBits     []byte                 `json:"custody_bits" ssz-max:"16" ssz-kind:"bitlist"`
+	CustodyBits     []byte                 `json:"custody_bits" ssz-max:"4096" ssz-kind:"bitlist"`
 	Signature       []byte                 `json:"signature" ssz-size:"96"`
 }
 
