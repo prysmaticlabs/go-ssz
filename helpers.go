@@ -67,14 +67,22 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 // number of chunks is a power of two, Merkleize the chunks, and return the root.
 // Note that merkleize on a single chunk is simply that chunk, i.e. the identity
 // when the number of chunks is one.
-func merkleize(chunks [][]byte) [32]byte {
+func merkleize(chunks [][]byte, padding uint64) [32]byte {
 	if len(chunks) == 1 {
 		var root [32]byte
 		copy(root[:], chunks[0])
 		return root
 	}
-	for !isPowerTwo(len(chunks)) {
-		chunks = append(chunks, make([]byte, BytesPerChunk))
+	if padding > 0 {
+		nextPowerOfTwo := padding
+		for !isPowerTwo(int(nextPowerOfTwo)) {
+			chunks = append(chunks, make([]byte, BytesPerChunk))
+			nextPowerOfTwo++
+		}
+	} else {
+		for !isPowerTwo(len(chunks)) {
+			chunks = append(chunks, make([]byte, BytesPerChunk))
+		}
 	}
 	hashLayer := chunks
 	// We keep track of the hash layers of a Merkle trie until we reach

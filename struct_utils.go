@@ -17,10 +17,12 @@ var UnboundedSSZFieldSizeMarker = "?"
 // include the respective sszUtils for that particular field type,
 // giving easy access to its marshaler, unmarshaler, and tree hasher.
 type field struct {
-	index    int
-	name     string
-	typ      reflect.Type
-	sszUtils *sszUtils
+	index       int
+	name        string
+	typ         reflect.Type
+	sszUtils    *sszUtils
+	capacity    uint64
+	hasCapacity bool
 }
 
 // truncateLast removes the last value of a struct, usually the signature,
@@ -52,6 +54,7 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 		if err != nil {
 			return nil, err
 		}
+		fCapacity, hasCapacity := determineFieldCapacity(f)
 
 		// We determine the SSZ utils for the field, including its respective
 		// marshaler, unmarshaler, and hasher.
@@ -60,7 +63,14 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 		}
 		name := f.Name
-		fields = append(fields, field{index: i, name: name, sszUtils: utils, typ: fType})
+		fields = append(fields, field{
+			index:       i,
+			name:        name,
+			sszUtils:    utils,
+			typ:         fType,
+			capacity:    fCapacity,
+			hasCapacity: hasCapacity,
+		})
 	}
 	return fields, nil
 }
@@ -75,6 +85,18 @@ func determineFieldType(field reflect.StructField) (reflect.Type, error) {
 		return inferFieldTypeFromSizeTags(field, fieldSizeTags), nil
 	}
 	return field.Type, nil
+}
+
+func determineFieldCapacity(field reflect.StructField) (uint64, bool) {
+	tag, exists := field.Tag.Lookup("ssz-max")
+	if !exists {
+		return 0, false
+	}
+	val, err := strconv.Atoi(tag)
+	if err != nil {
+		return 0, false
+	}
+	return uint64(val), true
 }
 
 func parseSSZFieldTags(field reflect.StructField) ([]int, bool, error) {

@@ -53,7 +53,7 @@ type MinimalIndexedAttestation struct {
 }
 
 type MinimalPendingAttestation struct {
-	AggregationBits []byte                 `json:"aggregation_bits" ssz-max:"4096"`
+	AggregationBits []byte                 `json:"aggregation_bits" ssz-max:"4096" ssz-kind:"bitlist"`
 	Data            MinimalAttestationData `json:"data"`
 	InclusionDelay  uint64                 `json:"inclusion_delay"`
 	ProposerIndex   uint64                 `json:"proposer_index"`
@@ -102,9 +102,9 @@ type MinimalAttesterSlashing struct {
 }
 
 type MinimalAttestation struct {
-	AggregationBits []byte                 `json:"aggregation_bits" ssz-max:"4096"`
+	AggregationBits []byte                 `json:"aggregation_bits" ssz-max:"16" ssz-kind:"bitlist"`
 	Data            MinimalAttestationData `json:"data"`
-	CustodyBits     []byte                 `json:"custody_bits" ssz-max:"4096"`
+	CustodyBits     []byte                 `json:"custody_bits" ssz-max:"16" ssz-kind:"bitlist"`
 	Signature       []byte                 `json:"signature" ssz-size:"96"`
 }
 
@@ -172,7 +172,7 @@ type MinimalBeaconState struct {
 	CurrentEpochAttestations  []MinimalPendingAttestation `json:"current_epoch_attestations" ssz-max:"1024"`
 	PreviousCrosslinks        []MinimalCrosslink          `json:"previous_crosslinks" ssz-size:"8"`
 	CurrentCrosslinks         []MinimalCrosslink          `json:"current_crosslinks" ssz-size:"8"`
-	JustificationBits         []byte                      `json:"justification_bits" ssz-size:"4"`
+	JustificationBits         []byte                      `json:"justification_bits" ssz-size:"4" ssz-kind:"bitvector"`
 
 	PreviousJustifiedCheckpoint MinimalCheckpoint `json:"previous_justified_checkpoint"`
 	CurrentJustifiedCheckpoint  MinimalCheckpoint `json:"current_justified_checkpoint"`

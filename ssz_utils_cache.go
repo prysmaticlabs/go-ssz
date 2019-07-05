@@ -11,7 +11,7 @@ type marshaler func(reflect.Value, []byte, uint64) (uint64, error)
 
 type unmarshaler func([]byte, reflect.Value, uint64) (uint64, error)
 
-type hasher func(reflect.Value) ([32]byte, error)
+type hasher func(reflect.Value, uint64) ([32]byte, error)
 
 type sszUtils struct {
 	marshaler
