@@ -52,6 +52,7 @@ workspace_binary(
 go_library(
     name = "go_default_library",
     srcs = [
+        "bitfield.go",
         "deep_equal.go",
         "determine_size.go",
         "doc.go",

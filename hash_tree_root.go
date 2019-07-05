@@ -86,12 +86,13 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 
 func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	buf := val.Interface().([]byte)
-	chunks, err := pack([][]byte{buf})
+	bitfield := Bitlist(buf)
+	chunks, err := pack([][]byte{bitfield.Bytes()})
 	if err != nil {
 		return [32]byte{}, err
 	}
 	length := make([]byte, 32)
-	binary.PutUvarint(length, uint64(1))
+	binary.PutUvarint(length, bitfield.Len())
 	return mixInLength(merkleize(chunks, 16), length), nil
 }
 
@@ -129,13 +130,11 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		return nil, err
 	}
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
-		// var padding uint64
-		// if val.Len() > 0 {
-		// 	elemSize := determineFixedSize(val.Index(0), val.Index(0).Type())
-		// 	padding = maxCapacity * elemSize / BytesPerLengthOffset
-		// 	fmt.Println(padding)
-		// }
-		fmt.Println(val.Interface())
+		padding := uint64(0)
+		if val.Len() > 0 {
+			elemSize := determineFixedSize(val.Index(0), val.Index(0).Type())
+			padding = maxCapacity * elemSize / BytesPerLengthOffset
+		}
 		encoded := make([]byte, determineSize(val))
 		if _, err = utils.marshaler(val, encoded, 0); err != nil {
 			return [32]byte{}, err
@@ -144,24 +143,12 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
-		fmt.Println(encoded)
-		fmt.Println(highest(encoded[0], 1))
 		buf := make([]byte, 32)
 		binary.PutUvarint(buf, uint64(len(encoded)))
-		fmt.Println("Basic slice hashing")
-		fmt.Println(chunks)
-		res := mixInLength(merkleize(chunks, maxCapacity), buf)
-		fmt.Printf("%#x\n", res)
+		res := mixInLength(merkleize(chunks, padding), buf)
 		return res, nil
 	}
 	return hasher, nil
-}
-
-func highest(byteFlag byte, whichBit uint8) byte {
-	if whichBit > 0 && whichBit <= 8 {
-		return (byteFlag & (1 << (whichBit - 1)))
-	}
-	return 0
 }
 
 func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
