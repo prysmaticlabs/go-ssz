@@ -133,7 +133,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		padding := uint64(0)
 		if val.Len() > 0 {
 			elemSize := determineFixedSize(val.Index(0), val.Index(0).Type())
-			padding = maxCapacity * elemSize / BytesPerLengthOffset
+			padding = (maxCapacity*elemSize + 31) / 32
 		}
 		encoded := make([]byte, determineSize(val))
 		if _, err = utils.marshaler(val, encoded, 0); err != nil {
@@ -144,7 +144,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 			return [32]byte{}, err
 		}
 		buf := make([]byte, 32)
-		binary.PutUvarint(buf, uint64(len(encoded)))
+		binary.PutUvarint(buf, uint64(val.Len()))
 		res := mixInLength(merkleize(chunks, padding), buf)
 		return res, nil
 	}
