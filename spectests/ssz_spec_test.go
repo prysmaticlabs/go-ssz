@@ -325,40 +325,40 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 				expectedRoot:    testCase.PendingAttestation.Root,
 			})
 		}
-		// if !isEmpty(testCase.ProposerSlashing.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.ProposerSlashing.Value,
-		// 		unmarshalTarget: new(MinimalProposerSlashing),
-		// 		expected:        testCase.ProposerSlashing.Serialized,
-		// 		expectedRoot:    testCase.ProposerSlashing.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.Transfer.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.Transfer.Value,
-		// 		unmarshalTarget:     new(MinimalTransfer),
-		// 		expected:            testCase.Transfer.Serialized,
-		// 		expectedRoot:        testCase.Transfer.Root,
-		// 		expectedSigningRoot: testCase.Transfer.SigningRoot,
-		// 	})
-		// }
-		// if !isEmpty(testCase.Validator.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.Validator.Value,
-		// 		unmarshalTarget: new(MinimalValidator),
-		// 		expected:        testCase.Validator.Serialized,
-		// 		expectedRoot:    testCase.Validator.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.VoluntaryExit.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.VoluntaryExit.Value,
-		// 		unmarshalTarget:     new(MinimalVoluntaryExit),
-		// 		expected:            testCase.VoluntaryExit.Serialized,
-		// 		expectedRoot:        testCase.VoluntaryExit.Root,
-		// 		expectedSigningRoot: testCase.VoluntaryExit.SigningRoot,
-		// 	})
-		// }
+		if !isEmpty(testCase.ProposerSlashing.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.ProposerSlashing.Value,
+				unmarshalTarget: new(MinimalProposerSlashing),
+				expected:        testCase.ProposerSlashing.Serialized,
+				expectedRoot:    testCase.ProposerSlashing.Root,
+			})
+		}
+		if !isEmpty(testCase.Transfer.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.Transfer.Value,
+				unmarshalTarget:     new(MinimalTransfer),
+				expected:            testCase.Transfer.Serialized,
+				expectedRoot:        testCase.Transfer.Root,
+				expectedSigningRoot: testCase.Transfer.SigningRoot,
+			})
+		}
+		if !isEmpty(testCase.Validator.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Validator.Value,
+				unmarshalTarget: new(MinimalValidator),
+				expected:        testCase.Validator.Serialized,
+				expectedRoot:    testCase.Validator.Root,
+			})
+		}
+		if !isEmpty(testCase.VoluntaryExit.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.VoluntaryExit.Value,
+				unmarshalTarget:     new(MinimalVoluntaryExit),
+				expected:            testCase.VoluntaryExit.Serialized,
+				expectedRoot:        testCase.VoluntaryExit.Root,
+				expectedSigningRoot: testCase.VoluntaryExit.SigningRoot,
+			})
+		}
 	}
 }
 
