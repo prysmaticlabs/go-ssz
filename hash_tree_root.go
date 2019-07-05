@@ -84,6 +84,17 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 	return hasher, nil
 }
 
+func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
+	buf := val.Interface().([]byte)
+	chunks, err := pack([][]byte{buf})
+	if err != nil {
+		return [32]byte{}, err
+	}
+	length := make([]byte, 32)
+	binary.PutUvarint(length, uint64(1))
+	return mixInLength(merkleize(chunks, 16), length), nil
+}
+
 func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
@@ -200,10 +211,14 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			if useCache {
 				r, err = hashCache.lookup(val.Field(f.index), f.sszUtils.hasher)
 			} else {
-				if f.hasCapacity {
-					r, err = f.sszUtils.hasher(val.Field(f.index), f.capacity)
+				if f.kind == "bitlist" {
+					r, err = bitlistHasher(val.Field(f.index), f.capacity)
 				} else {
-					r, err = f.sszUtils.hasher(val.Field(f.index), 0)
+					if f.hasCapacity {
+						r, err = f.sszUtils.hasher(val.Field(f.index), f.capacity)
+					} else {
+						r, err = f.sszUtils.hasher(val.Field(f.index), 0)
+					}
 				}
 			}
 			if err != nil {

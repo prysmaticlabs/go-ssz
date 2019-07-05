@@ -23,6 +23,7 @@ type field struct {
 	sszUtils    *sszUtils
 	capacity    uint64
 	hasCapacity bool
+	kind        string
 }
 
 // truncateLast removes the last value of a struct, usually the signature,
@@ -55,6 +56,10 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 			return nil, err
 		}
 		fCapacity, hasCapacity := determineFieldCapacity(f)
+		var fKind string
+		if parsedKind, hasKind := determineFieldKind(f); hasKind {
+			fKind = parsedKind
+		}
 
 		// We determine the SSZ utils for the field, including its respective
 		// marshaler, unmarshaler, and hasher.
@@ -70,6 +75,7 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 			typ:         fType,
 			capacity:    fCapacity,
 			hasCapacity: hasCapacity,
+			kind:        fKind,
 		})
 	}
 	return fields, nil
@@ -97,6 +103,10 @@ func determineFieldCapacity(field reflect.StructField) (uint64, bool) {
 		return 0, false
 	}
 	return uint64(val), true
+}
+
+func determineFieldKind(field reflect.StructField) (string, bool) {
+	return field.Tag.Lookup("ssz-kind")
 }
 
 func parseSSZFieldTags(field reflect.StructField) ([]int, bool, error) {
