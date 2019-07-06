@@ -3,7 +3,6 @@ package ssz
 import (
 	"bytes"
 	"crypto/sha256"
-	"fmt"
 	"reflect"
 )
 
@@ -74,7 +73,8 @@ func merkleize(chunks [][]byte, padding uint64) [32]byte {
 		for !isPowerTwo(int(nextPowerOfTwo)) {
 			nextPowerOfTwo++
 		}
-		for i := uint64(0); i < nextPowerOfTwo-1; i++ {
+		initialChunks := len(chunks)
+		for i := uint64(initialChunks); i < nextPowerOfTwo; i++ {
 			chunks = append(chunks, make([]byte, BytesPerChunk))
 		}
 	}
@@ -100,9 +100,6 @@ func merkleize(chunks [][]byte, padding uint64) [32]byte {
 			layer = append(layer, hashedChunk[:])
 		}
 		hashLayer = layer
-	}
-	for _, item := range hashLayer {
-		fmt.Printf("Printing hash layer %#x\n", item)
 	}
 	var root [32]byte
 	copy(root[:], hashLayer[0])
