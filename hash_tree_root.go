@@ -142,35 +142,32 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 			} else {
 				elemSize = 32
 			}
-			fmt.Printf("element size: %d\n", elemSize)
 			padding = (maxCapacity*elemSize + 31) / 32
 		}
 		var leaves [][]byte
 		for i := 0; i < val.Len(); i++ {
-			innerBuf := make([]byte, elemSize)
-			fmt.Println("First iter")
-			if _, err = utils.marshaler(val.Index(i), innerBuf, 0); err != nil {
-				return [32]byte{}, err
+			if isBasicType(val.Index(i).Kind()) {
+				innerBufSize := determineSize(val.Index(i))
+				innerBuf := make([]byte, innerBufSize)
+				if _, err = utils.marshaler(val.Index(i), innerBuf, 0); err != nil {
+					return [32]byte{}, err
+				}
+				leaves = append(leaves, innerBuf)
+			} else {
+				r, err := utils.hasher(val.Index(i), 0)
+				if err != nil {
+					return [32]byte{}, err
+				}
+				leaves = append(leaves, r[:])
 			}
-			leaves = append(leaves, innerBuf)
-		}
-		fmt.Println("--Printing leaves")
-		for _, c := range leaves {
-			fmt.Printf("%#x\n", c)
 		}
 		chunks, err := pack(leaves)
 		if err != nil {
 			return [32]byte{}, err
 		}
-		fmt.Println("--Printing chunks")
-		for _, c := range chunks {
-			fmt.Printf("%#x\n", c)
-		}
 		buf := make([]byte, 32)
 		binary.PutUvarint(buf, uint64(val.Len()))
-		res := mixInLength(merkleize(chunks, padding), buf)
-		fmt.Printf("Mixing in results list %#x leaves %d, obj len %d, padding %d\n", res, len(chunks), val.Len(), padding)
-		return res, nil
+		return mixInLength(merkleize(chunks, padding), buf), nil
 	}
 	return hasher, nil
 }
