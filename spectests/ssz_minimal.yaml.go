@@ -150,8 +150,8 @@ type MinimalBlock struct {
 }
 
 type MinimalBeaconState struct {
-	Slot                   uint64             `json:"slot"`
 	GenesisTime            uint64             `json:"genesis_time"`
+	Slot                   uint64             `json:"slot"`
 	Fork                   MinimalFork        `json:"fork"`
 	LatestBlockHeader      MinimalBlockHeader `json:"latest_block_header"`
 	BlockRoots             [][]byte           `json:"block_roots" ssz-size:"64,32"`
