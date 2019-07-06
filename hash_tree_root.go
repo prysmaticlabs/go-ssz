@@ -81,7 +81,7 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
-		result := merkleize(chunks, 0)
+		result := merkleize(chunks, false /* has padding */, 0)
 		return result, nil
 	}
 	return hasher, nil
@@ -97,7 +97,7 @@ func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	}
 	length := make([]byte, 32)
 	binary.PutUvarint(length, bitfield.Len())
-	return mixInLength(merkleize(chunks, padding), length), nil
+	return mixInLength(merkleize(chunks, true /* has padding */, padding), length), nil
 }
 
 func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
@@ -123,7 +123,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
-		return merkleize(chunks, 0), nil
+		return merkleize(chunks, false /* has padding */, 0), nil
 	}
 	return hasher, nil
 }
@@ -165,7 +165,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		}
 		buf := make([]byte, 32)
 		binary.PutUvarint(buf, uint64(val.Len()))
-		return mixInLength(merkleize(chunks, padding), buf), nil
+		return mixInLength(merkleize(chunks, true /* has padding */, padding), buf), nil
 	}
 	return hasher, nil
 }
@@ -177,6 +177,10 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 	}
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		roots := [][]byte{}
+		buf := make([]byte, 32)
+		if val.Len() == 0 {
+			return mixInLength(merkleize([][]byte{}, false /* has padding */, 0), buf), nil
+		}
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
@@ -193,9 +197,8 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
-		buf := make([]byte, 32)
 		binary.PutUvarint(buf, maxCapacity)
-		return mixInLength(merkleize(chunks, 0), buf), nil
+		return mixInLength(merkleize(chunks, false /* has padding */, 0), buf), nil
 	}
 	return hasher, nil
 }
@@ -234,7 +237,7 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			fmt.Printf("%v root %#x\n", f.name, r)
 			roots = append(roots, r[:])
 		}
-		return merkleize(roots, 0), nil
+		return merkleize(roots, false /* has padding */, 0), nil
 	}
 	return hasher, nil
 }

@@ -67,8 +67,13 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 // number of chunks is a power of two, Merkleize the chunks, and return the root.
 // Note that merkleize on a single chunk is simply that chunk, i.e. the identity
 // when the number of chunks is one.
-func merkleize(chunks [][]byte, padding uint64) [32]byte {
-	if padding > 0 {
+func merkleize(chunks [][]byte, hasPadding bool, padding uint64) [32]byte {
+	if len(chunks) == 0 {
+		zeroHash := make([]byte, 32)
+		res := hash(append(zeroHash, zeroHash...))
+		return res
+	}
+	if hasPadding {
 		nextPowerOfTwo := padding
 		for !isPowerTwo(int(nextPowerOfTwo)) {
 			nextPowerOfTwo++
