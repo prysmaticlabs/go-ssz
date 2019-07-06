@@ -179,7 +179,7 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		roots := [][]byte{}
 		buf := make([]byte, 32)
-		if val.Len() == 0 {
+		if val.Len() == 0 && maxCapacity == 0 {
 			return mixInLength(merkleize([][]byte{}, false /* has padding */, 0), buf), nil
 		}
 		for i := 0; i < val.Len(); i++ {
@@ -237,7 +237,7 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			}
 			roots = append(roots, r[:])
 		}
-		return merkleize(roots, false /* has padding */, 0), nil
+		return merkleize(roots, false, 0), nil
 	}
 	return hasher, nil
 }
