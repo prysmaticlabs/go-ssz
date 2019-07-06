@@ -228,14 +228,12 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 			})
 		}
 		if !isEmpty(testCase.BeaconBlockHeader.Value) {
-			t.Run("BeaconBlockHeader", func(tt *testing.T) {
-				compareSSZEncoding(tt, &sszComparisonConfig{
-					val:                 testCase.BeaconBlockHeader.Value,
-					unmarshalTarget:     new(MinimalBlockHeader),
-					expected:            testCase.BeaconBlockHeader.Serialized,
-					expectedRoot:        testCase.BeaconBlockHeader.Root,
-					expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
-				})
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.BeaconBlockHeader.Value,
+				unmarshalTarget:     new(MinimalBlockHeader),
+				expected:            testCase.BeaconBlockHeader.Serialized,
+				expectedRoot:        testCase.BeaconBlockHeader.Root,
+				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
 			})
 		}
 		// if !isEmpty(testCase.BeaconState.Value) {
