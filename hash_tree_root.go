@@ -210,6 +210,7 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 
 func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
+		fmt.Println("--Fields Hasher Running")
 		roots := [][]byte{}
 		for _, f := range fields {
 			var r [32]byte
