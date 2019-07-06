@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"crypto/sha256"
+	"fmt"
 	"reflect"
 )
 
@@ -99,6 +100,9 @@ func merkleize(chunks [][]byte, padding uint64) [32]byte {
 			layer = append(layer, hashedChunk[:])
 		}
 		hashLayer = layer
+	}
+	for _, item := range hashLayer {
+		fmt.Printf("Printing hash layer %#x\n", item)
 	}
 	var root [32]byte
 	copy(root[:], hashLayer[0])

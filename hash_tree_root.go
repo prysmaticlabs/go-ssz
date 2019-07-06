@@ -81,7 +81,8 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
-		return merkleize(chunks, 0), nil
+		result := merkleize(chunks, 0)
+		return result, nil
 	}
 	return hasher, nil
 }
@@ -141,6 +142,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 			} else {
 				elemSize = 32
 			}
+			fmt.Printf("element size: %d\n", elemSize)
 			padding = (maxCapacity*elemSize + 31) / 32
 		}
 		var roots [][]byte
@@ -151,15 +153,19 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 			}
 			roots = append(roots, r[:])
 		}
-		fmt.Println(len(roots))
-		fmt.Println(padding)
 		chunks, err := pack(roots)
 		if err != nil {
 			return [32]byte{}, err
 		}
+		fmt.Println("--Printing chunks")
+		for _, c := range chunks {
+			fmt.Printf("%#x\n", c)
+		}
 		buf := make([]byte, 32)
 		binary.PutUvarint(buf, uint64(val.Len()))
+		fmt.Println(buf)
 		res := mixInLength(merkleize(chunks, padding), buf)
+		fmt.Printf("Mixing in results list %#x leaves %d, obj len %d, padding %d\n", res, len(chunks), val.Len(), padding)
 		return res, nil
 	}
 	return hasher, nil
