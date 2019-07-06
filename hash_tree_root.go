@@ -134,16 +134,14 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		return nil, err
 	}
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
-		padding := uint64(0)
 		elemSize := uint64(0)
-		if val.Len() > 0 {
-			if isBasicType(val.Index(0).Kind()) {
-				elemSize = determineFixedSize(val.Index(0), val.Index(0).Type())
-			} else {
-				elemSize = 32
-			}
-			padding = (maxCapacity*elemSize + 31) / 32
+		if isBasicType(typ.Elem().Kind()) {
+			elemSize = determineFixedSize(val, typ.Elem())
+		} else {
+			elemSize = 32
 		}
+		padding := (maxCapacity*elemSize + 31) / 32
+
 		var leaves [][]byte
 		for i := 0; i < val.Len(); i++ {
 			if isBasicType(val.Index(i).Kind()) {
