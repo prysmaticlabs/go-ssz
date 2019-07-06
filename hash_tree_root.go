@@ -165,9 +165,8 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		}
 		buf := make([]byte, 32)
 		binary.PutUvarint(buf, uint64(val.Len()))
-		res := merkleize(chunks, true, padding)
-		fmt.Printf("In basic slice: %#x\n", res)
-		return mixInLength(res, buf), nil
+		merkleRoot := merkleize(chunks, true, padding)
+		return mixInLength(merkleRoot, buf), nil
 	}
 	return hasher, nil
 }
@@ -200,12 +199,8 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 			return [32]byte{}, err
 		}
 		binary.PutUvarint(buf, uint64(val.Len()))
-		res := merkleize(chunks, true /* has padding */, maxCapacity)
-		fmt.Printf("Pre length %#x\n", res)
-		mMix := mixInLength(res, buf)
-		fmt.Printf("Mix in length %#x\n", mMix)
-		fmt.Printf("In composite slice: padding %d leaves len %d obj len %d\n", maxCapacity, len(chunks), val.Len())
-		return mMix, nil
+		merkleRoot := merkleize(chunks, true /* has padding */, maxCapacity)
+		return mixInLength(merkleRoot, buf), nil
 	}
 	return hasher, nil
 }
@@ -221,10 +216,6 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		roots := [][]byte{}
-		isBody := val.Type().Name() == "MinimalBlockBody"
-		if val.Type().Name() == "MinimalProposerSlashing" {
-			fmt.Println("---Prop Slashing")
-		}
 		for _, f := range fields {
 			var r [32]byte
 			var err error
@@ -245,31 +236,8 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
 			}
 			roots = append(roots, r[:])
-			if isBody {
-				fmt.Printf("Result for %v: %#x\n", f.name, r)
-			}
-			if val.Type().Name() == "MinimalProposerSlashing" {
-				fmt.Printf("Result for %v: %#x\n", f.name, r)
-			}
 		}
-		if val.Type().Name() == "MinimalProposerSlashing" {
-			fmt.Println("---Done Prop Slashing")
-			fmt.Printf("[")
-			for idx, i := range roots {
-				if idx == len(roots)-1 {
-					fmt.Printf("%#x]\n", i)
-				} else {
-					fmt.Printf("%#x, ", i)
-				}
-			}
-			pary := isolated(roots, false, 0)
-			weird := merkleize(roots, false /* has padding */, 0)
-			fmt.Println("--Weird")
-			fmt.Printf("%#x\n", pary)
-			fmt.Printf("%#x\n", weird)
-		}
-		res := merkleize(roots, false /* has padding */, 0)
-		return res, nil
+		return merkleize(roots, false /* has padding */, 0), nil
 	}
 	return hasher, nil
 }
