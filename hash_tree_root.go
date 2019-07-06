@@ -230,6 +230,7 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			if err != nil {
 				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
 			}
+			fmt.Printf("%v root %#x\n", f.name, r)
 			roots = append(roots, r[:])
 		}
 		return merkleize(roots, 0), nil
