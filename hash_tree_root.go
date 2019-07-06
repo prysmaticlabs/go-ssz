@@ -213,8 +213,11 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 
 func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
-		fmt.Println("--Fields Hasher Running")
 		roots := [][]byte{}
+		isBody := val.Type().Name() == "MinimalBlockBody"
+		if val.Type().Name() == "MinimalProposerSlashing" {
+			fmt.Println("---Prop Slashing")
+		}
 		for _, f := range fields {
 			var r [32]byte
 			var err error
@@ -234,10 +237,19 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			if err != nil {
 				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
 			}
-			fmt.Printf("%v root %#x\n", f.name, r)
 			roots = append(roots, r[:])
+			if isBody {
+				fmt.Printf("Result for %v: %#x\n", f.name, r)
+			}
+			if val.Type().Name() == "MinimalProposerSlashing" {
+				fmt.Printf("Result for %v: %#x\n", f.name, r)
+			}
 		}
-		return merkleize(roots, false /* has padding */, 0), nil
+		if val.Type().Name() == "MinimalProposerSlashing" {
+			fmt.Println("---Done Prop Slashing")
+		}
+		res := merkleize(roots, false /* has padding */, 0)
+		return res, nil
 	}
 	return hasher, nil
 }
