@@ -151,6 +151,8 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 			}
 			roots = append(roots, r[:])
 		}
+		fmt.Println(len(roots))
+		fmt.Println(padding)
 		chunks, err := pack(roots)
 		if err != nil {
 			return [32]byte{}, err
