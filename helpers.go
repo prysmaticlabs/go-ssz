@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"crypto/sha256"
+	"fmt"
 	"reflect"
 )
 
@@ -61,6 +62,55 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 	}
 	chunks[len(chunks)-1] = lastChunk
 	return chunks, nil
+}
+
+// Given ordered BYTES_PER_CHUNK-byte chunks, if necessary append zero chunks so that the
+// number of chunks is a power of two, Merkleize the chunks, and return the root.
+// Note that merkleize on a single chunk is simply that chunk, i.e. the identity
+// when the number of chunks is one.
+func isolated(chunks [][]byte, hasPadding bool, padding uint64) [32]byte {
+	if len(chunks) == 0 {
+		zeroHash := make([]byte, 32)
+		res := hash(append(zeroHash, zeroHash...))
+		return res
+	}
+	if hasPadding {
+		nextPowerOfTwo := padding
+		for !isPowerTwo(int(nextPowerOfTwo)) {
+			nextPowerOfTwo++
+		}
+		initialChunks := len(chunks)
+		for i := uint64(initialChunks); i < nextPowerOfTwo; i++ {
+			chunks = append(chunks, make([]byte, BytesPerChunk))
+		}
+	}
+
+	for !isPowerTwo(len(chunks)) {
+		chunks = append(chunks, make([]byte, BytesPerChunk))
+	}
+	if len(chunks) == 1 {
+		var root [32]byte
+		copy(root[:], chunks[0])
+		return root
+	}
+	fmt.Println(len(chunks))
+	hashLayer := chunks
+	// We keep track of the hash layers of a Merkle trie until we reach
+	// the top layer of length 1, which contains the single root element.
+	//        [Root]      -> Top layer has length 1.
+	//    [E]       [F]   -> This layer has length 2.
+	// [A]  [B]  [C]  [D] -> The bottom layer has length 4 (needs to be a power of two.
+	for len(hashLayer) > 1 {
+		layer := [][]byte{}
+		for i := 0; i < len(hashLayer); i += 2 {
+			hashedChunk := hash(append(hashLayer[i], hashLayer[i+1]...))
+			layer = append(layer, hashedChunk[:])
+		}
+		hashLayer = layer
+	}
+	var root [32]byte
+	copy(root[:], hashLayer[0])
+	return root
 }
 
 // Given ordered BYTES_PER_CHUNK-byte chunks, if necessary append zero chunks so that the

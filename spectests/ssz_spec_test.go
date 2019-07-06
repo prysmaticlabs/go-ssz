@@ -218,15 +218,15 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 		// 		})
 		// 	})
 		// }
-		// if !isEmpty(testCase.BeaconBlock.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.BeaconBlock.Value,
-		// 		unmarshalTarget:     new(MinimalBlock),
-		// 		expected:            testCase.BeaconBlock.Serialized,
-		// 		expectedRoot:        testCase.BeaconBlock.Root,
-		// 		expectedSigningRoot: testCase.BeaconBlock.SigningRoot,
-		// 	})
-		// }
+		if !isEmpty(testCase.BeaconBlock.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.BeaconBlock.Value,
+				unmarshalTarget:     new(MinimalBlock),
+				expected:            testCase.BeaconBlock.Serialized,
+				expectedRoot:        testCase.BeaconBlock.Root,
+				expectedSigningRoot: testCase.BeaconBlock.SigningRoot,
+			})
+		}
 		if !isEmpty(testCase.BeaconBlockBody.Value) {
 			// t.Run("BeaconBlockBody", func(tt *testing.T) {
 			compareSSZEncoding(t, &sszComparisonConfig{

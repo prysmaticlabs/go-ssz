@@ -165,7 +165,9 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 		}
 		buf := make([]byte, 32)
 		binary.PutUvarint(buf, uint64(val.Len()))
-		return mixInLength(merkleize(chunks, true /* has padding */, padding), buf), nil
+		res := merkleize(chunks, true, padding)
+		fmt.Printf("In basic slice: %#x\n", res)
+		return mixInLength(res, buf), nil
 	}
 	return hasher, nil
 }
@@ -197,8 +199,13 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
-		binary.PutUvarint(buf, maxCapacity)
-		return mixInLength(merkleize(chunks, false /* has padding */, 0), buf), nil
+		binary.PutUvarint(buf, uint64(val.Len()))
+		res := merkleize(chunks, true /* has padding */, maxCapacity)
+		fmt.Printf("Pre length %#x\n", res)
+		mMix := mixInLength(res, buf)
+		fmt.Printf("Mix in length %#x\n", mMix)
+		fmt.Printf("In composite slice: padding %d leaves len %d obj len %d\n", maxCapacity, len(chunks), val.Len())
+		return mMix, nil
 	}
 	return hasher, nil
 }
@@ -247,6 +254,19 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 		}
 		if val.Type().Name() == "MinimalProposerSlashing" {
 			fmt.Println("---Done Prop Slashing")
+			fmt.Printf("[")
+			for idx, i := range roots {
+				if idx == len(roots)-1 {
+					fmt.Printf("%#x]\n", i)
+				} else {
+					fmt.Printf("%#x, ", i)
+				}
+			}
+			pary := isolated(roots, false, 0)
+			weird := merkleize(roots, false /* has padding */, 0)
+			fmt.Println("--Weird")
+			fmt.Printf("%#x\n", pary)
+			fmt.Printf("%#x\n", weird)
 		}
 		res := merkleize(roots, false /* has padding */, 0)
 		return res, nil
