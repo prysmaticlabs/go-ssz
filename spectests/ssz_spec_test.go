@@ -265,7 +265,7 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 		// 		})
 		// 	})
 		// }
-		if !isEmpty(testCase.CompactCommittee.Value) {
+		if !isEmpty(testCase.CompactCommittee.Value) && len(testCase.CompactCommittee.Value.CompactValidators) == 0 {
 			fmt.Println("Running once")
 			// t.Run("CompactCommittee", func(tt *testing.T) {
 			compareSSZEncoding(t, &sszComparisonConfig{
