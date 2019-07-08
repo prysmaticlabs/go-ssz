@@ -75,7 +75,7 @@ func TestPack_OK(t *testing.T) {
 
 func TestMerkleize_Identity(t *testing.T) {
 	input := [][]byte{make([]byte, BytesPerChunk)}
-	output := merkleize(input)
+	output := merkleize(input, false, 0)
 	if !reflect.DeepEqual(output[:], input[0]) {
 		t.Errorf("merkleize() = %v, want %v", output, input)
 	}
@@ -108,7 +108,7 @@ func TestMerkleize_OK(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := merkleize(tt.input)
+			got := merkleize(tt.input, false, 0)
 			if !reflect.DeepEqual(got, tt.output) {
 				t.Errorf("merkleize() = %v, want %v", got, tt.output)
 			}
@@ -154,7 +154,7 @@ func BenchmarkMerkleize(b *testing.B) {
 		input[i] = make([]byte, BytesPerChunk)
 	}
 	for n := 0; n < b.N; n++ {
-		merkleize(input)
+		merkleize(input, false, 0)
 	}
 }
 

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"testing"
+
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 func init() {
@@ -16,11 +18,25 @@ type fork struct {
 	Epoch           uint64
 }
 
-var exampleFork = fork{
-	PreviousVersion: [4]byte{159, 65, 189, 91},
-	CurrentVersion:  [4]byte{203, 176, 241, 215},
-	Epoch:           11971467576204192310,
+type bitfieldContainer struct {
+	Field1 uint64
+	Field2 bitfield.Bitlist `ssz-max:"16"`
 }
+
+var (
+	exampleFork = fork{
+		PreviousVersion: [4]byte{159, 65, 189, 91},
+		CurrentVersion:  [4]byte{203, 176, 241, 215},
+		Epoch:           11971467576204192310,
+	}
+	bitfieldContainerExampleNil = bitfieldContainer{
+		Field1: uint64(5),
+	}
+	bitfieldContainerExampleEmpty = bitfieldContainer{
+		Field1: uint64(5),
+		Field2: bitfield.Bitlist([]byte{}),
+	}
+)
 
 func TestHashTreeRoot(t *testing.T) {
 	useCache = false
@@ -58,6 +74,19 @@ func TestHashTreeRootCached(t *testing.T) {
 	if !bytes.Equal(root[:], want) {
 		t.Errorf("want %v, HashTreeRoot() = %v", want, root)
 	}
+}
+
+func TestHashTreeRoot_NilBitfield(t *testing.T) {
+	if _, err := HashTreeRoot(bitfieldContainerExampleNil); err != nil {
+		t.Fatal(err)
+	}
+	// root2, err := HashTreeRoot(bitfieldContainerExampleEmpty)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// if root1 != root2 {
+	// 	t.Errorf("Mismatched roots, received %#x != %#x", root1, root2)
+	// }
 }
 
 func BenchmarkHashTreeRoot(b *testing.B) {
