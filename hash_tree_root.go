@@ -91,6 +91,10 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 
 func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	padding := (maxCapacity + 255) / 256
+	if val.IsNil() {
+		length := make([]byte, 32)
+		return mixInLength(merkleize([][]byte{}, true, padding), length), nil
+	}
 	bfield := val.Interface().(bitfield.Bitlist)
 	chunks, err := pack([][]byte{bfield.Bytes()})
 	if err != nil {
