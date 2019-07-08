@@ -172,7 +172,7 @@ type MinimalBeaconState struct {
 	CurrentEpochAttestations  []MinimalPendingAttestation `json:"current_epoch_attestations" ssz-max:"1024"`
 	PreviousCrosslinks        []MinimalCrosslink          `json:"previous_crosslinks" ssz-size:"8"`
 	CurrentCrosslinks         []MinimalCrosslink          `json:"current_crosslinks" ssz-size:"8"`
-	JustificationBits         []byte                      `json:"justification_bits" ssz-max:"1" ssz-kind:"bitvector"`
+	JustificationBits         []byte                      `json:"justification_bits" ssz-size:"1" ssz-kind:"bitvector"`
 
 	PreviousJustifiedCheckpoint MinimalCheckpoint `json:"previous_justified_checkpoint"`
 	CurrentJustifiedCheckpoint  MinimalCheckpoint `json:"current_justified_checkpoint"`
