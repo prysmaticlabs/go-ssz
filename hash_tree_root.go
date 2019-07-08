@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 var useCache bool
@@ -89,14 +91,13 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 
 func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	padding := (maxCapacity + 255) / 256
-	buf := val.Interface().([]byte)
-	bitfield := Bitlist(buf)
-	chunks, err := pack([][]byte{bitfield.Bytes()})
+	bfield := val.Interface().(bitfield.Bitlist)
+	chunks, err := pack([][]byte{bfield.Bytes()})
 	if err != nil {
 		return [32]byte{}, err
 	}
 	length := make([]byte, 32)
-	binary.PutUvarint(length, bitfield.Len())
+	binary.PutUvarint(length, bfield.Len())
 	return mixInLength(merkleize(chunks, true /* has padding */, padding), length), nil
 }
 
@@ -222,7 +223,7 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			if useCache {
 				r, err = hashCache.lookup(val.Field(f.index), f.sszUtils.hasher)
 			} else {
-				if f.kind == "bitlist" {
+				if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
 					r, err = bitlistHasher(val.Field(f.index), f.capacity)
 				} else {
 					if f.hasCapacity {
