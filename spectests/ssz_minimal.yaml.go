@@ -183,6 +183,19 @@ type MinimalBeaconState struct {
 	FinalizedCheckpoint         MinimalCheckpoint `json:"finalized_checkpoint"`
 }
 
+type SszBenchmarkState struct {
+	Value      MinimalBeaconState `json:"value"`
+	Serialized []byte             `json:"serialized"`
+	Root       []byte             `json:"root" ssz:"size=32"`
+}
+
+type SszBenchmarkBlock struct {
+	Value       MinimalBlock `json:"value"`
+	Serialized  []byte       `json:"serialized"`
+	Root        []byte       `json:"root" ssz:"size=32"`
+	SigningRoot []byte       `json:"signing_root" ssz:"size=96"`
+}
+
 type SszMinimalTest struct {
 	Title         string   `json:"title"`
 	Summary       string   `json:"summary"`

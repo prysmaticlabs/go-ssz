@@ -29,7 +29,7 @@ func TestYamlStateRoundTrip(t *testing.T) {
 	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
 	compareSSZEncoding(t, &sszComparisonConfig{
 		val:             s.Value,
-		unmarshalTarget: new(MainnetBeaconState),
+		unmarshalTarget: new(MinimalBeaconState),
 		expected:        s.Serialized,
 		expectedRoot:    s.Root,
 	})
@@ -40,7 +40,7 @@ func TestYamlBlockRoundTrip(t *testing.T) {
 	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
 	compareSSZEncoding(t, &sszComparisonConfig{
 		val:                 s.Value,
-		unmarshalTarget:     new(MainnetBlock),
+		unmarshalTarget:     new(MinimalBlock),
 		expected:            s.Serialized,
 		expectedRoot:        s.Root,
 		expectedSigningRoot: s.SigningRoot,

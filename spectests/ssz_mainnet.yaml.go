@@ -183,19 +183,6 @@ type MainnetBeaconState struct {
 	FinalizedCheckpoint         MainnetCheckpoint `json:"finalized_checkpoint"`
 }
 
-type SszBenchmarkState struct {
-	Value      MainnetBeaconState `json:"value"`
-	Serialized []byte             `json:"serialized"`
-	Root       []byte             `json:"root" ssz:"size=32"`
-}
-
-type SszBenchmarkBlock struct {
-	Value       MainnetBlock `json:"value"`
-	Serialized  []byte       `json:"serialized"`
-	Root        []byte       `json:"root" ssz:"size=32"`
-	SigningRoot []byte       `json:"signing_root" ssz:"size=32"`
-}
-
 type SszMainnetTest struct {
 	Title         string   `json:"title"`
 	Summary       string   `json:"summary"`
