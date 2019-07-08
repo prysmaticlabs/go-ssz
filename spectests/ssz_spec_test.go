@@ -138,7 +138,7 @@ func TestYamlGenericSpecTests(t *testing.T) {
 func TestYamlStaticSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_static/core/"
 	yamlFileNames := []string{
-		// "ssz_mainnet_random.yaml",
+		"ssz_mainnet_random.yaml",
 		"ssz_minimal_lengthy.yaml",
 		"ssz_minimal_max.yaml",
 		"ssz_minimal_nil.yaml",
@@ -236,14 +236,14 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
 			})
 		}
-		if !isEmpty(testCase.BeaconState.Value) {
-			compareSSZEncoding(t, &sszComparisonConfig{
-				val:             testCase.BeaconState.Value,
-				unmarshalTarget: new(MinimalBeaconState),
-				expected:        testCase.BeaconState.Serialized,
-				expectedRoot:    testCase.BeaconState.Root,
-			})
-		}
+		// if !isEmpty(testCase.BeaconState.Value) {
+		// 	compareSSZEncoding(t, &sszComparisonConfig{
+		// 		val:             testCase.BeaconState.Value,
+		// 		unmarshalTarget: new(MinimalBeaconState),
+		// 		expected:        testCase.BeaconState.Serialized,
+		// 		expectedRoot:    testCase.BeaconState.Root,
+		// 	})
+		// }
 		if !isEmpty(testCase.Checkpoint.Value) {
 			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Checkpoint.Value,
@@ -364,15 +364,15 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 
 func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 	for _, testCase := range s.TestCases {
-		// if !isEmpty(testCase.Attestation.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.Attestation.Value,
-		// 		unmarshalTarget:     new(MainnetAttestation),
-		// 		expected:            testCase.Attestation.Serialized,
-		// 		expectedRoot:        testCase.Attestation.Root,
-		// 		expectedSigningRoot: testCase.Attestation.SigningRoot,
-		// 	})
-		// }
+		if !isEmpty(testCase.Attestation.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.Attestation.Value,
+				unmarshalTarget:     new(MainnetAttestation),
+				expected:            testCase.Attestation.Serialized,
+				expectedRoot:        testCase.Attestation.Root,
+				expectedSigningRoot: testCase.Attestation.SigningRoot,
+			})
+		}
 		if !isEmpty(testCase.AttestationData.Value) {
 			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.AttestationData.Value,
@@ -389,31 +389,31 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 				expectedRoot:    testCase.AttestationDataAndCustodyBit.Root,
 			})
 		}
-		// if !isEmpty(testCase.AttesterSlashing.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.AttesterSlashing.Value,
-		// 		unmarshalTarget: new(MainnetAttesterSlashing),
-		// 		expected:        testCase.AttesterSlashing.Serialized,
-		// 		expectedRoot:    testCase.AttesterSlashing.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.BeaconBlock.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.BeaconBlock.Value,
-		// 		unmarshalTarget:     new(MainnetBlock),
-		// 		expected:            testCase.BeaconBlock.Serialized,
-		// 		expectedRoot:        testCase.BeaconBlock.Root,
-		// 		expectedSigningRoot: testCase.BeaconBlock.SigningRoot,
-		// 	})
-		// }
-		// if !isEmpty(testCase.BeaconBlockBody.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.BeaconBlockBody.Value,
-		// 		unmarshalTarget: new(MainnetBlockBody),
-		// 		expected:        testCase.BeaconBlockBody.Serialized,
-		// 		expectedRoot:    testCase.BeaconBlockBody.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.AttesterSlashing.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttesterSlashing.Value,
+				unmarshalTarget: new(MainnetAttesterSlashing),
+				expected:        testCase.AttesterSlashing.Serialized,
+				expectedRoot:    testCase.AttesterSlashing.Root,
+			})
+		}
+		if !isEmpty(testCase.BeaconBlock.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.BeaconBlock.Value,
+				unmarshalTarget:     new(MainnetBlock),
+				expected:            testCase.BeaconBlock.Serialized,
+				expectedRoot:        testCase.BeaconBlock.Root,
+				expectedSigningRoot: testCase.BeaconBlock.SigningRoot,
+			})
+		}
+		if !isEmpty(testCase.BeaconBlockBody.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.BeaconBlockBody.Value,
+				unmarshalTarget: new(MainnetBlockBody),
+				expected:        testCase.BeaconBlockBody.Serialized,
+				expectedRoot:    testCase.BeaconBlockBody.Root,
+			})
+		}
 		if !isEmpty(testCase.BeaconBlockHeader.Value) {
 			compareSSZEncoding(t, &sszComparisonConfig{
 				val:                 testCase.BeaconBlockHeader.Value,
@@ -434,19 +434,19 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 		if !isEmpty(testCase.Checkpoint.Value) {
 			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Checkpoint.Value,
-				unmarshalTarget: new(MinimalCheckpoint),
+				unmarshalTarget: new(MainnetCheckpoint),
 				expected:        testCase.Checkpoint.Serialized,
 				expectedRoot:    testCase.Checkpoint.Root,
 			})
 		}
-		// if !isEmpty(testCase.CompactCommittee.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.CompactCommittee.Value,
-		// 		unmarshalTarget: new(MinimalCompactCommittee),
-		// 		expected:        testCase.CompactCommittee.Serialized,
-		// 		expectedRoot:    testCase.CompactCommittee.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.CompactCommittee.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.CompactCommittee.Value,
+				unmarshalTarget: new(MainnetCompactCommittee),
+				expected:        testCase.CompactCommittee.Serialized,
+				expectedRoot:    testCase.CompactCommittee.Root,
+			})
+		}
 		if !isEmpty(testCase.Crosslink.Value) {
 			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Crosslink.Value,
@@ -495,23 +495,23 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 				expectedRoot:    testCase.HistoricalBatch.Root,
 			})
 		}
-		// if !isEmpty(testCase.IndexedAttestation.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.IndexedAttestation.Value,
-		// 		unmarshalTarget:     new(MainnetIndexedAttestation),
-		// 		expected:            testCase.IndexedAttestation.Serialized,
-		// 		expectedRoot:        testCase.IndexedAttestation.Root,
-		// 		expectedSigningRoot: testCase.IndexedAttestation.SigningRoot,
-		// 	})
-		// }
-		// if !isEmpty(testCase.PendingAttestation.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.PendingAttestation.Value,
-		// 		unmarshalTarget: new(MainnetPendingAttestation),
-		// 		expected:        testCase.PendingAttestation.Serialized,
-		// 		expectedRoot:    testCase.PendingAttestation.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.IndexedAttestation.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.IndexedAttestation.Value,
+				unmarshalTarget:     new(MainnetIndexedAttestation),
+				expected:            testCase.IndexedAttestation.Serialized,
+				expectedRoot:        testCase.IndexedAttestation.Root,
+				expectedSigningRoot: testCase.IndexedAttestation.SigningRoot,
+			})
+		}
+		if !isEmpty(testCase.PendingAttestation.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.PendingAttestation.Value,
+				unmarshalTarget: new(MainnetPendingAttestation),
+				expected:        testCase.PendingAttestation.Serialized,
+				expectedRoot:    testCase.PendingAttestation.Root,
+			})
+		}
 		if !isEmpty(testCase.ProposerSlashing.Value) {
 			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.ProposerSlashing.Value,
@@ -574,13 +574,13 @@ func compareSSZEncoding(t *testing.T, cfg *sszComparisonConfig) {
 	if !ssz.DeepEqual(concreteValue, cfg.val) {
 		t.Error("Unmarshaled encoding did not match original value")
 	}
-	// root, err := ssz.HashTreeRoot(cfg.val)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// if !bytes.Equal(root[:], cfg.expectedRoot) {
-	// 	t.Fatalf("Expected hash tree root %#x, received %#x", cfg.expectedRoot, root[:])
-	// }
+	root, err := ssz.HashTreeRoot(cfg.val)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(root[:], cfg.expectedRoot) {
+		t.Fatalf("Expected hash tree root %#x, received %#x", cfg.expectedRoot, root[:])
+	}
 	if cfg.expectedSigningRoot != nil {
 		signingRoot, err := ssz.SigningRoot(cfg.val)
 		if err != nil {
