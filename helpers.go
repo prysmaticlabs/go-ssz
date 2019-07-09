@@ -11,7 +11,16 @@ var (
 	BytesPerChunk = 32
 	// BytesPerLengthOffset defines a constant for off-setting serialized chunks.
 	BytesPerLengthOffset = uint64(4)
+	zeroHashes           [][]byte
 )
+
+func init() {
+	for i := 0; i <= 32; i++ {
+		leaf := append([]byte{}, []byte{}...)
+		result := hash(leaf)
+		zeroHashes = append(zeroHashes, result[:])
+	}
+}
 
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
 // chunks, right-pad the last chunk with zero bytes, and return the chunks.
@@ -109,6 +118,18 @@ func merkleize(chunks [][]byte, hasPadding bool, padding uint64) [32]byte {
 	var root [32]byte
 	copy(root[:], hashLayer[0])
 	return root
+}
+
+func mergeChunks(h [32]byte, i uint64) {
+	j := uint64(0)
+	for {
+		if i&(1<<j) == 0 {
+			// TODO: Add if count detail here.
+			h = hash(append(h[:], zeroHashes[j]...))
+		} else {
+			break
+		}
+	}
 }
 
 // Given a Merkle root root and a length length ("uint256" little-endian serialization)
