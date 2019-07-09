@@ -49,46 +49,46 @@ func BenchmarkBeaconBlock_HashTreeRoot(b *testing.B) {
 	}
 }
 
-func BenchmarkBeaconState_Marshal(b *testing.B) {
-	b.StopTimer()
-	s := &SszBenchmarkState{}
-	populateStructFromYaml(b, "./yaml/ssz_single_state.yaml", s)
-	b.StartTimer()
-	for n := 0; n < b.N; n++ {
-		if _, err := ssz.Marshal(s.Value); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
+// func BenchmarkBeaconState_Marshal(b *testing.B) {
+// 	b.StopTimer()
+// 	s := &SszBenchmarkState{}
+// 	populateStructFromYaml(b, "./yaml/ssz_single_state.yaml", s)
+// 	b.StartTimer()
+// 	for n := 0; n < b.N; n++ {
+// 		if _, err := ssz.Marshal(s.Value); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// }
 
-func BenchmarkBeaconState_Unmarshal(b *testing.B) {
-	b.StopTimer()
-	s := &SszBenchmarkState{}
-	populateStructFromYaml(b, "./yaml/ssz_single_state.yaml", s)
-	encoded, err := ssz.Marshal(s.Value)
-	if err != nil {
-		b.Fatal(err)
-	}
-	var target MinimalBeaconState
-	b.StartTimer()
-	for n := 0; n < b.N; n++ {
-		if err := ssz.Unmarshal(encoded, &target); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
+// func BenchmarkBeaconState_Unmarshal(b *testing.B) {
+// 	b.StopTimer()
+// 	s := &SszBenchmarkState{}
+// 	populateStructFromYaml(b, "./yaml/ssz_single_state.yaml", s)
+// 	encoded, err := ssz.Marshal(s.Value)
+// 	if err != nil {
+// 		b.Fatal(err)
+// 	}
+// 	var target MinimalBeaconState
+// 	b.StartTimer()
+// 	for n := 0; n < b.N; n++ {
+// 		if err := ssz.Unmarshal(encoded, &target); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// }
 
-func BenchmarkBeaconState_HashTreeRoot(b *testing.B) {
-	b.StopTimer()
-	s := &SszBenchmarkState{}
-	populateStructFromYaml(b, "./yaml/ssz_single_state.yaml", s)
-	b.StartTimer()
-	for n := 0; n < b.N; n++ {
-		if _, err := ssz.HashTreeRoot(s.Value); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
+// func BenchmarkBeaconState_HashTreeRoot(b *testing.B) {
+// 	b.StopTimer()
+// 	s := &SszBenchmarkState{}
+// 	populateStructFromYaml(b, "./yaml/ssz_single_state.yaml", s)
+// 	b.StartTimer()
+// 	for n := 0; n < b.N; n++ {
+// 		if _, err := ssz.HashTreeRoot(s.Value); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// }
 
 func populateStructFromYaml(t testing.TB, fPath string, val interface{}) {
 	yamlFile, err := ioutil.ReadFile(fPath)
