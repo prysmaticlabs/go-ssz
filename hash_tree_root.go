@@ -137,7 +137,6 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 		return nil, err
 	}
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
-		fmt.Println("oh no composite array called")
 		roots := [][]byte{}
 		elemSize := uint64(0)
 		if isBasicType(typ.Elem().Kind()) {
@@ -219,7 +218,8 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 		roots := [][]byte{}
 		buf := make([]byte, 32)
 		if val.Len() == 0 && maxCapacity == 0 {
-			return mixInLength(bitwiseMerkleize([][]byte{buf}, 1), buf), nil
+			itemMerkleize := mixInLength(bitwiseMerkleize([][]byte{buf}, 1), buf)
+			return mixInLength(itemMerkleize, buf), nil
 		}
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
@@ -254,7 +254,6 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 
 func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
-		isBlock := val.Type().Name() == "MinimalBlockBody"
 		roots := [][]byte{}
 		for _, f := range fields {
 			var r [32]byte
@@ -276,9 +275,6 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
 			}
 			roots = append(roots, r[:])
-			if isBlock {
-				fmt.Printf("%v and root %#x\n", f.name, r)
-			}
 		}
 		// fmt.Printf("[")
 		// for idx, rt := range roots {

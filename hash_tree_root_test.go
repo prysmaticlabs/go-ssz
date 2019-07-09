@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/prysmaticlabs/go-bitfield"
@@ -23,10 +24,17 @@ type bitfieldContainer struct {
 	Field2 bitfield.Bitlist `ssz-max:"16"`
 }
 
+type maxCapContainer struct {
+	Transfers []fork `ssz-max:"0"`
+}
+
 var (
 	bitfieldContainerExampleEmpty = bitfieldContainer{
 		Field1: uint64(5),
 		Field2: bitfield.Bitlist([]byte{}),
+	}
+	exampleMaxCap = maxCapContainer{
+		Transfers: []fork{},
 	}
 )
 
@@ -60,6 +68,14 @@ func TestHashTreeRoot(t *testing.T) {
 	if !bytes.Equal(root[:], want) {
 		t.Errorf("want %#x, HashTreeRoot() = %#x", want, root)
 	}
+}
+
+func TestMaxCapContainer(t *testing.T) {
+	root, err := HashTreeRoot(exampleMaxCap)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("%#x\n", root)
 }
 
 func BenchmarkHashTreeRoot(b *testing.B) {
