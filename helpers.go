@@ -3,7 +3,6 @@ package ssz
 import (
 	"bytes"
 	"crypto/sha256"
-	"fmt"
 	"math"
 	"reflect"
 )
@@ -133,7 +132,6 @@ func bitwiseMerkleize(chunks [][]byte, padding uint64) [32]byte {
 	if bitLength(padding-1) > maxDepth {
 		maxDepth = bitLength(padding - 1)
 	}
-	fmt.Printf("count %d, depth %d, maxDepth %d\n", count, depth, maxDepth)
 	layers := make([][]byte, maxDepth+1)
 
 	for idx, chunk := range chunks {
