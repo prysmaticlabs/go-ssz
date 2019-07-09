@@ -39,8 +39,8 @@ filegroup(
     visibility = ["//visibility:public"],
 )
     """,
-    sha256 = "56847989737e816ab7d23f3bb2422347dfa81271bae81a94de512c01461fab25",
-    url = "https://github.com/prysmaticlabs/eth2.0-spec-tests/releases/download/v0.7.1/base64_encoded_archive.tar.gz",
+    sha256 = "5e787c3ac2f2b75a3eda82d903d118e960e5440aada0a484c5669bd2c57058bc",
+    url = "https://prysmaticlabs.com/uploads/base64_encoded_archive.tar.gz",
 )
 
 http_archive(
@@ -62,9 +62,6 @@ go_repository(
     importpath = "golang.org/x/lint",
 )
 
-# Do not add go dependencies here. They must be added in deps.bzl to provide
-# dependencies to downstream bazel projects.
-
 go_repository(
     name = "com_github_ghodss_yaml",
     commit = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7",  # v1.0.0
@@ -82,3 +79,7 @@ go_repository(
     commit = "29f32d820d112dbd66e58492a6ffb7cc3106312b",  # v1.2.1
     importpath = "gopkg.in/d4l3k/messagediff.v1",
 )
+
+# Do not add go dependencies here. They must be added in deps.bzl to provide
+# dependencies to downstream bazel projects. Only test related dependencies
+# are allowed in this WORKSPACE.

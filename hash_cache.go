@@ -77,7 +77,7 @@ func (b *hashCacheS) lookup(rval reflect.Value, hasher hasher) ([32]byte, error)
 	if exists {
 		return toBytes32(fetchedInfo.MerkleRoot), nil
 	}
-	res, err := hasher(rval)
+	res, err := hasher(rval, 0)
 	if err != nil {
 		return [32]byte{}, err
 	}

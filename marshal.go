@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 // Marshal a value and output the result into a byte slice.
@@ -133,6 +135,13 @@ func marshalUint64(val reflect.Value, buf []byte, startOffset uint64) (uint64, e
 }
 
 func marshalByteSlice(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
+	if _, ok := val.Interface().(bitfield.Bitfield); ok {
+		newVal := reflect.New(reflect.TypeOf([]byte{})).Elem()
+		newVal.Set(val)
+		newSlice := newVal.Interface().([]byte)
+		copy(buf[startOffset:startOffset+uint64(val.Len())], newSlice)
+		return startOffset + uint64(len(newSlice)), nil
+	}
 	slice := val.Slice(0, val.Len()).Interface().([]byte)
 	copy(buf[startOffset:startOffset+uint64(len(slice))], slice)
 	return startOffset + uint64(val.Len()), nil

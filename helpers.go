@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"crypto/sha256"
+	"math"
 	"reflect"
 )
 
@@ -11,7 +12,17 @@ var (
 	BytesPerChunk = 32
 	// BytesPerLengthOffset defines a constant for off-setting serialized chunks.
 	BytesPerLengthOffset = uint64(4)
+	zeroHashes           = make([][]byte, 100)
 )
+
+func init() {
+	zeroHashes[0] = make([]byte, 32)
+	for i := 1; i < 100; i++ {
+		leaf := append(zeroHashes[i-1], zeroHashes[i-1]...)
+		result := hash(leaf)
+		zeroHashes[i] = result[:]
+	}
+}
 
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
 // chunks, right-pad the last chunk with zero bytes, and return the chunks.
@@ -63,47 +74,68 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 	return chunks, nil
 }
 
-// Given ordered BYTES_PER_CHUNK-byte chunks, if necessary append zero chunks so that the
+// Given ordered BYTES_PER_CHUNK-byte chunks, if necessary utilize zero chunks so that the
 // number of chunks is a power of two, Merkleize the chunks, and return the root.
 // Note that merkleize on a single chunk is simply that chunk, i.e. the identity
 // when the number of chunks is one.
-func merkleize(chunks [][]byte) [32]byte {
-	if len(chunks) == 1 {
-		var root [32]byte
-		copy(root[:], chunks[0])
-		return root
+func bitwiseMerkleize(chunks [][]byte, padding uint64) [32]byte {
+	count := uint64(len(chunks))
+	depth := uint64(bitLength(0))
+	if bitLength(count-1) > depth {
+		depth = bitLength(count - 1)
 	}
-	for !isPowerTwo(len(chunks)) {
-		chunks = append(chunks, make([]byte, BytesPerChunk))
+	maxDepth := depth
+	if bitLength(padding-1) > maxDepth {
+		maxDepth = bitLength(padding - 1)
 	}
-	hashLayer := chunks
-	// We keep track of the hash layers of a Merkle trie until we reach
-	// the top layer of length 1, which contains the single root element.
-	//        [Root]      -> Top layer has length 1.
-	//    [E]       [F]   -> This layer has length 2.
-	// [A]  [B]  [C]  [D] -> The bottom layer has length 4 (needs to be a power of two.
-	for len(hashLayer) > 1 {
-		layer := [][]byte{}
-		for i := 0; i < len(hashLayer); i += 2 {
-			hashedChunk := hash(append(hashLayer[i], hashLayer[i+1]...))
-			layer = append(layer, hashedChunk[:])
+	layers := make([][]byte, maxDepth+1)
+
+	for idx, chunk := range chunks {
+		mergeChunks(layers, chunk, uint64(idx), count, depth)
+	}
+
+	if 1<<depth != count {
+		mergeChunks(layers, zeroHashes[0], count, count, depth)
+	}
+
+	for i := depth; i < maxDepth; i++ {
+		res := hash(append(layers[i], zeroHashes[i]...))
+		layers[i+1] = res[:]
+	}
+
+	return toBytes32(layers[maxDepth])
+}
+
+func mergeChunks(layers [][]byte, currentRoot []byte, i, count, depth uint64) {
+	j := uint64(0)
+	for {
+		if i&(1<<j) == 0 {
+			if i == count && j < depth {
+				res := hash(append(currentRoot[:], zeroHashes[j]...))
+				currentRoot = res[:]
+			} else {
+				break
+			}
+		} else {
+			res := hash(append(layers[j], currentRoot[:]...))
+			currentRoot = res[:]
 		}
-		hashLayer = layer
+		j++
 	}
-	var root [32]byte
-	copy(root[:], hashLayer[0])
-	return root
+	layers[j] = currentRoot[:]
+}
+
+func bitLength(n uint64) uint64 {
+	if n == 0 {
+		return 0
+	}
+	return uint64(math.Log2(float64(n))) + 1
 }
 
 // Given a Merkle root root and a length length ("uint256" little-endian serialization)
 // return hash(root + length).
 func mixInLength(root [32]byte, length []byte) [32]byte {
 	return hash(append(root[:], length...))
-}
-
-// Fast verification to check if an number if a power of two.
-func isPowerTwo(n int) bool {
-	return n != 0 && (n&(n-1)) == 0
 }
 
 // Instantiates a reflect value which may not have a concrete type to have a concrete type

@@ -112,7 +112,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 	for _, tt := range tests {
 		serializedItem, err := ssz.Marshal(tt.input)
 		if err != nil {
-			panic(err)
+			t.Fatal(err)
 		}
 		if err := ssz.Unmarshal(serializedItem, tt.ptr); err != nil {
 			t.Fatal(err)

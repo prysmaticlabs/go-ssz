@@ -75,7 +75,7 @@ func TestPack_OK(t *testing.T) {
 
 func TestMerkleize_Identity(t *testing.T) {
 	input := [][]byte{make([]byte, BytesPerChunk)}
-	output := merkleize(input)
+	output := bitwiseMerkleize(input, 1)
 	if !reflect.DeepEqual(output[:], input[0]) {
 		t.Errorf("merkleize() = %v, want %v", output, input)
 	}
@@ -108,37 +108,13 @@ func TestMerkleize_OK(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := merkleize(tt.input)
+			got := bitwiseMerkleize(tt.input, 1)
 			if !reflect.DeepEqual(got, tt.output) {
 				t.Errorf("merkleize() = %v, want %v", got, tt.output)
 			}
 		})
 	}
 }
-
-func TestIsPowerTwo(t *testing.T) {
-	tests := []struct {
-		input  int
-		output bool
-	}{
-		{input: 4, output: true},
-		{input: 5, output: false},
-		{input: 1, output: true},
-		{input: 0, output: false},
-		{input: -50, output: false},
-		{input: 2, output: true},
-		{input: 256, output: true},
-		{input: 1024, output: true},
-		{input: 1000000, output: false},
-	}
-	for _, tt := range tests {
-		got := isPowerTwo(tt.input)
-		if got != tt.output {
-			t.Errorf("isPowerTwo() = %v, want %v", got, tt.output)
-		}
-	}
-}
-
 func BenchmarkPack(b *testing.B) {
 	input := [][]byte{make([]byte, BytesPerChunk*8000)}
 	for n := 0; n < b.N; n++ {
@@ -154,12 +130,6 @@ func BenchmarkMerkleize(b *testing.B) {
 		input[i] = make([]byte, BytesPerChunk)
 	}
 	for n := 0; n < b.N; n++ {
-		merkleize(input)
-	}
-}
-
-func BenchmarkIsPowerTwo(b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		isPowerTwo(1 << 36)
+		bitwiseMerkleize(input, 1)
 	}
 }

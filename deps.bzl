@@ -90,6 +90,15 @@ def go_ssz_dependencies():
         importpath = "golang.org/x/crypto",
     )
 
+    _maybe(
+        # Apache License 2.0
+        # https://github.com/prysmaticlabs/go-bitfield/blob/master/LICENSE
+        go_repository,
+        name = "com_github_prysmaticlabs_go_bitfield",
+        commit = "ec88cc4d1d143cad98308da54b73d0cdb04254eb",
+        importpath = "github.com/prysmaticlabs/go-bitfield",
+    )
+
 
 
 def _maybe(repo_rule, name, **kwargs):

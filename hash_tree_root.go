@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 var useCache bool
@@ -37,7 +39,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if useCache {
 		output, err = hashCache.lookup(rval, sszUtils.hasher)
 	} else {
-		output, err = sszUtils.hasher(rval)
+		output, err = sszUtils.hasher(rval, 0)
 	}
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
@@ -48,24 +50,18 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 func makeHasher(typ reflect.Type) (hasher, error) {
 	kind := typ.Kind()
 	switch {
-	// if the value is a basic object or an array of basic objects, we apply the basic
-	// type hasher defined by merkleize(pack(value)).
 	case isBasicType(kind) || isBasicTypeArray(typ, kind):
 		return makeBasicTypeHasher(typ)
-	// If the value is a slice of basic objects (dynamic length), we apply the basic slice
-	// hasher defined by mix_in_length(merkleize(pack(value)), len(value)). Otherwise,
-	// we apply mix_in_length(merkleize([hash_tree_root(element) for element in value]), len(value)).
-	case kind == reflect.Slice:
-		if isBasicTypeSlice(typ, kind) {
-			return makeBasicSliceHasher(typ)
-		}
+	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
+		return makeBasicSliceHasher(typ)
+	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
+		return makeBasicSliceHasher(typ)
+	case kind == reflect.Array && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
+		return makeBasicArrayHasher(typ)
+	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
 		return makeCompositeSliceHasher(typ)
-	// If the value is an array of composite objects, we apply the hasher
-	// defined by merkleize([hash_tree_root(element) for element in value]).
-	case kind == reflect.Array && !isBasicTypeArray(typ, kind):
+	case kind == reflect.Array:
 		return makeCompositeArrayHasher(typ)
-	// If the value is a container (a struct), we apply the struct hasher which is defined
-	// by using the struct fields as merkleize([hash_tree_root(element) for element in value]).
 	case kind == reflect.Struct:
 		return makeStructHasher(typ)
 	case kind == reflect.Ptr:
@@ -80,7 +76,7 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, err
 	}
-	hasher := func(val reflect.Value) ([32]byte, error) {
+	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		buf := make([]byte, determineSize(val))
 		if _, err = utils.marshaler(val, buf, 0); err != nil {
 			return [32]byte{}, err
@@ -89,60 +85,48 @@ func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
-		return merkleize(chunks), nil
+		result := bitwiseMerkleize(chunks, 1)
+		return result, nil
 	}
 	return hasher, nil
 }
 
-func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
-	utils, err := cachedSSZUtilsNoAcquireLock(typ)
+func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
+	padding := (maxCapacity + 255) / 256
+	if val.IsNil() {
+		length := make([]byte, 32)
+		return mixInLength(bitwiseMerkleize([][]byte{}, padding), length), nil
+	}
+	bfield := val.Interface().(bitfield.Bitlist)
+	chunks, err := pack([][]byte{bfield.Bytes()})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
+		return [32]byte{}, err
 	}
-	hasher := func(val reflect.Value) ([32]byte, error) {
-		buf := make([]byte, determineSize(val))
-		if _, err = utils.marshaler(val, buf, 0); err != nil {
-			return [32]byte{}, err
-		}
-		serializedValues := [][]byte{buf}
-		chunks, err := pack(serializedValues)
-		if err != nil {
-			return [32]byte{}, err
-		}
-		// We marshal the length into little-endian, 256-bit byte slice.
-		b := make([]byte, 32)
-		binary.LittleEndian.PutUint64(b, uint64(val.Len()))
-		return mixInLength(merkleize(chunks), b), nil
-	}
-	return hasher, nil
+	length := make([]byte, 32)
+	binary.PutUvarint(length, bfield.Len())
+	return mixInLength(bitwiseMerkleize(chunks, padding), length), nil
 }
 
-func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
+func makeBasicArrayHasher(typ reflect.Type) (hasher, error) {
 	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
 	if err != nil {
 		return nil, err
 	}
-	hasher := func(val reflect.Value) ([32]byte, error) {
-		roots := [][]byte{}
+	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
+		var leaves [][]byte
 		for i := 0; i < val.Len(); i++ {
-			var r [32]byte
-			if useCache {
-				r, err = hashCache.lookup(val.Index(i), utils.hasher)
-			} else {
-				r, err = utils.hasher(val.Index(i))
-			}
+			r, err := utils.hasher(val.Index(i), 0)
 			if err != nil {
 				return [32]byte{}, err
 			}
-			roots = append(roots, r[:])
+			leaves = append(leaves, r[:])
 		}
-		chunks, err := pack(roots)
+		chunks, err := pack(leaves)
 		if err != nil {
 			return [32]byte{}, err
 		}
-		b := make([]byte, 32)
-		binary.LittleEndian.PutUint64(b, uint64(val.Len()))
-		return mixInLength(merkleize(chunks), b), nil
+		merkleRoot := bitwiseMerkleize(chunks, 1)
+		return merkleRoot, nil
 	}
 	return hasher, nil
 }
@@ -152,14 +136,21 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, err
 	}
-	hasher := func(val reflect.Value) ([32]byte, error) {
+	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		roots := [][]byte{}
+		elemSize := uint64(0)
+		if isBasicType(typ.Elem().Kind()) {
+			elemSize = determineFixedSize(val, typ.Elem())
+		} else {
+			elemSize = 32
+		}
+		padding := (uint64(val.Len())*elemSize + 31) / 32
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
 				r, err = hashCache.lookup(val.Index(i), utils.hasher)
 			} else {
-				r, err = utils.hasher(val.Index(i))
+				r, err = utils.hasher(val.Index(i), 0)
 			}
 			if err != nil {
 				return [32]byte{}, err
@@ -170,7 +161,85 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
-		return merkleize(chunks), nil
+		return bitwiseMerkleize(chunks, padding), nil
+	}
+	return hasher, nil
+}
+
+func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
+	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	if err != nil {
+		return nil, err
+	}
+	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
+		elemSize := uint64(0)
+		if isBasicType(typ.Elem().Kind()) {
+			elemSize = determineFixedSize(val, typ.Elem())
+		} else {
+			elemSize = 32
+		}
+		padding := (maxCapacity*elemSize + 31) / 32
+
+		var leaves [][]byte
+		for i := 0; i < val.Len(); i++ {
+			if isBasicType(val.Index(i).Kind()) {
+				innerBufSize := determineSize(val.Index(i))
+				innerBuf := make([]byte, innerBufSize)
+				if _, err = utils.marshaler(val.Index(i), innerBuf, 0); err != nil {
+					return [32]byte{}, err
+				}
+				leaves = append(leaves, innerBuf)
+			} else {
+				r, err := utils.hasher(val.Index(i), 0)
+				if err != nil {
+					return [32]byte{}, err
+				}
+				leaves = append(leaves, r[:])
+			}
+		}
+		chunks, err := pack(leaves)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		buf := make([]byte, 32)
+		binary.PutUvarint(buf, uint64(val.Len()))
+		merkleRoot := bitwiseMerkleize(chunks, padding)
+		return mixInLength(merkleRoot, buf), nil
+	}
+	return hasher, nil
+}
+
+func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
+	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	if err != nil {
+		return nil, err
+	}
+	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
+		roots := [][]byte{}
+		buf := make([]byte, 32)
+		if val.Len() == 0 && maxCapacity == 0 {
+			itemMerkleize := mixInLength(bitwiseMerkleize([][]byte{buf}, 1), buf)
+			return mixInLength(itemMerkleize, buf), nil
+		}
+		for i := 0; i < val.Len(); i++ {
+			var r [32]byte
+			if useCache {
+				r, err = hashCache.lookup(val.Index(i), utils.hasher)
+			} else {
+				r, err = utils.hasher(val.Index(i), 0)
+			}
+			if err != nil {
+				return [32]byte{}, err
+			}
+			roots = append(roots, r[:])
+		}
+		chunks, err := pack(roots)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		binary.PutUvarint(buf, uint64(val.Len()))
+		merkleRoot := bitwiseMerkleize(chunks, maxCapacity)
+		return mixInLength(merkleRoot, buf), nil
 	}
 	return hasher, nil
 }
@@ -184,7 +253,7 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeFieldsHasher(fields []field) (hasher, error) {
-	hasher := func(val reflect.Value) ([32]byte, error) {
+	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		roots := [][]byte{}
 		for _, f := range fields {
 			var r [32]byte
@@ -192,14 +261,22 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			if useCache {
 				r, err = hashCache.lookup(val.Field(f.index), f.sszUtils.hasher)
 			} else {
-				r, err = f.sszUtils.hasher(val.Field(f.index))
+				if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
+					r, err = bitlistHasher(val.Field(f.index), f.capacity)
+				} else {
+					if f.hasCapacity {
+						r, err = f.sszUtils.hasher(val.Field(f.index), f.capacity)
+					} else {
+						r, err = f.sszUtils.hasher(val.Field(f.index), 0)
+					}
+				}
 			}
 			if err != nil {
 				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
 			}
 			roots = append(roots, r[:])
 		}
-		return merkleize(roots), nil
+		return bitwiseMerkleize(roots, uint64(len(fields))), nil
 	}
 	return hasher, nil
 }
@@ -209,11 +286,11 @@ func makePtrHasher(typ reflect.Type) (hasher, error) {
 	if err != nil {
 		return nil, err
 	}
-	hasher := func(val reflect.Value) ([32]byte, error) {
+	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		if val.IsNil() {
 			return [32]byte{}, nil
 		}
-		return elemSSZUtils.hasher(val.Elem())
+		return elemSSZUtils.hasher(val.Elem(), maxCapacity)
 	}
 	return hasher, nil
 }
