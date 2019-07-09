@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"crypto/sha256"
+	"math"
 	"reflect"
 )
 
@@ -120,16 +121,55 @@ func merkleize(chunks [][]byte, hasPadding bool, padding uint64) [32]byte {
 	return root
 }
 
-func mergeChunks(h [32]byte, i uint64) {
+func bitwiseMerkleize(chunks [][]byte, padding uint64) [32]byte {
+	count := uint64(len(chunks))
+	depth := uint64(bitLength(0))
+	if bitLength(count-1) > depth {
+		depth = bitLength(count - 1)
+	}
+	maxDepth := depth
+	if bitLength(padding-1) > maxDepth {
+		maxDepth = bitLength(padding - 1)
+	}
+	layers := make([][]byte, maxDepth+1)
+
+	for idx, chunk := range chunks {
+		mergeChunks(layers, chunk, uint64(idx), count, depth)
+	}
+
+	if 1<<depth != count {
+		mergeChunks(layers, zeroHashes[0], count, count, depth)
+	}
+
+	for i := depth; i < maxDepth; i++ {
+		res := hash(append(layers[i], zeroHashes[i]...))
+		layers[i+1] = res[:]
+	}
+
+	return toBytes32(layers[maxDepth])
+}
+
+func mergeChunks(layers [][]byte, currentRoot []byte, i, count, depth uint64) {
 	j := uint64(0)
 	for {
 		if i&(1<<j) == 0 {
-			// TODO: Add if count detail here.
-			h = hash(append(h[:], zeroHashes[j]...))
+			if i == count && j < depth {
+				res := hash(append(currentRoot[:], zeroHashes[j]...))
+				currentRoot = res[:]
+			} else {
+				break
+			}
 		} else {
-			break
+			res := hash(append(layers[j], currentRoot[:]...))
+			currentRoot = res[:]
 		}
+		j++
 	}
+	layers[j] = currentRoot[:]
+}
+
+func bitLength(n uint64) uint64 {
+	return uint64(math.Log2(float64(n))) + 1
 }
 
 // Given a Merkle root root and a length length ("uint256" little-endian serialization)
