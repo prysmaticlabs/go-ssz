@@ -62,9 +62,6 @@ go_repository(
     importpath = "golang.org/x/lint",
 )
 
-# Do not add go dependencies here. They must be added in deps.bzl to provide
-# dependencies to downstream bazel projects.
-
 go_repository(
     name = "com_github_ghodss_yaml",
     commit = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7",  # v1.0.0
@@ -83,8 +80,6 @@ go_repository(
     importpath = "gopkg.in/d4l3k/messagediff.v1",
 )
 
-go_repository(
-    name = "com_github_prysmaticlabs_go_bitfield",
-    commit = "1f5a518a05f0d67ff59f9298727275186669b903",
-    importpath = "github.com/prysmaticlabs/go-bitfield",
-)
+# Do not add go dependencies here. They must be added in deps.bzl to provide
+# dependencies to downstream bazel projects. Only test related dependencies
+# are allowed in this WORKSPACE.
