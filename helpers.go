@@ -12,17 +12,15 @@ var (
 	BytesPerChunk = 32
 	// BytesPerLengthOffset defines a constant for off-setting serialized chunks.
 	BytesPerLengthOffset = uint64(4)
-	zeroHashes           = make([][]byte, 32)
+	zeroHashes           = make([][]byte, 100)
 )
 
 func init() {
-	leaf := append([]byte{}, []byte{}...)
-	result := hash(leaf)
-	zeroHashes[0] = result[:]
-	for i := 1; i < 32; i++ {
+	zeroHashes[0] = make([]byte, 32)
+	for i := 1; i < 100; i++ {
 		leaf := append(zeroHashes[i-1], zeroHashes[i-1]...)
 		result := hash(leaf)
-		zeroHashes = append(zeroHashes, result[:])
+		zeroHashes[i] = result[:]
 	}
 }
 
@@ -125,6 +123,11 @@ func merkleize(chunks [][]byte, hasPadding bool, padding uint64) [32]byte {
 }
 
 func bitwiseMerkleize(chunks [][]byte, padding uint64) [32]byte {
+	if len(chunks) == 1 {
+		var root [32]byte
+		copy(root[:], chunks[0])
+		return root
+	}
 	padTo := padding
 	if padding == 0 {
 		padTo = 1

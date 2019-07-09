@@ -8,34 +8,34 @@ import (
 	"github.com/prysmaticlabs/go-ssz"
 )
 
-func BenchmarkBeaconBlock_Marshal(b *testing.B) {
-	b.StopTimer()
-	s := &SszBenchmarkBlock{}
-	populateStructFromYaml(b, "./yaml/ssz_single_block.yaml", s)
-	b.StartTimer()
-	for n := 0; n < b.N; n++ {
-		if _, err := ssz.Marshal(s.Value); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
+// func BenchmarkBeaconBlock_Marshal(b *testing.B) {
+// 	b.StopTimer()
+// 	s := &SszBenchmarkBlock{}
+// 	populateStructFromYaml(b, "./yaml/ssz_single_block.yaml", s)
+// 	b.StartTimer()
+// 	for n := 0; n < b.N; n++ {
+// 		if _, err := ssz.Marshal(s.Value); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// }
 
-func BenchmarkBeaconBlock_Unmarshal(b *testing.B) {
-	b.StopTimer()
-	s := &SszBenchmarkBlock{}
-	populateStructFromYaml(b, "./yaml/ssz_single_block.yaml", s)
-	encoded, err := ssz.Marshal(s.Value)
-	if err != nil {
-		b.Fatal(err)
-	}
-	var target MinimalBlock
-	b.StartTimer()
-	for n := 0; n < b.N; n++ {
-		if err := ssz.Unmarshal(encoded, &target); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
+// func BenchmarkBeaconBlock_Unmarshal(b *testing.B) {
+// 	b.StopTimer()
+// 	s := &SszBenchmarkBlock{}
+// 	populateStructFromYaml(b, "./yaml/ssz_single_block.yaml", s)
+// 	encoded, err := ssz.Marshal(s.Value)
+// 	if err != nil {
+// 		b.Fatal(err)
+// 	}
+// 	var target MinimalBlock
+// 	b.StartTimer()
+// 	for n := 0; n < b.N; n++ {
+// 		if err := ssz.Unmarshal(encoded, &target); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// }
 
 func BenchmarkBeaconBlock_HashTreeRoot(b *testing.B) {
 	b.StopTimer()
