@@ -12,12 +12,15 @@ var (
 	BytesPerChunk = 32
 	// BytesPerLengthOffset defines a constant for off-setting serialized chunks.
 	BytesPerLengthOffset = uint64(4)
-	zeroHashes           [][]byte
+	zeroHashes           = make([][]byte, 32)
 )
 
 func init() {
-	for i := 0; i <= 32; i++ {
-		leaf := append([]byte{}, []byte{}...)
+	leaf := append([]byte{}, []byte{}...)
+	result := hash(leaf)
+	zeroHashes[0] = result[:]
+	for i := 1; i < 32; i++ {
+		leaf := append(zeroHashes[i-1], zeroHashes[i-1]...)
 		result := hash(leaf)
 		zeroHashes = append(zeroHashes, result[:])
 	}
@@ -122,14 +125,18 @@ func merkleize(chunks [][]byte, hasPadding bool, padding uint64) [32]byte {
 }
 
 func bitwiseMerkleize(chunks [][]byte, padding uint64) [32]byte {
+	padTo := padding
+	if padding == 0 {
+		padTo = 1
+	}
 	count := uint64(len(chunks))
 	depth := uint64(bitLength(0))
 	if bitLength(count-1) > depth {
 		depth = bitLength(count - 1)
 	}
 	maxDepth := depth
-	if bitLength(padding-1) > maxDepth {
-		maxDepth = bitLength(padding - 1)
+	if bitLength(padTo-1) > maxDepth {
+		maxDepth = bitLength(padTo - 1)
 	}
 	layers := make([][]byte, maxDepth+1)
 
@@ -169,6 +176,9 @@ func mergeChunks(layers [][]byte, currentRoot []byte, i, count, depth uint64) {
 }
 
 func bitLength(n uint64) uint64 {
+	if n == 0 {
+		return 1
+	}
 	return uint64(math.Log2(float64(n))) + 1
 }
 
