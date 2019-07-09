@@ -3,10 +3,7 @@ package ssz
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"testing"
-
-	"github.com/prysmaticlabs/go-bitfield"
 )
 
 func init() {
@@ -18,25 +15,6 @@ type fork struct {
 	CurrentVersion  [4]byte
 	Epoch           uint64
 }
-
-type bitfieldContainer struct {
-	Field1 uint64
-	Field2 bitfield.Bitlist `ssz-max:"16"`
-}
-
-type maxCapContainer struct {
-	Transfers []fork `ssz-max:"0"`
-}
-
-var (
-	bitfieldContainerExampleEmpty = bitfieldContainer{
-		Field1: uint64(5),
-		Field2: bitfield.Bitlist([]byte{}),
-	}
-	exampleMaxCap = maxCapContainer{
-		Transfers: []fork{},
-	}
-)
 
 func TestHashTreeRoot(t *testing.T) {
 	useCache = false
@@ -67,32 +45,5 @@ func TestHashTreeRoot(t *testing.T) {
 	}
 	if !bytes.Equal(root[:], want) {
 		t.Errorf("want %#x, HashTreeRoot() = %#x", want, root)
-	}
-}
-
-func TestMaxCapContainer(t *testing.T) {
-	root, err := HashTreeRoot(exampleMaxCap)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Printf("%#x\n", root)
-}
-
-func BenchmarkHashTreeRoot(b *testing.B) {
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		if _, err := HashTreeRoot(bitfieldContainerExampleEmpty); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
-
-func BenchmarkHashTreeRootCached(b *testing.B) {
-	useCache = true
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		if _, err := HashTreeRoot(bitfieldContainerExampleEmpty); err != nil {
-			b.Fatal(err)
-		}
 	}
 }

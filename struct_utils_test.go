@@ -6,8 +6,8 @@ import (
 )
 
 type structWithTags struct {
-	NestedItem    [][][][]byte `ssz:"size=4,1,4,1"`
-	UnboundedItem [][]byte     `ssz:"size=?,4"`
+	NestedItem    [][][][]byte `ssz-size:"4,1,4,1"`
+	UnboundedItem [][]byte     `ssz-size:"?,4"`
 }
 
 func TestInferTypeFromStructTags(t *testing.T) {

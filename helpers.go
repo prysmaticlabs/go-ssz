@@ -74,6 +74,10 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 	return chunks, nil
 }
 
+// Given ordered BYTES_PER_CHUNK-byte chunks, if necessary utilize zero chunks so that the
+// number of chunks is a power of two, Merkleize the chunks, and return the root.
+// Note that merkleize on a single chunk is simply that chunk, i.e. the identity
+// when the number of chunks is one.
 func bitwiseMerkleize(chunks [][]byte, padding uint64) [32]byte {
 	count := uint64(len(chunks))
 	depth := uint64(bitLength(0))
@@ -132,11 +136,6 @@ func bitLength(n uint64) uint64 {
 // return hash(root + length).
 func mixInLength(root [32]byte, length []byte) [32]byte {
 	return hash(append(root[:], length...))
-}
-
-// Fast verification to check if an number if a power of two.
-func isPowerTwo(n int) bool {
-	return n != 0 && (n&(n-1)) == 0
 }
 
 // Instantiates a reflect value which may not have a concrete type to have a concrete type
