@@ -177,39 +177,39 @@ func TestYamlStaticSpecTests(t *testing.T) {
 
 func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 	for _, testCase := range s.TestCases {
-		// if !isEmpty(testCase.Attestation.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.Attestation.Value,
-		// 		unmarshalTarget:     new(MinimalAttestation),
-		// 		expected:            testCase.Attestation.Serialized,
-		// 		expectedRoot:        testCase.Attestation.Root,
-		// 		expectedSigningRoot: testCase.Attestation.SigningRoot,
-		// 	})
-		// }
-		// if !isEmpty(testCase.AttestationData.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.AttestationData.Value,
-		// 		unmarshalTarget: new(MinimalAttestationData),
-		// 		expected:        testCase.AttestationData.Serialized,
-		// 		expectedRoot:    testCase.AttestationData.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.AttestationDataAndCustodyBit.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.AttestationDataAndCustodyBit.Value,
-		// 		unmarshalTarget: new(MinimalAttestationAndCustodyBit),
-		// 		expected:        testCase.AttestationDataAndCustodyBit.Serialized,
-		// 		expectedRoot:    testCase.AttestationDataAndCustodyBit.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.AttesterSlashing.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.AttesterSlashing.Value,
-		// 		unmarshalTarget: new(MinimalAttesterSlashing),
-		// 		expected:        testCase.AttesterSlashing.Serialized,
-		// 		expectedRoot:    testCase.AttesterSlashing.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.Attestation.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.Attestation.Value,
+				unmarshalTarget:     new(MinimalAttestation),
+				expected:            testCase.Attestation.Serialized,
+				expectedRoot:        testCase.Attestation.Root,
+				expectedSigningRoot: testCase.Attestation.SigningRoot,
+			})
+		}
+		if !isEmpty(testCase.AttestationData.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttestationData.Value,
+				unmarshalTarget: new(MinimalAttestationData),
+				expected:        testCase.AttestationData.Serialized,
+				expectedRoot:    testCase.AttestationData.Root,
+			})
+		}
+		if !isEmpty(testCase.AttestationDataAndCustodyBit.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttestationDataAndCustodyBit.Value,
+				unmarshalTarget: new(MinimalAttestationAndCustodyBit),
+				expected:        testCase.AttestationDataAndCustodyBit.Serialized,
+				expectedRoot:    testCase.AttestationDataAndCustodyBit.Root,
+			})
+		}
+		if !isEmpty(testCase.AttesterSlashing.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.AttesterSlashing.Value,
+				unmarshalTarget: new(MinimalAttesterSlashing),
+				expected:        testCase.AttesterSlashing.Serialized,
+				expectedRoot:    testCase.AttesterSlashing.Root,
+			})
+		}
 		// if !isEmpty(testCase.BeaconBlock.Value) {
 		// 	compareSSZEncoding(t, &sszComparisonConfig{
 		// 		val:                 testCase.BeaconBlock.Value,
@@ -227,15 +227,15 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 		// 		expectedRoot:    testCase.BeaconBlockBody.Root,
 		// 	})
 		// }
-		// if !isEmpty(testCase.BeaconBlockHeader.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.BeaconBlockHeader.Value,
-		// 		unmarshalTarget:     new(MinimalBlockHeader),
-		// 		expected:            testCase.BeaconBlockHeader.Serialized,
-		// 		expectedRoot:        testCase.BeaconBlockHeader.Root,
-		// 		expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
-		// 	})
-		// }
+		if !isEmpty(testCase.BeaconBlockHeader.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.BeaconBlockHeader.Value,
+				unmarshalTarget:     new(MinimalBlockHeader),
+				expected:            testCase.BeaconBlockHeader.Serialized,
+				expectedRoot:        testCase.BeaconBlockHeader.Root,
+				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
+			})
+		}
 		// // if !isEmpty(testCase.BeaconState.Value) {
 		// // 	compareSSZEncoding(t, &sszComparisonConfig{
 		// // 		val:             testCase.BeaconState.Value,
@@ -260,14 +260,14 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 				expectedRoot:    testCase.CompactCommittee.Root,
 			})
 		}
-		// if !isEmpty(testCase.Crosslink.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.Crosslink.Value,
-		// 		unmarshalTarget: new(MinimalCrosslink),
-		// 		expected:        testCase.Crosslink.Serialized,
-		// 		expectedRoot:    testCase.Crosslink.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.Crosslink.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Crosslink.Value,
+				unmarshalTarget: new(MinimalCrosslink),
+				expected:        testCase.Crosslink.Serialized,
+				expectedRoot:    testCase.Crosslink.Root,
+			})
+		}
 		// if !isEmpty(testCase.Deposit.Value) {
 		// 	compareSSZEncoding(t, &sszComparisonConfig{
 		// 		val:             testCase.Deposit.Value,
@@ -276,30 +276,30 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 		// 		expectedRoot:    testCase.Deposit.Root,
 		// 	})
 		// }
-		// if !isEmpty(testCase.DepositData.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.DepositData.Value,
-		// 		unmarshalTarget: new(MinimalDepositData),
-		// 		expected:        testCase.DepositData.Serialized,
-		// 		expectedRoot:    testCase.DepositData.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.Eth1Data.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.Eth1Data.Value,
-		// 		unmarshalTarget: new(MinimalEth1Data),
-		// 		expected:        testCase.Eth1Data.Serialized,
-		// 		expectedRoot:    testCase.Eth1Data.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.Fork.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.Fork.Value,
-		// 		unmarshalTarget: new(MinimalFork),
-		// 		expected:        testCase.Fork.Serialized,
-		// 		expectedRoot:    testCase.Fork.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.DepositData.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.DepositData.Value,
+				unmarshalTarget: new(MinimalDepositData),
+				expected:        testCase.DepositData.Serialized,
+				expectedRoot:    testCase.DepositData.Root,
+			})
+		}
+		if !isEmpty(testCase.Eth1Data.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Eth1Data.Value,
+				unmarshalTarget: new(MinimalEth1Data),
+				expected:        testCase.Eth1Data.Serialized,
+				expectedRoot:    testCase.Eth1Data.Root,
+			})
+		}
+		if !isEmpty(testCase.Fork.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Fork.Value,
+				unmarshalTarget: new(MinimalFork),
+				expected:        testCase.Fork.Serialized,
+				expectedRoot:    testCase.Fork.Root,
+			})
+		}
 		// if !isEmpty(testCase.HistoricalBatch.Value) {
 		// 	compareSSZEncoding(t, &sszComparisonConfig{
 		// 		val:             testCase.HistoricalBatch.Value,
@@ -308,57 +308,57 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 		// 		expectedRoot:    testCase.HistoricalBatch.Root,
 		// 	})
 		// }
-		// if !isEmpty(testCase.IndexedAttestation.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.IndexedAttestation.Value,
-		// 		unmarshalTarget:     new(MinimalIndexedAttestation),
-		// 		expected:            testCase.IndexedAttestation.Serialized,
-		// 		expectedRoot:        testCase.IndexedAttestation.Root,
-		// 		expectedSigningRoot: testCase.IndexedAttestation.SigningRoot,
-		// 	})
-		// }
-		// if !isEmpty(testCase.PendingAttestation.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.PendingAttestation.Value,
-		// 		unmarshalTarget: new(MinimalPendingAttestation),
-		// 		expected:        testCase.PendingAttestation.Serialized,
-		// 		expectedRoot:    testCase.PendingAttestation.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.ProposerSlashing.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.ProposerSlashing.Value,
-		// 		unmarshalTarget: new(MinimalProposerSlashing),
-		// 		expected:        testCase.ProposerSlashing.Serialized,
-		// 		expectedRoot:    testCase.ProposerSlashing.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.Transfer.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.Transfer.Value,
-		// 		unmarshalTarget:     new(MinimalTransfer),
-		// 		expected:            testCase.Transfer.Serialized,
-		// 		expectedRoot:        testCase.Transfer.Root,
-		// 		expectedSigningRoot: testCase.Transfer.SigningRoot,
-		// 	})
-		// }
-		// if !isEmpty(testCase.Validator.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.Validator.Value,
-		// 		unmarshalTarget: new(MinimalValidator),
-		// 		expected:        testCase.Validator.Serialized,
-		// 		expectedRoot:    testCase.Validator.Root,
-		// 	})
-		// }
-		// if !isEmpty(testCase.VoluntaryExit.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:                 testCase.VoluntaryExit.Value,
-		// 		unmarshalTarget:     new(MinimalVoluntaryExit),
-		// 		expected:            testCase.VoluntaryExit.Serialized,
-		// 		expectedRoot:        testCase.VoluntaryExit.Root,
-		// 		expectedSigningRoot: testCase.VoluntaryExit.SigningRoot,
-		// 	})
-		// }
+		if !isEmpty(testCase.IndexedAttestation.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.IndexedAttestation.Value,
+				unmarshalTarget:     new(MinimalIndexedAttestation),
+				expected:            testCase.IndexedAttestation.Serialized,
+				expectedRoot:        testCase.IndexedAttestation.Root,
+				expectedSigningRoot: testCase.IndexedAttestation.SigningRoot,
+			})
+		}
+		if !isEmpty(testCase.PendingAttestation.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.PendingAttestation.Value,
+				unmarshalTarget: new(MinimalPendingAttestation),
+				expected:        testCase.PendingAttestation.Serialized,
+				expectedRoot:    testCase.PendingAttestation.Root,
+			})
+		}
+		if !isEmpty(testCase.ProposerSlashing.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.ProposerSlashing.Value,
+				unmarshalTarget: new(MinimalProposerSlashing),
+				expected:        testCase.ProposerSlashing.Serialized,
+				expectedRoot:    testCase.ProposerSlashing.Root,
+			})
+		}
+		if !isEmpty(testCase.Transfer.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.Transfer.Value,
+				unmarshalTarget:     new(MinimalTransfer),
+				expected:            testCase.Transfer.Serialized,
+				expectedRoot:        testCase.Transfer.Root,
+				expectedSigningRoot: testCase.Transfer.SigningRoot,
+			})
+		}
+		if !isEmpty(testCase.Validator.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.Validator.Value,
+				unmarshalTarget: new(MinimalValidator),
+				expected:        testCase.Validator.Serialized,
+				expectedRoot:    testCase.Validator.Root,
+			})
+		}
+		if !isEmpty(testCase.VoluntaryExit.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:                 testCase.VoluntaryExit.Value,
+				unmarshalTarget:     new(MinimalVoluntaryExit),
+				expected:            testCase.VoluntaryExit.Serialized,
+				expectedRoot:        testCase.VoluntaryExit.Root,
+				expectedSigningRoot: testCase.VoluntaryExit.SigningRoot,
+			})
+		}
 	}
 }
 

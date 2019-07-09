@@ -115,6 +115,13 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 	}
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		roots := [][]byte{}
+		elemSize := uint64(0)
+		if isBasicType(typ.Elem().Kind()) {
+			elemSize = determineFixedSize(val, typ.Elem())
+		} else {
+			elemSize = 32
+		}
+		padding := (maxCapacity*elemSize + 31) / 32
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
@@ -131,7 +138,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 		if err != nil {
 			return [32]byte{}, err
 		}
-		return bitwiseMerkleize(chunks, 0), nil
+		return bitwiseMerkleize(chunks, padding), nil
 	}
 	return hasher, nil
 }
