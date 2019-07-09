@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"crypto/sha256"
+	"fmt"
 	"math"
 	"reflect"
 )
@@ -123,24 +124,16 @@ func merkleize(chunks [][]byte, hasPadding bool, padding uint64) [32]byte {
 }
 
 func bitwiseMerkleize(chunks [][]byte, padding uint64) [32]byte {
-	if len(chunks) == 1 {
-		var root [32]byte
-		copy(root[:], chunks[0])
-		return root
-	}
-	padTo := padding
-	if padding == 0 {
-		padTo = 1
-	}
 	count := uint64(len(chunks))
 	depth := uint64(bitLength(0))
 	if bitLength(count-1) > depth {
 		depth = bitLength(count - 1)
 	}
 	maxDepth := depth
-	if bitLength(padTo-1) > maxDepth {
-		maxDepth = bitLength(padTo - 1)
+	if bitLength(padding-1) > maxDepth {
+		maxDepth = bitLength(padding - 1)
 	}
+	fmt.Printf("count %d, depth %d, maxDepth %d\n", count, depth, maxDepth)
 	layers := make([][]byte, maxDepth+1)
 
 	for idx, chunk := range chunks {
@@ -180,7 +173,7 @@ func mergeChunks(layers [][]byte, currentRoot []byte, i, count, depth uint64) {
 
 func bitLength(n uint64) uint64 {
 	if n == 0 {
-		return 1
+		return 0
 	}
 	return uint64(math.Log2(float64(n))) + 1
 }
