@@ -144,7 +144,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 		} else {
 			elemSize = 32
 		}
-		padding := (maxCapacity*elemSize + 31) / 32
+		padding := (uint64(val.Len())*elemSize + 31) / 32
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
@@ -276,14 +276,6 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			}
 			roots = append(roots, r[:])
 		}
-		// fmt.Printf("[")
-		// for idx, rt := range roots {
-		// 	if idx == len(roots)-1 {
-		// 		fmt.Printf("%#x]\n", rt)
-		// 	} else {
-		// 		fmt.Printf("%#x, ", rt)
-		// 	}
-		// }
 		return bitwiseMerkleize(roots, uint64(len(fields))), nil
 	}
 	return hasher, nil

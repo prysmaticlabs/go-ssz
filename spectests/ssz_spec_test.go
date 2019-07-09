@@ -138,7 +138,7 @@ func TestYamlGenericSpecTests(t *testing.T) {
 func TestYamlStaticSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_static/core/"
 	yamlFileNames := []string{
-		// "ssz_mainnet_random.yaml",
+		"ssz_mainnet_random.yaml",
 		"ssz_minimal_lengthy.yaml",
 		"ssz_minimal_max.yaml",
 		"ssz_minimal_nil.yaml",
@@ -236,14 +236,14 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
 			})
 		}
-		// if !isEmpty(testCase.BeaconState.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.BeaconState.Value,
-		// 		unmarshalTarget: new(MinimalBeaconState),
-		// 		expected:        testCase.BeaconState.Serialized,
-		// 		expectedRoot:    testCase.BeaconState.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.BeaconState.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.BeaconState.Value,
+				unmarshalTarget: new(MinimalBeaconState),
+				expected:        testCase.BeaconState.Serialized,
+				expectedRoot:    testCase.BeaconState.Root,
+			})
+		}
 		if !isEmpty(testCase.Checkpoint.Value) {
 			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Checkpoint.Value,
@@ -423,14 +423,14 @@ func runMainnetSpecTestCases(t *testing.T, s *SszMainnetTest) {
 				expectedSigningRoot: testCase.BeaconBlockHeader.SigningRoot,
 			})
 		}
-		// if !isEmpty(testCase.BeaconState.Value) {
-		// 	compareSSZEncoding(t, &sszComparisonConfig{
-		// 		val:             testCase.BeaconState.Value,
-		// 		unmarshalTarget: new(MainnetBeaconState),
-		// 		expected:        testCase.BeaconState.Serialized,
-		// 		expectedRoot:    testCase.BeaconState.Root,
-		// 	})
-		// }
+		if !isEmpty(testCase.BeaconState.Value) {
+			compareSSZEncoding(t, &sszComparisonConfig{
+				val:             testCase.BeaconState.Value,
+				unmarshalTarget: new(MainnetBeaconState),
+				expected:        testCase.BeaconState.Serialized,
+				expectedRoot:    testCase.BeaconState.Root,
+			})
+		}
 		if !isEmpty(testCase.Checkpoint.Value) {
 			compareSSZEncoding(t, &sszComparisonConfig{
 				val:             testCase.Checkpoint.Value,
