@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/prysmaticlabs/go-bitfield"
 )
@@ -255,6 +256,7 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		roots := [][]byte{}
+		isState := strings.Contains(val.Type().Name(), "BeaconState")
 		for _, f := range fields {
 			var r [32]byte
 			var err error
@@ -275,6 +277,9 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
 			}
 			roots = append(roots, r[:])
+			if isState {
+				fmt.Println("%v has root %#x\n", f.name, r)
+			}
 		}
 		return bitwiseMerkleize(roots, uint64(len(fields))), nil
 	}
