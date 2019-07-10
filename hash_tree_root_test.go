@@ -52,6 +52,41 @@ func TestHashTreeRoot(t *testing.T) {
 	}
 }
 
+func TestHashTreeRootWithCapacity_FailsWithNonSliceType(t *testing.T) {
+	useCache = false
+	forkItem := fork{
+		Epoch: 11971467576204192310,
+	}
+	capacity := uint64(100)
+	if _, err := HashTreeRootWithCapacity(forkItem, capacity); err == nil {
+		t.Error("Expected hash tree root to fail with non-slice type")
+	}
+	useCache = true
+}
+
+func TestHashTreeRootWithCapacity_HashesCorrectly(t *testing.T) {
+	useCache = false
+	capacity := uint64(1099511627776)
+	balances := make([]uint64, 512)
+	for i := 0; i < len(balances); i++ {
+		balances[i] = 32000000000
+	}
+	root, err := HashTreeRootWithCapacity(balances, capacity)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Test case taken from validator balances of the state value in:
+	// https://github.com/ethereum/eth2.0-spec-tests/blob/v0.8.0/tests/sanity/slots/sanity_slots_mainnet.yaml.
+	want, err := hex.DecodeString("21a67313b0c6f988aac4fb6dd68686e1329243f7f6af21b722f6b83ca8fed9a8")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(root[:], want) {
+		t.Errorf("Mismatched roots, wanted %#x == %#x", root, want)
+	}
+	useCache = true
+}
+
 // Regression test for https://github.com/prysmaticlabs/go-ssz/issues/46.
 func TestHashTreeRoot_EncodeSliceLengthCorrectly(t *testing.T) {
 	useCache = false

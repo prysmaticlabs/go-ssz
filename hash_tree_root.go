@@ -23,9 +23,9 @@ var useCache bool
 //      Field1: 10,
 //      Field2: []byte{1, 2, 3, 4},
 //  }
-//  encoded, err := HashTreeRoot(ex)
+//  root, err := HashTreeRoot(ex)
 //  if err != nil {
-//      return fmt.Errorf("failed to marshal: %v", err)
+//      return fmt.Errorf("failed to compute root: %v", err)
 //  }
 func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if val == nil {
@@ -41,6 +41,39 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 		output, err = hashCache.lookup(rval, sszUtils.hasher)
 	} else {
 		output, err = sszUtils.hasher(rval, 0)
+	}
+	if err != nil {
+		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
+	}
+	return output, nil
+}
+
+// HashTreeRootWithCapacity determines the root hash of a dynamic list
+// using SSZ's merkleization and applies a max capacity value when computing the root.
+// If the input is not a slice, the function returns an error.
+//
+//  accountBalances := []uint64{1, 2, 3, 4}
+//  root, err := HashTreeRootWithCapacity(accountBalances, 100) // Max 100 accounts.
+//  if err != nil {
+//      return fmt.Errorf("failed to compute root: %v", err)
+//  }
+func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, error) {
+	if val == nil {
+		return [32]byte{}, errors.New("untyped nil is not supported")
+	}
+	rval := reflect.ValueOf(val)
+	if rval.Kind() != reflect.Slice {
+		return [32]byte{}, fmt.Errorf("expected slice-kind input, received %v", rval.Kind())
+	}
+	sszUtils, err := cachedSSZUtils(rval.Type())
+	if err != nil {
+		return [32]byte{}, fmt.Errorf("could not get ssz utils for type: %v: %v", rval.Type(), err)
+	}
+	var output [32]byte
+	if useCache {
+		output, err = hashCache.lookup(rval, sszUtils.hasher)
+	} else {
+		output, err = sszUtils.hasher(rval, maxCapacity)
 	}
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
