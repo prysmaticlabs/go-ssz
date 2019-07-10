@@ -92,20 +92,20 @@ func determineFieldCapacity(field reflect.StructField) (uint64, bool) {
 	if !exists {
 		return 0, false
 	}
-	val, err := strconv.Atoi(tag)
+	val, err := strconv.ParseUint(tag, 10, 64)
 	if err != nil {
 		return 0, false
 	}
-	return uint64(val), true
+	return val, true
 }
 
-func parseSSZFieldTags(field reflect.StructField) ([]int, bool, error) {
+func parseSSZFieldTags(field reflect.StructField) ([]uint64, bool, error) {
 	tag, exists := field.Tag.Lookup("ssz-size")
 	if !exists {
 		return nil, false, nil
 	}
 	items := strings.Split(tag, ",")
-	sizes := make([]int, len(items))
+	sizes := make([]uint64, len(items))
 	var err error
 	for i := 0; i < len(items); i++ {
 		// If a field is unbounded, we mark it with a size of 0.
@@ -113,7 +113,7 @@ func parseSSZFieldTags(field reflect.StructField) ([]int, bool, error) {
 			sizes[i] = 0
 			continue
 		}
-		sizes[i], err = strconv.Atoi(items[i])
+		sizes[i], err = strconv.ParseUint(items[i], 10, 64)
 		if err != nil {
 			return nil, false, err
 		}
@@ -121,7 +121,7 @@ func parseSSZFieldTags(field reflect.StructField) ([]int, bool, error) {
 	return sizes, true, nil
 }
 
-func inferFieldTypeFromSizeTags(field reflect.StructField, sizes []int) reflect.Type {
+func inferFieldTypeFromSizeTags(field reflect.StructField, sizes []uint64) reflect.Type {
 	innerElement := field.Type.Elem()
 	for i := 1; i < len(sizes); i++ {
 		innerElement = innerElement.Elem()
@@ -131,18 +131,18 @@ func inferFieldTypeFromSizeTags(field reflect.StructField, sizes []int) reflect.
 		if sizes[i] == 0 {
 			currentType = reflect.SliceOf(currentType)
 		} else {
-			currentType = reflect.ArrayOf(sizes[i], currentType)
+			currentType = reflect.ArrayOf(int(sizes[i]), currentType)
 		}
 	}
 	return currentType
 }
 
-func growSliceFromSizeTags(val reflect.Value, sizes []int) reflect.Value {
+func growSliceFromSizeTags(val reflect.Value, sizes []uint64) reflect.Value {
 	if len(sizes) == 0 {
 		return val
 	}
-	finalValue := reflect.MakeSlice(val.Type(), sizes[0], sizes[0])
-	for i := 0; i < sizes[0]; i++ {
+	finalValue := reflect.MakeSlice(val.Type(), int(sizes[0]), int(sizes[0]))
+	for i := 0; i < int(sizes[0]); i++ {
 		intermediate := growSliceFromSizeTags(finalValue.Index(i), sizes[1:])
 		finalValue.Index(i).Set(intermediate)
 	}
