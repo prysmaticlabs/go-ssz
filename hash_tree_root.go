@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/prysmaticlabs/go-bitfield"
 )
@@ -263,29 +262,24 @@ func makeStructHasher(typ reflect.Type) (hasher, error) {
 func makeFieldsHasher(fields []field) (hasher, error) {
 	hasher := func(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		roots := [][]byte{}
-		isState := strings.Contains(val.Type().Name(), "BeaconState")
 		for _, f := range fields {
 			var r [32]byte
 			var err error
-			// if useCache {
-			// 	fmt.Println("use cache")
-			// 	r, err = hashCache.lookup(val.Field(f.index), f.sszUtils.hasher)
-			// } else {
-			if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
-				r, err = bitlistHasher(val.Field(f.index), f.capacity)
+			if useCache {
+				r, err = hashCache.lookup(val.Field(f.index), f.sszUtils.hasher)
 			} else {
-				if f.hasCapacity {
-					r, err = f.sszUtils.hasher(val.Field(f.index), f.capacity)
+				if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
+					r, err = bitlistHasher(val.Field(f.index), f.capacity)
 				} else {
-					r, err = f.sszUtils.hasher(val.Field(f.index), 0)
+					if f.hasCapacity {
+						r, err = f.sszUtils.hasher(val.Field(f.index), f.capacity)
+					} else {
+						r, err = f.sszUtils.hasher(val.Field(f.index), 0)
+					}
 				}
 			}
-			// }
 			if err != nil {
 				return [32]byte{}, fmt.Errorf("failed to hash field of struct: %v", err)
-			}
-			if isState {
-				fmt.Printf("%v has root %#x\n", f.name, r)
 			}
 			roots = append(roots, r[:])
 		}
