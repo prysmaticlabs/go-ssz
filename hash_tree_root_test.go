@@ -47,3 +47,14 @@ func TestHashTreeRoot(t *testing.T) {
 		t.Errorf("want %#x, HashTreeRoot() = %#x", want, root)
 	}
 }
+
+func TestHashTreeRootWithCapacity(t *testing.T) {
+	useCache = false
+	forkItem := fork{
+		Epoch: 11971467576204192310,
+	}
+	capacity := uint64(100)
+	if _, err := HashTreeRootWithCapacity(forkItem, capacity); err == nil {
+		t.Error("Expected hash tree root to fail with non-slice type")
+	}
+}
