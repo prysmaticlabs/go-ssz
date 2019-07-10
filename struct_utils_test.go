@@ -54,11 +54,11 @@ func TestInferTypeFromStructTags(t *testing.T) {
 // Regression test for https://github.com/prysmaticlabs/go-ssz/issues/44
 func TestDetermineFieldCapacity_HandlesOverflow(t *testing.T) {
 	input := struct{
-		Data string `ssz-max:"1099511627776"`
+		Data string `ssz-max:"18446744073709551615"` // max uint64
 	}{}
 
 	result, _ := determineFieldCapacity(reflect.TypeOf(input).Field(0))
-	want := uint64(1099511627776)
+	want := uint64(18446744073709551615)
 	if result != want {
 		t.Errorf("got: %d, wanted %d", result, want)
 	}
