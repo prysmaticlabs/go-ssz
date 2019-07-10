@@ -278,7 +278,7 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			}
 			roots = append(roots, r[:])
 			if isState {
-				fmt.Println("%v has root %#x\n", f.name, r)
+				fmt.Printf("%v has root %#x\n", f.name, r)
 			}
 		}
 		return bitwiseMerkleize(roots, uint64(len(fields))), nil
