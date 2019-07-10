@@ -96,7 +96,6 @@ func determineFieldCapacity(field reflect.StructField) (uint64, bool) {
 	if err != nil {
 		return 0, false
 	}
-	fmt.Printf("String max capacity: %s, parsed max capacity %d\n", tag, val)
 	return val, true
 }
 

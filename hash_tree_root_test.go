@@ -16,6 +16,23 @@ type fork struct {
 	Epoch           uint64
 }
 
+type balanceContainer struct {
+	Balances []uint64 `ssz-max:"1099511627776"`
+}
+
+func TestBalanceStruct(t *testing.T) {
+	b := balanceContainer{
+		Balances: make([]uint64, 512),
+	}
+	for i := 0; i < len(b.Balances); i++ {
+		b.Balances[i] = uint64(32000000000)
+	}
+	root, err := HashTreeRoot(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestHashTreeRoot(t *testing.T) {
 	useCache = false
 	var currentVersion [4]byte
