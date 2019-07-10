@@ -61,7 +61,7 @@ func TestHashTreeRootWithCapacity(t *testing.T) {
 	if _, err := HashTreeRootWithCapacity(forkItem, capacity); err == nil {
 		t.Error("Expected hash tree root to fail with non-slice type")
 	}
-  useCache = true
+	useCache = true
 }
 
 // Regression test for https://github.com/prysmaticlabs/go-ssz/issues/46.
