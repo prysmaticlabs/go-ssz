@@ -50,3 +50,16 @@ func TestInferTypeFromStructTags(t *testing.T) {
 		t.Errorf("Expected inferred field: %v, received %v", expectedFieldType, fType)
 	}
 }
+
+// Regression test for https://github.com/prysmaticlabs/go-ssz/issues/44
+func TestDetermineFieldCapacity_HandlesOverflow(t *testing.T) {
+	input := struct{
+		Data string `ssz-max:"1099511627776"`
+	}{}
+
+	result, _ := determineFieldCapacity(reflect.TypeOf(input).Field(0))
+	want := uint64(1099511627776)
+	if result != want {
+		t.Errorf("got: %d, wanted %d", result, want)
+	}
+}

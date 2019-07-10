@@ -92,11 +92,11 @@ func determineFieldCapacity(field reflect.StructField) (uint64, bool) {
 	if !exists {
 		return 0, false
 	}
-	val, err := strconv.Atoi(tag)
+	val, err := strconv.ParseUint(tag, 10, 64)
 	if err != nil {
 		return 0, false
 	}
-	return uint64(val), true
+	return val, true
 }
 
 func parseSSZFieldTags(field reflect.StructField) ([]int, bool, error) {
