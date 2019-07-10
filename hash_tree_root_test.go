@@ -16,6 +16,10 @@ type fork struct {
 	Epoch           uint64
 }
 
+type accountBalances struct {
+	Balances []uint64 `ssz-max:"1099511627776"` // Large uint64 capacity.
+}
+
 func TestHashTreeRoot(t *testing.T) {
 	useCache = false
 	var currentVersion [4]byte
@@ -46,4 +50,29 @@ func TestHashTreeRoot(t *testing.T) {
 	if !bytes.Equal(root[:], want) {
 		t.Errorf("want %#x, HashTreeRoot() = %#x", want, root)
 	}
+}
+
+// Regression test for https://github.com/prysmaticlabs/go-ssz/issues/46.
+func TestHashTreeRoot_EncodeSliceLengthCorrectly(t *testing.T) {
+	useCache = false
+	acct := accountBalances{
+		Balances: make([]uint64, 512),
+	}
+	for i := 0; i < len(acct.Balances); i++ {
+		acct.Balances[i] = 32000000000
+	}
+	root, err := HashTreeRoot(acct)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Test case taken from validator balances of the state value in:
+	// https://github.com/ethereum/eth2.0-spec-tests/blob/v0.8.0/tests/sanity/slots/sanity_slots_mainnet.yaml.
+	want, err := hex.DecodeString("21a67313b0c6f988aac4fb6dd68686e1329243f7f6af21b722f6b83ca8fed9a8")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(root[:], want) {
+		t.Errorf("Mismatched roots, wanted %#x == %#x", root, want)
+	}
+	useCache = true
 }
