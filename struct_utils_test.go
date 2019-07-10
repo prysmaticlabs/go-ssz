@@ -51,7 +51,7 @@ func TestInferTypeFromStructTags(t *testing.T) {
 	}
 }
 
-// Regression test for https://github.com/prysmaticlabs/go-ssz/issues/44
+// Regression test for https://github.com/prysmaticlabs/go-ssz/issues/44.
 func TestDetermineFieldCapacity_HandlesOverflow(t *testing.T) {
 	input := struct {
 		Data string `ssz-max:"18446744073709551615"` // max uint64
@@ -64,7 +64,7 @@ func TestDetermineFieldCapacity_HandlesOverflow(t *testing.T) {
 	}
 }
 
-// Regression test for https://github.com/prysmaticlabs/go-ssz/issues/44
+// Regression test for https://github.com/prysmaticlabs/go-ssz/issues/44.
 func TestParseSSZFieldTags_HandlesOverflow(t *testing.T) {
 	input := struct {
 		Data string `ssz-size:"18446744073709551615"` // max uint64
