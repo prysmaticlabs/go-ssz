@@ -51,15 +51,18 @@ func TestInferTypeFromStructTags(t *testing.T) {
 	}
 }
 
-// Regression test for https://github.com/prysmaticlabs/go-ssz/issues/44
-func TestDetermineFieldCapacity_HandlesOverflow(t *testing.T) {
-	input := struct{
-		Data string `ssz-max:"18446744073709551615"` // max uint64
+// Regression test for https://github.com/prysmaticlabs/go-ssz/issues/44.
+func TestParseSSZFieldTags_HandlesOverflow(t *testing.T) {
+	input := struct {
+		Data string `ssz-size:"18446744073709551615"` // max uint64
 	}{}
 
-	result, _ := determineFieldCapacity(reflect.TypeOf(input).Field(0))
+	result, _, err := parseSSZFieldTags(reflect.TypeOf(input).Field(0))
+	if err != nil {
+		t.Fatal(err)
+	}
 	want := uint64(18446744073709551615)
-	if result != want {
+	if result[0] != want {
 		t.Errorf("got: %d, wanted %d", result, want)
 	}
 }

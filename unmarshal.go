@@ -145,14 +145,14 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		}
 		// If there are struct tags that specify a different type, we handle accordingly.
 		if val.Type() != typ {
-			sizes := []int{1}
+			sizes := []uint64{1}
 			innerElement := typ.Elem()
 			for {
 				if innerElement.Kind() == reflect.Slice {
 					sizes = append(sizes, 0)
 					innerElement = innerElement.Elem()
 				} else if innerElement.Kind() == reflect.Array {
-					sizes = append(sizes, innerElement.Len())
+					sizes = append(sizes, uint64(innerElement.Len()))
 					innerElement = innerElement.Elem()
 				} else {
 					break
@@ -175,14 +175,14 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 		elementSize := index - startOffset
 		endOffset := uint64(len(input)) / elementSize
 		if val.Type() != typ {
-			sizes := []int{int(endOffset)}
+			sizes := []uint64{endOffset}
 			innerElement := typ.Elem()
 			for {
 				if innerElement.Kind() == reflect.Slice {
 					sizes = append(sizes, 0)
 					innerElement = innerElement.Elem()
 				} else if innerElement.Kind() == reflect.Array {
-					sizes = append(sizes, innerElement.Len())
+					sizes = append(sizes, uint64(innerElement.Len()))
 					innerElement = innerElement.Elem()
 				} else {
 					break
