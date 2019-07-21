@@ -19,7 +19,7 @@ type MainnetCheckpoint struct {
 }
 
 type MainnetValidator struct {
-	Pubkey                     []byte `json:"public_key" ssz-size:"48"`
+	Pubkey                     []byte `json:"pubkey" ssz-size:"48"`
 	WithdrawalCredentials      []byte `json:"withdrawal_credentials" ssz-size:"32"`
 	EffectiveBalance           uint64 `json:"effective_balance"`
 	Slashed                    bool   `json:"slashed"`
