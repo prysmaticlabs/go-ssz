@@ -27,24 +27,42 @@ type sszComparisonConfig struct {
 func TestYamlStateRoundTrip(t *testing.T) {
 	s := &SszBenchmarkState{}
 	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
-	compareSSZEncoding(t, &sszComparisonConfig{
-		val:             s.Value,
-		unmarshalTarget: new(MinimalBeaconState),
-		expected:        s.Serialized,
-		expectedRoot:    s.Root,
-	})
+	encoded, err := ssz.Marshal(s.Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, s.Serialized) {
+		t.Fatal("Failed to encode")
+	}
+	var targetState MinimalBeaconState
+	if err := ssz.Unmarshal(encoded, &targetState); err != nil {
+		t.Fatal(err)
+	}
+	if !ssz.DeepEqual(targetState, s.Value) {
+		t.Error("Unmarshaled encoding did not match original value")
+	}
 }
 
 func TestYamlBlockRoundTrip(t *testing.T) {
 	s := &SszBenchmarkBlock{}
 	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
-	compareSSZEncoding(t, &sszComparisonConfig{
-		val:                 s.Value,
-		unmarshalTarget:     new(MinimalBlock),
-		expected:            s.Serialized,
-		expectedRoot:        s.Root,
-		expectedSigningRoot: s.SigningRoot,
-	})
+	encoded, err := ssz.Marshal(s.Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, s.Serialized) {
+		t.Fatal("Failed to encode")
+	}
+	var targetBlock MinimalBlock
+	if err := ssz.Unmarshal(encoded, &targetBlock); err != nil {
+		t.Fatal(err)
+	}
+	if !ssz.DeepEqual(targetBlock, s.Value) {
+		t.Error("Unmarshaled encoding did not match original value")
+	}
+	if _, err := ssz.HashTreeRoot(s.Value); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestYamlGenericSpecTests(t *testing.T) {
