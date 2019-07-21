@@ -124,8 +124,8 @@ type MainnetVoluntaryExit struct {
 }
 
 type MainnetTransfer struct {
-	Sender    uint64 `json:"sender"`
-	Recipient uint64 `json:"recipient"`
+	Sender    uint64 `json:"sender_index"`
+	Recipient uint64 `json:"recipient_index"`
 	Amount    uint64 `json:"amount"`
 	Fee       uint64 `json:"fee"`
 	Slot      uint64 `json:"slot"`
