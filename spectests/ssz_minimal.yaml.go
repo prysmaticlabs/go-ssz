@@ -19,7 +19,7 @@ type MinimalCheckpoint struct {
 }
 
 type MinimalValidator struct {
-	Pubkey                     []byte `json:"pubkey" ssz-size:"48"`
+	Pubkey                     []byte `json:"public_key" ssz-size:"48"`
 	WithdrawalCredentials      []byte `json:"withdrawal_credentials" ssz-size:"32"`
 	EffectiveBalance           uint64 `json:"effective_balance"`
 	Slashed                    bool   `json:"slashed"`
@@ -75,7 +75,7 @@ type MinimalHistoricalBatch struct {
 }
 
 type MinimalDepositData struct {
-	Pubkey                []byte `json:"pubkey" ssz-size:"48"`
+	Pubkey                []byte `json:"public_key" ssz-size:"48"`
 	WithdrawalCredentials []byte `json:"withdrawal_credentials" ssz-size:"32"`
 	Amount                uint64 `json:"amount"`
 	Signature             []byte `json:"signature" ssz-size:"96"`
@@ -124,12 +124,12 @@ type MinimalVoluntaryExit struct {
 }
 
 type MinimalTransfer struct {
-	Sender    uint64 `json:"sender"`
-	Recipient uint64 `json:"recipient"`
+	Sender    uint64 `json:"sender_index"`
+	Recipient uint64 `json:"recipient_index"`
 	Amount    uint64 `json:"amount"`
 	Fee       uint64 `json:"fee"`
 	Slot      uint64 `json:"slot"`
-	Pubkey    []byte `json:"pubkey" ssz-size:"48"`
+	Pubkey    []byte `json:"sender_withdrawal_public_key" ssz-size:"48"`
 	Signature []byte `json:"signature" ssz-size:"96"`
 }
 
