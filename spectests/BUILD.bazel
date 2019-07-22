@@ -30,4 +30,5 @@ go_test(
         "@com_github_ghodss_yaml//:go_default_library",
         "@io_bazel_rules_go//go/tools/bazel:go_default_library",
     ],
+    tags = ["spectest"]
 )

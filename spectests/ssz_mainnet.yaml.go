@@ -50,10 +50,10 @@ type MainnetAttestationAndCustodyBit struct {
 }
 
 type MainnetIndexedAttestation struct {
-	CustodyBit0Indices []uint64               `json:"custody_bit_0_indices" ssz-max:"4096"`
-	CustodyBit1Indices []uint64               `json:"custody_bit_1_indices" ssz-max:"4096"`
-	Data               MainnetAttestationData `json:"data"`
-	Signature          []byte                 `json:"signature" ssz-size:"96"`
+	CustodyBit_0Indices []uint64               `json:"custody_bit_0_indices" ssz-max:"4096"`
+	CustodyBit_1Indices []uint64               `json:"custody_bit_1_indices" ssz-max:"4096"`
+	Data                 MainnetAttestationData `json:"data"`
+	Signature            []byte                 `json:"signature" ssz-size:"96"`
 }
 
 type MainnetPendingAttestation struct {
@@ -96,13 +96,13 @@ type MainnetBlockHeader struct {
 
 type MainnetProposerSlashing struct {
 	ProposerIndex uint64             `json:"proposer_index"`
-	Header1       MainnetBlockHeader `json:"header_1"`
-	Header2       MainnetBlockHeader `json:"header_2"`
+	Header_1      MainnetBlockHeader `json:"header_1"`
+	Header_2      MainnetBlockHeader `json:"header_2"`
 }
 
 type MainnetAttesterSlashing struct {
-	Attestation1 MainnetIndexedAttestation `json:"attestation_1"`
-	Attestation2 MainnetIndexedAttestation `json:"attestation_2"`
+	Attestation_1 MainnetIndexedAttestation `json:"attestation_1"`
+	Attestation_2 MainnetIndexedAttestation `json:"attestation_2"`
 }
 
 type MainnetAttestation struct {
