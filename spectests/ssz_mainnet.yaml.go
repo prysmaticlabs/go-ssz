@@ -50,8 +50,8 @@ type MainnetAttestationAndCustodyBit struct {
 }
 
 type MainnetIndexedAttestation struct {
-	CustodyBit_0_Indices []uint64               `json:"custody_bit_0_indices" ssz-max:"4096"`
-	CustodyBit_1_Indices []uint64               `json:"custody_bit_1_indices" ssz-max:"4096"`
+	CustodyBit_0Indices []uint64               `json:"custody_bit_0_indices" ssz-max:"4096"`
+	CustodyBit_1Indices []uint64               `json:"custody_bit_1_indices" ssz-max:"4096"`
 	Data                 MainnetAttestationData `json:"data"`
 	Signature            []byte                 `json:"signature" ssz-size:"96"`
 }
