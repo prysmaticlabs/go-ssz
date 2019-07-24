@@ -47,10 +47,11 @@ func TestCache_byHash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := HashedEncoding(byteSl)
+	encoded, err := Marshal(byteSl)
 	if err != nil {
 		t.Fatal(err)
 	}
+	hs := hash(encoded)
 	exists, _, err := hashCache.RootByEncodedHash(hs)
 	if err != nil {
 		t.Fatal(err)

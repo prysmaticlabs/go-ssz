@@ -65,11 +65,17 @@ func (b *hashCacheS) RootByEncodedHash(h common.Hash) (bool, *root, error) {
 	return true, hInfo, nil
 }
 
-func (b *hashCacheS) lookup(rval reflect.Value, hasher hasher, maxCapacity uint64) ([32]byte, error) {
-	hs, err := HashedEncoding(rval.Interface())
-	if err != nil {
+func (b *hashCacheS) lookup(
+	rval reflect.Value,
+	hasher hasher,
+	marshaler marshaler,
+	maxCapacity uint64,
+) ([32]byte, error) {
+	buf := make([]byte, determineSize(rval))
+	if _, err := marshaler(rval, buf, 0); err != nil {
 		return [32]byte{}, err
 	}
+	hs := hash(buf)
 	exists, fetchedInfo, err := b.RootByEncodedHash(hs)
 	if err != nil {
 		return [32]byte{}, err

@@ -38,7 +38,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	}
 	var output [32]byte
 	if useCache {
-		output, err = hashCache.lookup(rval, sszUtils.hasher, 0)
+		output, err = hashCache.lookup(rval, sszUtils.hasher, sszUtils.marshaler, 0)
 	} else {
 		output, err = sszUtils.hasher(rval, 0)
 	}
@@ -71,7 +71,7 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 	}
 	var output [32]byte
 	if useCache {
-		output, err = hashCache.lookup(rval, sszUtils.hasher, 0)
+		output, err = hashCache.lookup(rval, sszUtils.hasher, sszUtils.marshaler, 0)
 	} else {
 		output, err = sszUtils.hasher(rval, maxCapacity)
 	}
@@ -193,7 +193,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
-				r, err = hashCache.lookup(val.Index(i), utils.hasher, 0)
+				r, err = hashCache.lookup(val.Index(i), utils.hasher, utils.marshaler, 0)
 			} else {
 				r, err = utils.hasher(val.Index(i), 0)
 			}
@@ -284,7 +284,7 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
-				r, err = hashCache.lookup(val.Index(i), utils.hasher, 0)
+				r, err = hashCache.lookup(val.Index(i), utils.hasher, utils.marshaler, 0)
 			} else {
 				r, err = utils.hasher(val.Index(i), 0)
 			}
@@ -329,9 +329,23 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			var err error
 			if useCache {
 				if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
-					r, err = hashCache.lookup(val.Field(f.index), bitlistHasher, f.capacity)
+					r, err = bitlistHasher(val.Field(f.index), f.capacity)
 				} else {
-					r, err = hashCache.lookup(val.Field(f.index), f.sszUtils.hasher, f.capacity)
+					if f.hasCapacity {
+						r, err = hashCache.lookup(
+							val.Field(f.index),
+							f.sszUtils.hasher,
+							f.sszUtils.marshaler,
+							f.capacity,
+						)
+					} else {
+						r, err = hashCache.lookup(
+							val.Field(f.index),
+							f.sszUtils.hasher,
+							f.sszUtils.marshaler,
+							0,
+						)
+					}
 				}
 			} else {
 				if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
@@ -366,26 +380,4 @@ func makePtrHasher(typ reflect.Type) (hasher, error) {
 		return elemSSZUtils.hasher(val.Elem(), maxCapacity)
 	}
 	return hasher, nil
-}
-
-func getEncoding(val reflect.Value) ([]byte, error) {
-	utils, err := cachedSSZUtilsNoAcquireLock(val.Type())
-	if err != nil {
-		return nil, err
-	}
-	buf := make([]byte, determineSize(val))
-	if _, err = utils.marshaler(val, buf, 0); err != nil {
-		return nil, err
-	}
-	return buf, nil
-}
-
-// HashedEncoding returns the hash of the encoded object.
-func HashedEncoding(val interface{}) ([32]byte, error) {
-	rval := reflect.ValueOf(val)
-	encoding, err := getEncoding(rval)
-	if err != nil {
-		return [32]byte{}, err
-	}
-	return hash(encoding), nil
 }
