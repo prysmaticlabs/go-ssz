@@ -39,16 +39,7 @@ func truncateAndHash(val reflect.Value) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, err
 	}
-	marshaler, err := makeStructMarshaler(val.Type())
-	if err != nil {
-		return [32]byte{}, err
-	}
-	var output [32]byte
-	if useCache {
-		output, err = hashCache.lookup(val, hasher, marshaler, 0)
-	} else {
-		output, err = hasher(val, 0)
-	}
+	output, err := hasher(val, 0)
 	if err != nil {
 		return [32]byte{}, err
 	}

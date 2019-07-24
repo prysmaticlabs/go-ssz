@@ -1,6 +1,7 @@
 package ssz
 
 import (
+	"encoding/binary"
 	"errors"
 	"reflect"
 	"time"
@@ -75,7 +76,9 @@ func (b *hashCacheS) lookup(
 	if _, err := marshaler(rval, buf, 0); err != nil {
 		return [32]byte{}, err
 	}
-	hs := hash(buf)
+	encodedCapacity := make([]byte, 8)
+	binary.LittleEndian.PutUint64(encodedCapacity, maxCapacity)
+	hs := hash(append(buf, encodedCapacity...))
 	exists, fetchedInfo, err := b.RootByEncodedHash(hs)
 	if err != nil {
 		return [32]byte{}, err

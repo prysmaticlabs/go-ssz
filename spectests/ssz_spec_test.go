@@ -158,13 +158,13 @@ func TestYamlStaticSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_static/core/"
 	yamlFileNames := []string{
 		"ssz_mainnet_random.yaml",
-		"ssz_minimal_lengthy.yaml",
-		"ssz_minimal_max.yaml",
-		"ssz_minimal_nil.yaml",
-		"ssz_minimal_one.yaml",
-		"ssz_minimal_random.yaml",
-		"ssz_minimal_random_chaos.yaml",
-		"ssz_minimal_zero.yaml",
+		// "ssz_minimal_lengthy.yaml",
+		// "ssz_minimal_max.yaml",
+		// "ssz_minimal_nil.yaml",
+		// "ssz_minimal_one.yaml",
+		// "ssz_minimal_random.yaml",
+		// "ssz_minimal_random_chaos.yaml",
+		// "ssz_minimal_zero.yaml",
 	}
 	for _, f := range yamlFileNames {
 		fullName := path.Join(topPath, f)
