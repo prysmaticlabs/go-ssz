@@ -2,6 +2,7 @@ package ssz
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -75,7 +76,10 @@ func (b *hashCacheS) lookup(rval reflect.Value, hasher hasher) ([32]byte, error)
 		return [32]byte{}, err
 	}
 	if exists {
+		fmt.Println("cache hit")
 		return toBytes32(fetchedInfo.MerkleRoot), nil
+	} else {
+		fmt.Println("no hit")
 	}
 	res, err := hasher(rval, 0)
 	if err != nil {
