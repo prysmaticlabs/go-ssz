@@ -38,7 +38,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	}
 	var output [32]byte
 	if useCache {
-		output, err = hashCache.lookup(rval, sszUtils.hasher)
+		output, err = hashCache.lookup(rval, sszUtils.hasher, 0)
 	} else {
 		output, err = sszUtils.hasher(rval, 0)
 	}
@@ -71,7 +71,7 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 	}
 	var output [32]byte
 	if useCache {
-		output, err = hashCache.lookup(rval, sszUtils.hasher)
+		output, err = hashCache.lookup(rval, sszUtils.hasher, 0)
 	} else {
 		output, err = sszUtils.hasher(rval, maxCapacity)
 	}
@@ -193,7 +193,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
-				r, err = hashCache.lookup(val.Index(i), utils.hasher)
+				r, err = hashCache.lookup(val.Index(i), utils.hasher, 0)
 			} else {
 				r, err = utils.hasher(val.Index(i), 0)
 			}
@@ -284,7 +284,7 @@ func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
 		for i := 0; i < val.Len(); i++ {
 			var r [32]byte
 			if useCache {
-				r, err = hashCache.lookup(val.Index(i), utils.hasher)
+				r, err = hashCache.lookup(val.Index(i), utils.hasher, 0)
 			} else {
 				r, err = utils.hasher(val.Index(i), 0)
 			}
@@ -328,7 +328,11 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 			var r [32]byte
 			var err error
 			if useCache {
-				r, err = hashCache.lookup(val.Field(f.index), f.sszUtils.hasher)
+				if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
+					r, err = hashCache.lookup(val.Field(f.index), bitlistHasher, f.capacity)
+				} else {
+					r, err = hashCache.lookup(val.Field(f.index), f.sszUtils.hasher, f.capacity)
+				}
 			} else {
 				if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
 					r, err = bitlistHasher(val.Field(f.index), f.capacity)
