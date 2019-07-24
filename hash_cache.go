@@ -86,7 +86,6 @@ func (b *hashCacheS) lookup(rval reflect.Value, hasher hasher) ([32]byte, error)
 		return [32]byte{}, err
 	}
 	return res, nil
-
 }
 
 // AddRoot adds an encodedhash of the object as key and a rootHash object to the cache.

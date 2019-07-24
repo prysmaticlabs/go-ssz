@@ -10,7 +10,7 @@ import (
 	"github.com/prysmaticlabs/go-bitfield"
 )
 
-var useCache bool
+var useCache = true
 
 // HashTreeRoot determines the root hash using SSZ's merkleization.
 // Given a struct with the following fields, one can tree hash it as follows:
