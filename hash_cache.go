@@ -79,11 +79,11 @@ func (b *hashCacheS) lookup(
 	if err != nil {
 		return [32]byte{}, err
 	}
+	// We take the hash of the generated cache key.
 	h, _ := highwayhash.New(make([]byte, 32))
 	if _, err := io.Copy(h, bytes.NewBuffer(cacheKey)); err != nil {
 		return [32]byte{}, err
 	}
-	// We take the hash of the generate cache key.
 	hs := h.Sum(nil)
 	exists, fetchedInfo, err := b.RootByEncodedHash(hs)
 	if err != nil {
