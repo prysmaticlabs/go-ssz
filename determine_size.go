@@ -88,6 +88,9 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 		}
 		return totalSize
 	case kind == reflect.Ptr:
+		if val.IsNil() {
+			return 0
+		}
 		return determineFixedSize(val.Elem(), typ.Elem())
 	default:
 		return 0
@@ -139,6 +142,9 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 
 func determineSize(val reflect.Value) uint64 {
 	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return 0
+		}
 		return determineSize(val.Elem())
 	}
 	if isVariableSizeType(val.Type()) {
