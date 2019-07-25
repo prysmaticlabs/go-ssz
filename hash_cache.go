@@ -55,7 +55,7 @@ func newHashCache(maxCacheSize int64) *hashCacheS {
 // RootByEncodedHash fetches Root by the encoded hash of the object. Returns true with a
 // reference to the root if exists. Otherwise returns false, nil.
 func (b *hashCacheS) RootByEncodedHash(h []byte) (bool, *root, error) {
-	item := b.hashCache.Get(fmt.Sprintf("%x", h))
+	item := b.hashCache.Get(string(h))
 	if item == nil {
 		hashCacheMiss.Inc()
 		return false, nil, nil
@@ -75,26 +75,15 @@ func (b *hashCacheS) lookup(
 	marshaler marshaler,
 	maxCapacity uint64,
 ) ([32]byte, error) {
-	encodedLength := make([]byte, 8)
-	encodedCapacity := make([]byte, 8)
-	binary.LittleEndian.PutUint64(encodedCapacity, maxCapacity)
-	var buf []byte
-	if rval.Kind() == reflect.Struct {
-		buf = generateStructHashKey(rval)
-	} else {
-		buf = make([]byte, determineSize(rval))
-		if _, err := marshaler(rval, buf, 0); err != nil {
-			return [32]byte{}, err
-		}
-		binary.LittleEndian.PutUint64(encodedLength, uint64(len(buf)))
-		buf = append(buf, []byte(rval.Type().String())...)
-	}
-	app1 := append(encodedCapacity, encodedLength...)
-	app2 := append(app1, buf...)
-	h, _ := highwayhash.New(make([]byte, 32))
-	if _, err := io.Copy(h, bytes.NewBuffer(app2)); err != nil {
+	cacheKey, err := generateCacheKey(rval, marshaler, maxCapacity)
+	if err != nil {
 		return [32]byte{}, err
 	}
+	h, _ := highwayhash.New(make([]byte, 32))
+	if _, err := io.Copy(h, bytes.NewBuffer(cacheKey)); err != nil {
+		return [32]byte{}, err
+	}
+	// We take the hash of the generate cache key.
 	hs := h.Sum(nil)
 	exists, fetchedInfo, err := b.RootByEncodedHash(hs)
 	if err != nil {
@@ -123,16 +112,40 @@ func (b *hashCacheS) AddRoot(h []byte, rootB []byte) error {
 		Hash:       h,
 		MerkleRoot: rootB,
 	}
-	b.hashCache.Set(fmt.Sprintf("%x", h), mr, time.Hour)
+	b.hashCache.Set(string(h), mr, time.Hour)
 	hashCacheSize.Set(float64(b.hashCache.ItemCount()))
 	return nil
 }
 
-func generateStructHashKey(v reflect.Value) []byte {
+func generateCacheKey(v reflect.Value, marshaler marshaler, maxCapacity uint64) ([]byte, error) {
+	encodedLength := make([]byte, 8)
+	encodedCapacity := make([]byte, 8)
+	binary.LittleEndian.PutUint64(encodedCapacity, maxCapacity)
+	var buf []byte
+	var err error
+	if v.Kind() == reflect.Struct {
+		buf, err = generateStructHashKey(v)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		buf = make([]byte, determineSize(v))
+		if _, err := marshaler(v, buf, 0); err != nil {
+			return nil, err
+		}
+		binary.LittleEndian.PutUint64(encodedLength, uint64(len(buf)))
+		buf = append(buf, []byte(v.Type().String())...)
+	}
+	lengthMetadata := append(encodedCapacity, encodedLength...)
+	buf = append(buf, lengthMetadata...)
+	return buf, nil
+}
+
+func generateStructHashKey(v reflect.Value) ([]byte, error) {
 	t := v.Type()
 	fields, err := structFields(t)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	var buf bytes.Buffer
 	buf.WriteString(t.String())
@@ -147,11 +160,15 @@ func generateStructHashKey(v reflect.Value) []byte {
 			buf.WriteString(fmt.Sprintf("%d", v.Field(f.index).Len()))
 		}
 		if f.typ.Kind() == reflect.Struct {
-			buf.WriteString(string(generateStructHashKey(v.Field(f.index))))
+			res, err := generateStructHashKey(v.Field(f.index))
+			if err != nil {
+				return nil, err
+			}
+			buf.WriteString(string(res))
 		}
 		buf.WriteString(fmt.Sprintf("%d", f.capacity))
 		buf.WriteString(fmt.Sprintf("%v", v.Field(f.index).Interface()))
 	}
 	buf.WriteString(string(len(fields)))
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
