@@ -130,10 +130,12 @@ func generateCacheKey(v reflect.Value, marshaler marshaler, maxCapacity uint64) 
 		}
 	} else {
 		buf = make([]byte, determineSize(v))
-		if _, err := marshaler(v, buf, 0); err != nil {
-			return nil, err
+		if v.Kind() != reflect.Struct || (v.Kind() == reflect.Ptr && !v.IsNil()) {
+			if _, err := marshaler(v, buf, 0); err != nil {
+				return nil, err
+			}
+			binary.LittleEndian.PutUint64(encodedLength, uint64(len(buf)))
 		}
-		binary.LittleEndian.PutUint64(encodedLength, uint64(len(buf)))
 		buf = append(buf, []byte(v.Type().String())...)
 	}
 	lengthMetadata := append(encodedCapacity, encodedLength...)
