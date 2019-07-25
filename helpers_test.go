@@ -74,10 +74,13 @@ func TestPack_OK(t *testing.T) {
 }
 
 func TestMerkleize_Identity(t *testing.T) {
-	input := [][]byte{make([]byte, BytesPerChunk)}
-	output := bitwiseMerkleize(input, 1)
-	if !reflect.DeepEqual(output[:], input[0]) {
-		t.Errorf("merkleize() = %v, want %v", output, input)
+	want := make([]byte, BytesPerChunk)
+	output, err := bitwiseMerkleize([][]byte{}, 0, true /* has limit */)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(output[:], want) {
+		t.Errorf("merkleize() = %v, want %v", output, want)
 	}
 }
 
@@ -108,7 +111,10 @@ func TestMerkleize_OK(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := bitwiseMerkleize(tt.input, 1)
+			got, err := bitwiseMerkleize(tt.input, 1, false /* has limit */)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !reflect.DeepEqual(got, tt.output) {
 				t.Errorf("merkleize() = %v, want %v", got, tt.output)
 			}
@@ -130,6 +136,6 @@ func BenchmarkMerkleize(b *testing.B) {
 		input[i] = make([]byte, BytesPerChunk)
 	}
 	for n := 0; n < b.N; n++ {
-		bitwiseMerkleize(input, 1)
+		bitwiseMerkleize(input, 1, false /* has limit */)
 	}
 }

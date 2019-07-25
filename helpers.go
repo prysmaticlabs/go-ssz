@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"crypto/sha256"
+	"fmt"
 	"math"
 	"reflect"
 )
@@ -78,16 +79,25 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 // number of chunks is a power of two, Merkleize the chunks, and return the root.
 // Note that merkleize on a single chunk is simply that chunk, i.e. the identity
 // when the number of chunks is one.
-func bitwiseMerkleize(chunks [][]byte, padding uint64) [32]byte {
+func bitwiseMerkleize(chunks [][]byte, limit uint64, hasLimit bool) ([32]byte, error) {
+	padding := limit
+	if !hasLimit {
+		padding = uint64(len(chunks))
+	}
 	count := uint64(len(chunks))
+
+	if count > padding {
+		return [32]byte{}, fmt.Errorf("chunk count = %d cannot be greater than padding = %d", count, padding)
+	}
+	if padding == 0 {
+		return toBytes32(zeroHashes[0]), nil
+	}
+
 	depth := uint64(bitLength(0))
 	if bitLength(count-1) > depth {
 		depth = bitLength(count - 1)
 	}
-	maxDepth := depth
-	if bitLength(padding-1) > maxDepth {
-		maxDepth = bitLength(padding - 1)
-	}
+	maxDepth := bitLength(padding - 1)
 	layers := make([][]byte, maxDepth+1)
 
 	for idx, chunk := range chunks {
@@ -103,7 +113,7 @@ func bitwiseMerkleize(chunks [][]byte, padding uint64) [32]byte {
 		layers[i+1] = res[:]
 	}
 
-	return toBytes32(layers[maxDepth])
+	return toBytes32(layers[maxDepth]), nil
 }
 
 func mergeChunks(layers [][]byte, currentRoot []byte, i, count, depth uint64) {

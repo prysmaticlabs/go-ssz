@@ -75,11 +75,11 @@ func TestSigningRoot(t *testing.T) {
 	for i, test := range signingRootTests {
 		output1, err := SigningRoot(test.Val1)
 		if err != nil {
-			t.Fatalf("could not get the signing root of test %d, value 1 %v", i, err)
+			t.Errorf("could not get the signing root of test %d, value 1 %v", i, err)
 		}
 		output2, err := SigningRoot(test.Val2)
 		if err != nil {
-			t.Fatalf("could not get the signing root of test %d, value 2 %v", i, err)
+			t.Errorf("could not get the signing root of test %d, value 2 %v", i, err)
 		}
 		// Check values have same result hash
 		if !bytes.Equal(output1[:], output2[:]) {

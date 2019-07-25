@@ -25,6 +25,7 @@ go_test(
         "yaml/ssz_single_state.yaml",
     ],
     embed = [":go_default_library"],
+    tags = ["spectest"],
     deps = [
         "//:go_default_library",
         "@com_github_ghodss_yaml//:go_default_library",

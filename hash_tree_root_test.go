@@ -20,6 +20,22 @@ type accountBalances struct {
 	Balances []uint64 `ssz-max:"1099511627776"` // Large uint64 capacity.
 }
 
+type nilItem struct {
+	Field1 []*fork
+	Field2 uint64
+}
+
+func TestNilPointerHashTreeRoot(t *testing.T) {
+	useCache = true
+	i := &nilItem{
+		Field1: []*fork{nil},
+		Field2: 10,
+	}
+	if _, err := HashTreeRoot(i); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestHashTreeRoot(t *testing.T) {
 	useCache = false
 	var currentVersion [4]byte

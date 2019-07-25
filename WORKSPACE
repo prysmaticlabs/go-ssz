@@ -28,20 +28,20 @@ load("@com_github_prysmaticlabs_go_ssz//:deps.bzl", "go_ssz_dependencies")
 
 go_ssz_dependencies()
 
-http_archive(
-    name = "eth2_spec_tests",
-    build_file_content = """
-filegroup(
-    name = "test_data",
-    srcs = glob([
-        "**/*.yaml",
-    ]),
-    visibility = ["//visibility:public"],
-)
-    """,
-    sha256 = "5e787c3ac2f2b75a3eda82d903d118e960e5440aada0a484c5669bd2c57058bc",
-    url = "https://prysmaticlabs.com/uploads/base64_encoded_archive.tar.gz",
-)
+http_archive(                                                                   
+    name = "eth2_spec_tests",                                                   
+    build_file_content = """                                                    
+filegroup(                                                                      
+    name = "test_data",                                                         
+    srcs = glob([                                                               
+        "**/*.yaml",                                                            
+    ]),                                                                         
+    visibility = ["//visibility:public"],                                       
+)                                                                               
+    """,                                                                        
+    sha256 = "a531804ac35d2398d37cfa755a686280d8cb3a9649e993e3cf89640f06191d5e",
+    url = "https://github.com/prysmaticlabs/eth2.0-spec-tests/releases/download/v0.8.1/base64_encoded_archive.tar.gz",
+)   
 
 http_archive(
     name = "io_kubernetes_build",
