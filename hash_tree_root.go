@@ -76,7 +76,7 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 	}
 	var output [32]byte
 	if useCache {
-		output, err = hashCache.lookup(rval, sszUtils.hasher, sszUtils.marshaler, 0)
+		output, err = hashCache.lookup(rval, sszUtils.hasher, sszUtils.marshaler, maxCapacity)
 	} else {
 		output, err = sszUtils.hasher(rval, maxCapacity)
 	}
