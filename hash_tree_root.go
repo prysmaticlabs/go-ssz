@@ -37,11 +37,11 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 		return [32]byte{}, fmt.Errorf("could not get ssz utils for type: %v: %v", rval.Type(), err)
 	}
 	var output [32]byte
-	// if useCache {
-	// 	output, err = hashCache.lookup(rval, sszUtils.hasher, sszUtils.marshaler, 0)
-	// } else {
-	output, err = sszUtils.hasher(rval, 0)
-	// }
+	if useCache {
+		output, err = hashCache.lookup(rval, sszUtils.hasher, sszUtils.marshaler, 0)
+	} else {
+		output, err = sszUtils.hasher(rval, 0)
+	}
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
 	}
