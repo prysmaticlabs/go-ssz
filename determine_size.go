@@ -67,13 +67,7 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 		return uint64(typ.Len())
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return uint64(val.Len())
-	case kind == reflect.Array:
-		var num uint64
-		for i := 0; i < typ.Len(); i++ {
-			num += determineFixedSize(val.Index(i), typ.Elem())
-		}
-		return num
-	case kind == reflect.Slice:
+	case kind == reflect.Array || kind == reflect.Slice:
 		var num uint64
 		for i := 0; i < val.Len(); i++ {
 			num += determineFixedSize(val.Index(i), typ.Elem())
