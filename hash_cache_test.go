@@ -2,10 +2,12 @@ package ssz
 
 import (
 	"bytes"
-	"encoding/binary"
-	"log"
+	"io"
+	"reflect"
 	"testing"
 	"time"
+
+	"github.com/minio/highwayhash"
 )
 
 type junkObject struct {
@@ -47,10 +49,20 @@ func TestCache_byHash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := HashedEncoding(byteSl)
+	marshaler, err := makeCompositeSliceMarshaler(reflect.TypeOf(byteSl))
 	if err != nil {
 		t.Fatal(err)
 	}
+	k, err := generateCacheKey(reflect.ValueOf(byteSl), marshaler, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h, _ := highwayhash.New(make([]byte, 32))
+	if _, err := io.Copy(h, bytes.NewBuffer(k)); err != nil {
+		t.Fatal(err)
+	}
+	// We take the hash of the generate cache key.
+	hs := h.Sum(nil)
 	exists, _, err := hashCache.RootByEncodedHash(hs)
 	if err != nil {
 		t.Fatal(err)
@@ -76,7 +88,7 @@ func TestCache_byHash(t *testing.T) {
 			fetchedInfo.MerkleRoot,
 		)
 	}
-	if fetchedInfo.Hash != hs {
+	if !bytes.Equal(fetchedInfo.Hash, hs) {
 		t.Errorf(
 			"Expected fetched info hash to be %v, got %v",
 			hs,
@@ -105,29 +117,5 @@ func BenchmarkHashWithCache(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		HashTreeRoot(&tree{First: First, Second: First})
-	}
-}
-
-func TestBlockCache_maxSize(t *testing.T) {
-	maxCacheSize := int64(10000)
-	cache := newHashCache(maxCacheSize)
-	for i := uint64(0); i < uint64(maxCacheSize+1025); i++ {
-		rootNum := make([]byte, 8)
-		binary.LittleEndian.PutUint64(rootNum, i)
-		if err := cache.AddRoot(toBytes32(rootNum[:4]), []byte{1}); err != nil {
-			t.Fatal(err)
-		}
-	}
-	log.Printf(
-		"hash cache key size is %d, itemcount is %d",
-		maxCacheSize,
-		cache.hashCache.ItemCount(),
-	)
-	if int64(cache.hashCache.ItemCount()) > maxCacheSize {
-		t.Errorf(
-			"Expected hash cache key size to be %d, got %d",
-			maxCacheSize,
-			cache.hashCache.ItemCount(),
-		)
 	}
 }

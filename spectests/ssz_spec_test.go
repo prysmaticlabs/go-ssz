@@ -288,7 +288,6 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 					expectedRoot:    testCase.Checkpoint.Root,
 				})
 			})
-
 		}
 		if !isEmpty(testCase.CompactCommittee.Value) {
 			t.Run("CompactCommittee", func(t *testing.T) {

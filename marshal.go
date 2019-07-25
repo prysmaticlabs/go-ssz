@@ -275,7 +275,6 @@ func makePtrMarshaler(typ reflect.Type) (marshaler, error) {
 	marshaler := func(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 		// Nil encodes to []byte{}.
 		if val.IsNil() {
-			buf[startOffset] = 0
 			return 0, nil
 		}
 		return elemSSZUtils.marshaler(val.Elem(), buf, startOffset)

@@ -67,8 +67,8 @@ go_library(
     importpath = "github.com/prysmaticlabs/go-ssz",
     visibility = ["//visibility:public"],
     deps = [
-        "@com_github_ethereum_go_ethereum//common:go_default_library",
         "@com_github_karlseguin_ccache//:go_default_library",
+        "@com_github_minio_highwayhash//:go_default_library",
         "@com_github_prometheus_client_golang//prometheus:go_default_library",
         "@com_github_prometheus_client_golang//prometheus/promauto:go_default_library",
         "@com_github_prysmaticlabs_go_bitfield//:go_default_library",
@@ -82,7 +82,9 @@ go_test(
         "hash_tree_root_test.go",
         "helpers_test.go",
         "marshal_unmarshal_test.go",
+        "signing_root_test.go",
         "struct_utils_test.go",
     ],
     embed = [":go_default_library"],
+    deps = ["@com_github_minio_highwayhash//:go_default_library"],
 )
