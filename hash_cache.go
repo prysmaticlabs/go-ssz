@@ -129,8 +129,8 @@ func generateCacheKey(v reflect.Value, marshaler marshaler, maxCapacity uint64) 
 			return nil, err
 		}
 	} else {
-		buf = make([]byte, determineSize(v))
 		if v.Kind() != reflect.Struct || (v.Kind() == reflect.Ptr && !v.IsNil()) {
+			buf = make([]byte, determineSize(v))
 			if _, err := marshaler(v, buf, 0); err != nil {
 				return nil, err
 			}
