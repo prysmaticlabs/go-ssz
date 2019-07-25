@@ -86,4 +86,5 @@ go_test(
         "struct_utils_test.go",
     ],
     embed = [":go_default_library"],
+    deps = ["@com_github_minio_highwayhash//:go_default_library"],
 )

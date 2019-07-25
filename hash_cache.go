@@ -159,13 +159,6 @@ func generateStructHashKey(v reflect.Value) ([]byte, error) {
 		if f.typ.Kind() == reflect.Slice {
 			buf.WriteString(fmt.Sprintf("%d", v.Field(f.index).Len()))
 		}
-		if f.typ.Kind() == reflect.Struct {
-			res, err := generateStructHashKey(v.Field(f.index))
-			if err != nil {
-				return nil, err
-			}
-			buf.WriteString(string(res))
-		}
 		buf.WriteString(fmt.Sprintf("%d", f.capacity))
 		buf.WriteString(fmt.Sprintf("%v", v.Field(f.index).Interface()))
 	}

@@ -327,36 +327,20 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 		for _, f := range fields {
 			var r [32]byte
 			var err error
+			if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
+				r, err = bitlistHasher(val.Field(f.index), f.capacity)
+				roots = append(roots, r[:])
+				continue
+			}
 			if useCache {
-				if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
-					r, err = bitlistHasher(val.Field(f.index), f.capacity)
-				} else {
-					if f.hasCapacity {
-						r, err = hashCache.lookup(
-							val.Field(f.index),
-							f.sszUtils.hasher,
-							f.sszUtils.marshaler,
-							f.capacity,
-						)
-					} else {
-						r, err = hashCache.lookup(
-							val.Field(f.index),
-							f.sszUtils.hasher,
-							f.sszUtils.marshaler,
-							0,
-						)
-					}
-				}
+				r, err = hashCache.lookup(
+					val.Field(f.index),
+					f.sszUtils.hasher,
+					f.sszUtils.marshaler,
+					f.capacity,
+				)
 			} else {
-				if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
-					r, err = bitlistHasher(val.Field(f.index), f.capacity)
-				} else {
-					if f.hasCapacity {
-						r, err = f.sszUtils.hasher(val.Field(f.index), f.capacity)
-					} else {
-						r, err = f.sszUtils.hasher(val.Field(f.index), 0)
-					}
-				}
+				r, err = f.sszUtils.hasher(val.Field(f.index), f.capacity)
 			}
 			if err != nil {
 				return [32]byte{}, fmt.Errorf("failed to hash field %s of struct: %v", f.name, err)
