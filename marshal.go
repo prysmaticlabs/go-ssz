@@ -148,6 +148,15 @@ func marshalByteSlice(val reflect.Value, buf []byte, startOffset uint64) (uint64
 }
 
 func marshalByteArray(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
+	rawByteLength := val.Len()
+	if b, ok := val.Interface().([]byte); ok {
+		copy(buf[startOffset:startOffset+uint64(rawByteLength)], b)
+		return startOffset + uint64(rawByteLength), nil
+	}
+	if b, ok := val.Interface().(bitfield.Bitvector4); ok {
+		copy(buf[startOffset:startOffset+uint64(rawByteLength)], b)
+		return startOffset + uint64(rawByteLength), nil
+	}
 	rawBytes := make([]byte, val.Len())
 	for i := 0; i < val.Len(); i++ {
 		rawBytes[i] = uint8(val.Index(i).Uint())

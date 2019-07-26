@@ -109,7 +109,10 @@ func bitwiseMerkleize(chunks [][]byte, limit uint64, hasLimit bool) ([32]byte, e
 	}
 
 	for i := depth; i < maxDepth; i++ {
-		res := hash(append(layers[i], zeroHashes[i]...))
+		v := make([]byte, 64)
+		copy(v[:32], layers[i][:])
+		copy(v[32:], zeroHashes[i][:])
+		res := hash(v)
 		layers[i+1] = res[:]
 	}
 
@@ -121,13 +124,19 @@ func mergeChunks(layers [][]byte, currentRoot []byte, i, count, depth uint64) {
 	for {
 		if i&(1<<j) == 0 {
 			if i == count && j < depth {
-				res := hash(append(currentRoot[:], zeroHashes[j]...))
+				v := make([]byte, 64)
+				copy(v[:32], currentRoot[:])
+				copy(v[32:], zeroHashes[j][:])
+				res := hash(v)
 				currentRoot = res[:]
 			} else {
 				break
 			}
 		} else {
-			res := hash(append(layers[j], currentRoot[:]...))
+			v := make([]byte, 64)
+			copy(v[:32], layers[j][:])
+			copy(v[32:], currentRoot[:])
+			res := hash(v)
 			currentRoot = res[:]
 		}
 		j++
