@@ -35,7 +35,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error)
 ````
 
 ## Usage examples
-**Notice:** SSZ supports `bool`, `uint8`, `uint16`, `uint32`, `uint64`, `slice`, `array`, `struct` and `pointer`data types.
+**Notice:** SSZ supports `bool`, `uint8`, `uint16`, `uint32`, `uint64`, `slice`, `array`, `struct` and `pointer` data types.
 
 ### Encoding an object (Marshal)
 
