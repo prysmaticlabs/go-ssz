@@ -8,7 +8,7 @@
 Simple Serialize is the serialization algorithm standard for all data structures common across Ethereum 2.0 client implementations. It is outlined in the official [Ethereum 2.0 specification](https://github.com/ethereum/eth2.0-specs/blob/master/specs/simple-serialize.md). 
 
 ### Need assistance?
-A more indepth breakdown of SSZ is available in [this section](https://prysmaticlabs.gitbook.io/prysm/how-prysm-works/ethereum-2.0-serialization-simple-serialize-ssz) of our official documentation. If you still have questions, feel free to stop by either our [Discord](https://discord.gg/KSA7rPr) or [Gitter](https://gitter.im/prysmaticlabs/geth-sharding?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) and a member of the team or our community will be happy to assist you.
+A more in-depth breakdown of SSZ is available in [this section](https://prysmaticlabs.gitbook.io/prysm/how-prysm-works/ethereum-2.0-serialization-simple-serialize-ssz) of our official documentation. If you still have questions, feel free to stop by either our [Discord](https://discord.gg/KSA7rPr) or [Gitter](https://gitter.im/prysmaticlabs/geth-sharding?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) and a member of the team or our community will be happy to assist you.
 
 ## Functionality
 
