@@ -81,11 +81,12 @@ go_test(
         "hash_cache_test.go",
         "hash_tree_root_test.go",
         "helpers_test.go",
+        "marshal_test.go",
         "marshal_unmarshal_test.go",
         "signing_root_test.go",
         "struct_utils_test.go",
-        "marshal_test.go",
     ],
     embed = [":go_default_library"],
     deps = ["@com_github_minio_highwayhash//:go_default_library"],
+    race = "on",
 )

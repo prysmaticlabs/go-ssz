@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"encoding/hex"
+	"sync"
 	"testing"
 )
 
@@ -126,4 +127,25 @@ func TestHashTreeRoot_EncodeSliceLengthCorrectly(t *testing.T) {
 		t.Errorf("Mismatched roots, wanted %#x == %#x", root, want)
 	}
 	useCache = true
+}
+
+func TestHashTreeRoot_ConcurrentAccess(t *testing.T) {
+	useCache = true
+	item := &truncateSignatureCase{
+		Slot:              10,
+		//PreviousBlockRoot: []byte{'a', 'b'},
+		//Signature:         []byte("TESTING23"),
+	}
+	var wg sync.WaitGroup
+	// We ensure the signing root function can be computed in a thread-safe manner.
+	wg.Add(100)
+	for i := 0; i < 100; i++ {
+		go func(tt *testing.T, w *sync.WaitGroup) {
+			if _, err := HashTreeRoot(item); err != nil {
+				tt.Fatal(err)
+			}
+			w.Done()
+		}(t, &wg)
+	}
+	wg.Wait()
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/karlseguin/ccache"
@@ -36,6 +37,7 @@ var (
 // hashCacheS struct with one queue for looking up by hash.
 type hashCacheS struct {
 	hashCache *ccache.Cache
+	lock      sync.Mutex
 }
 
 // root specifies the hash of data in a struct
@@ -55,7 +57,9 @@ func newHashCache(maxCacheSize int64) *hashCacheS {
 // RootByEncodedHash fetches Root by the encoded hash of the object. Returns true with a
 // reference to the root if exists. Otherwise returns false, nil.
 func (b *hashCacheS) RootByEncodedHash(h []byte) (bool, *root, error) {
+	b.lock.Lock()
 	item := b.hashCache.Get(string(h))
+	b.lock.Unlock()
 	if item == nil {
 		hashCacheMiss.Inc()
 		return false, nil, nil
@@ -96,24 +100,26 @@ func (b *hashCacheS) lookup(
 	if err != nil {
 		return [32]byte{}, err
 	}
-	err = b.AddRoot(hs, res[:])
+	err = b.addRoot(hs, res[:])
 	if err != nil {
 		return [32]byte{}, err
 	}
 	return res, nil
 }
 
-// AddRoot adds an encodedhash of the object as key and a rootHash object to the cache.
+// addRoot adds an encodedhash of the object as key and a rootHash object to the cache.
 // This method also trims the
 // least recently added root info if the cache size has reached the max cache
 // size limit.
-func (b *hashCacheS) AddRoot(h []byte, rootB []byte) error {
+func (b *hashCacheS) addRoot(h []byte, rootB []byte) error {
 	mr := &root{
 		Hash:       h,
 		MerkleRoot: rootB,
 	}
+	b.lock.Lock()
 	b.hashCache.Set(string(h), mr, time.Hour)
 	hashCacheSize.Set(float64(b.hashCache.ItemCount()))
+	b.lock.Unlock()
 	return nil
 }
 
@@ -130,11 +136,8 @@ func generateCacheKey(v reflect.Value, marshaler marshaler, maxCapacity uint64) 
 		}
 	} else {
 		if v.Kind() != reflect.Struct || (v.Kind() == reflect.Ptr && !v.IsNil()) {
-			buf = make([]byte, determineSize(v))
-			if _, err := marshaler(v, buf, 0); err != nil {
-				return nil, err
-			}
-			binary.LittleEndian.PutUint64(encodedLength, uint64(len(buf)))
+			itemLength := determineSize(v)
+			binary.LittleEndian.PutUint64(encodedLength, itemLength)
 		}
 		buf = append(buf, []byte(v.Type().String())...)
 	}

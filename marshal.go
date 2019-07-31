@@ -157,7 +157,7 @@ func marshalByteArray(val reflect.Value, buf []byte, startOffset uint64) (uint64
 }
 
 func makeBasicSliceMarshaler(typ reflect.Type) (marshaler, error) {
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	elemSSZUtils, err := cachedSSZUtils(typ.Elem())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
@@ -177,7 +177,7 @@ func makeBasicSliceMarshaler(typ reflect.Type) (marshaler, error) {
 }
 
 func makeCompositeSliceMarshaler(typ reflect.Type) (marshaler, error) {
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	elemSSZUtils, err := cachedSSZUtils(typ.Elem())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 	}
@@ -268,7 +268,7 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 }
 
 func makePtrMarshaler(typ reflect.Type) (marshaler, error) {
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	elemSSZUtils, err := cachedSSZUtils(typ.Elem())
 	if err != nil {
 		return nil, err
 	}

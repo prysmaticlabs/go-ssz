@@ -2,6 +2,7 @@ package ssz
 
 import (
 	"bytes"
+	"sync"
 	"testing"
 )
 
@@ -86,4 +87,24 @@ func TestSigningRoot(t *testing.T) {
 			t.Errorf("test %d: hash mismatch: %X\n != %X", i, output1, output2)
 		}
 	}
+}
+
+func TestSigningRoot_ConcurrentAccess(t *testing.T) {
+	item := &truncateSignatureCase{
+		Slot:              10,
+		PreviousBlockRoot: []byte{'a', 'b'},
+		Signature:         []byte("TESTING23"),
+	}
+	var wg sync.WaitGroup
+	// We ensure the signing root function can be computed in a thread-safe manner.
+	wg.Add(100)
+	for i := 0; i < 100; i++ {
+		go func(tt *testing.T, w *sync.WaitGroup) {
+			if _, err := SigningRoot(item); err != nil {
+				tt.Fatal(err)
+			}
+			w.Done()
+		}(t, &wg)
+	}
+	wg.Wait()
 }

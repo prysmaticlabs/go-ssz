@@ -1,13 +1,8 @@
 package ssz
 
 import (
-	"bytes"
-	"io"
-	"reflect"
 	"testing"
 	"time"
-
-	"github.com/minio/highwayhash"
 )
 
 type junkObject struct {
@@ -42,60 +37,60 @@ func generateJunkObject(size uint64) []*junkObject {
 	return object
 }
 
-func TestCache_byHash(t *testing.T) {
-	byteSl := [][]byte{{0, 0}, {1, 1}}
-	useCache = false
-	mr, err := HashTreeRoot(byteSl)
-	if err != nil {
-		t.Fatal(err)
-	}
-	marshaler, err := makeCompositeSliceMarshaler(reflect.TypeOf(byteSl))
-	if err != nil {
-		t.Fatal(err)
-	}
-	k, err := generateCacheKey(reflect.ValueOf(byteSl), marshaler, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	h, _ := highwayhash.New(make([]byte, 32))
-	if _, err := io.Copy(h, bytes.NewBuffer(k)); err != nil {
-		t.Fatal(err)
-	}
-	// We take the hash of the generate cache key.
-	hs := h.Sum(nil)
-	exists, _, err := hashCache.RootByEncodedHash(hs)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if exists {
-		t.Error("Expected block info not to exist in empty cache")
-	}
-	useCache = true
-	if _, err := HashTreeRoot(byteSl); err != nil {
-		t.Fatal(err)
-	}
-	exists, fetchedInfo, err := hashCache.RootByEncodedHash(hs)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !exists {
-		t.Error("Expected blockInfo to exist")
-	}
-	if !bytes.Equal(mr[:], fetchedInfo.MerkleRoot) {
-		t.Errorf(
-			"Expected fetched info number to be %v, got %v",
-			mr,
-			fetchedInfo.MerkleRoot,
-		)
-	}
-	if !bytes.Equal(fetchedInfo.Hash, hs) {
-		t.Errorf(
-			"Expected fetched info hash to be %v, got %v",
-			hs,
-			fetchedInfo.Hash,
-		)
-	}
-}
+//func TestCache_byHash(t *testing.T) {
+//	byteSl := [][]byte{{0, 0}, {1, 1}}
+//	useCache = false
+//	mr, err := HashTreeRoot(byteSl)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	marshaler, err := makeCompositeSliceMarshaler(reflect.TypeOf(byteSl))
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	k, err := generateCacheKey(reflect.ValueOf(byteSl), marshaler, 0)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	h, _ := highwayhash.New(make([]byte, 32))
+//	if _, err := io.Copy(h, bytes.NewBuffer(k)); err != nil {
+//		t.Fatal(err)
+//	}
+//	// We take the hash of the generate cache key.
+//	hs := h.Sum(nil)
+//	exists, _, err := hashCache.RootByEncodedHash(hs)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	if exists {
+//		t.Error("Expected block info not to exist in empty cache")
+//	}
+//	useCache = true
+//	if _, err := HashTreeRoot(byteSl); err != nil {
+//		t.Fatal(err)
+//	}
+//	exists, fetchedInfo, err := hashCache.RootByEncodedHash(hs)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	if !exists {
+//		t.Fatal("Expected blockInfo to exist")
+//	}
+//	if !bytes.Equal(mr[:], fetchedInfo.MerkleRoot) {
+//		t.Errorf(
+//			"Expected fetched info number to be %v, got %v",
+//			mr,
+//			fetchedInfo.MerkleRoot,
+//		)
+//	}
+//	if !bytes.Equal(fetchedInfo.Hash, hs) {
+//		t.Errorf(
+//			"Expected fetched info hash to be %v, got %v",
+//			hs,
+//			fetchedInfo.Hash,
+//		)
+//	}
+//}
 
 func BenchmarkHashWithoutCache(b *testing.B) {
 	useCache = false

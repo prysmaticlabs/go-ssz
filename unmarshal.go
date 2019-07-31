@@ -133,7 +133,7 @@ func makeByteSliceUnmarshaler() (unmarshaler, error) {
 }
 
 func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	elemSSZUtils, err := cachedSSZUtils(typ.Elem())
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func makeBasicSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 
 func makeCompositeSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 	elemType := typ.Elem()
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
+	elemSSZUtils, err := cachedSSZUtils(elemType)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +255,7 @@ func makeCompositeSliceUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 
 func makeBasicArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 	elemType := typ.Elem()
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
+	elemSSZUtils, err := cachedSSZUtils(elemType)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func makeBasicArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 
 func makeCompositeArrayUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 	elemType := typ.Elem()
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
+	elemSSZUtils, err := cachedSSZUtils(elemType)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +399,7 @@ func makeStructUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 
 func makePtrUnmarshaler(typ reflect.Type) (unmarshaler, error) {
 	elemType := typ.Elem()
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(elemType)
+	elemSSZUtils, err := cachedSSZUtils(elemType)
 	if err != nil {
 		return nil, err
 	}

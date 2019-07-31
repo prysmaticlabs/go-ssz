@@ -25,16 +25,6 @@ type field struct {
 	hasCapacity bool
 }
 
-// truncateLast removes the last value of a struct, usually the signature,
-// in order to hash only the data the signature field is intended to represent.
-func truncateLast(typ reflect.Type) (fields []field, err error) {
-	fields, err = structFields(typ)
-	if err != nil {
-		return nil, err
-	}
-	return fields[:len(fields)-1], nil
-}
-
 // structFields iterates over the raw fields of a struct, ignoring XXX protobuf fields,
 // and determines the necessary ssz utils such as the marshaler, unmarshaler, and tree hasher
 // for that particular struct field. Then, it returns a slice of field wrappers containing
@@ -58,7 +48,7 @@ func structFields(typ reflect.Type) (fields []field, err error) {
 
 		// We determine the SSZ utils for the field, including its respective
 		// marshaler, unmarshaler, and hasher.
-		utils, err := cachedSSZUtilsNoAcquireLock(fType)
+		utils, err := cachedSSZUtils(fType)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get ssz utils: %v", err)
 		}

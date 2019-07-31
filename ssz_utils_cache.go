@@ -20,7 +20,7 @@ type sszUtils struct {
 }
 
 var (
-	sszUtilsCacheMutex sync.RWMutex
+	sszUtilsCacheMutex sync.Mutex
 	sszUtilsCache      = make(map[reflect.Type]*sszUtils)
 	hashCache          = newHashCache(100000)
 )
@@ -28,43 +28,29 @@ var (
 // Get cached encoder, encodeSizer and unmarshaler implementation for a specified type.
 // With a cache we can achieve O(1) amortized time overhead for creating encoder, encodeSizer and decoder.
 func cachedSSZUtils(typ reflect.Type) (*sszUtils, error) {
-	sszUtilsCacheMutex.RLock()
-	utils := sszUtilsCache[typ]
-	sszUtilsCacheMutex.RUnlock()
-	if utils != nil {
-		return utils, nil
-	}
-
-	// If not found in cache, will get a new one and put it into the cache
 	sszUtilsCacheMutex.Lock()
-	defer sszUtilsCacheMutex.Unlock()
-	return cachedSSZUtilsNoAcquireLock(typ)
-}
-
-// This version is used when the caller is already holding the rw lock for sszUtilsCache.
-// It doesn't acquire new rw lock so it's free to recursively call itself without getting into
-// a deadlock situation.
-//
-// Make sure you are
-func cachedSSZUtilsNoAcquireLock(typ reflect.Type) (*sszUtils, error) {
-	// Check again in case other goroutine has just acquired the lock
-	// and already updated the cache
-	utils := sszUtilsCache[typ]
-	if utils != nil {
-		return utils, nil
+	cachedUtils, ok := sszUtilsCache[typ]
+	sszUtilsCacheMutex.Unlock()
+	if ok && cachedUtils != nil {
+		return cachedUtils, nil
 	}
 	// Put a dummy value into the cache before generating.
 	// If the generator tries to lookup the type of itself,
 	// it will get the dummy value and won't call recursively forever.
+	sszUtilsCacheMutex.Lock()
 	sszUtilsCache[typ] = new(sszUtils)
+	sszUtilsCacheMutex.Unlock()
 	utils, err := generateSSZUtilsForType(typ)
 	if err != nil {
-		// Don't forget to remove the dummy key when fail
+		sszUtilsCacheMutex.Lock()
 		delete(sszUtilsCache, typ)
+		sszUtilsCacheMutex.Unlock()
 		return nil, err
 	}
-	// Overwrite the dummy value with real value
+	// Overwrite the dummy value with real value.
+	sszUtilsCacheMutex.Lock()
 	*sszUtilsCache[typ] = *utils
+	sszUtilsCacheMutex.Unlock()
 	return sszUtilsCache[typ], nil
 }
 

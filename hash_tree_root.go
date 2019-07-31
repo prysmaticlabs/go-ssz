@@ -37,16 +37,17 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 		return [32]byte{}, errors.New("untyped nil is not supported")
 	}
 	rval := reflect.ValueOf(val)
-	sszUtils, err := cachedSSZUtils(rval.Type())
+	sszUtils, err := generateSSZUtilsForType(rval.Type())
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("could not get ssz utils for type: %v: %v", rval.Type(), err)
 	}
-	var output [32]byte
-	if useCache {
-		output, err = hashCache.lookup(rval, sszUtils.hasher, sszUtils.marshaler, 0)
-	} else {
-		output, err = sszUtils.hasher(rval, 0)
-	}
+	//var output [32]byte
+	//if useCache {
+	//	output, err = hashCache.lookup(rval, sszUtils.hasher, sszUtils.marshaler, 0)
+	//} else {
+		output, err := sszUtils.hasher(rval, 0)
+	//}
+	fmt.Println(output)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
 	}
@@ -111,7 +112,7 @@ func makeHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeBasicTypeHasher(typ reflect.Type) (hasher, error) {
-	utils, err := cachedSSZUtilsNoAcquireLock(typ)
+	utils, err := cachedSSZUtils(typ)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +157,7 @@ func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 }
 
 func makeBasicArrayHasher(typ reflect.Type) (hasher, error) {
-	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	utils, err := cachedSSZUtils(typ.Elem())
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +183,7 @@ func makeBasicArrayHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
-	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	utils, err := cachedSSZUtils(typ.Elem())
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +221,7 @@ func makeCompositeArrayHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
-	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	utils, err := cachedSSZUtils(typ.Elem())
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +272,7 @@ func makeBasicSliceHasher(typ reflect.Type) (hasher, error) {
 }
 
 func makeCompositeSliceHasher(typ reflect.Type) (hasher, error) {
-	utils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	utils, err := cachedSSZUtils(typ.Elem())
 	if err != nil {
 		return nil, err
 	}
@@ -358,7 +359,7 @@ func makeFieldsHasher(fields []field) (hasher, error) {
 }
 
 func makePtrHasher(typ reflect.Type) (hasher, error) {
-	elemSSZUtils, err := cachedSSZUtilsNoAcquireLock(typ.Elem())
+	elemSSZUtils, err := cachedSSZUtils(typ.Elem())
 	if err != nil {
 		return nil, err
 	}

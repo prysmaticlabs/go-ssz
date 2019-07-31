@@ -45,3 +45,13 @@ func truncateAndHash(val reflect.Value) ([32]byte, error) {
 	}
 	return output, nil
 }
+
+// truncateLast removes the last value of a struct, usually the signature,
+// in order to hash only the data the signature field is intended to represent.
+func truncateLast(typ reflect.Type) (fields []field, err error) {
+	fields, err = structFields(typ)
+	if err != nil {
+		return nil, err
+	}
+	return fields[:len(fields)-1], nil
+}
