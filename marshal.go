@@ -234,10 +234,8 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		for _, f := range fields {
 			if isVariableSizeType(f.typ) {
 				fixedLength += BytesPerLengthOffset
-				fmt.Printf("%s VARIABLE and length %d\n", f.name, fixedLength)
 			} else {
 				fixedLength += determineFixedSize(val.Field(f.index), f.typ)
-				fmt.Printf("%s FIXED and length %d\n", f.name, fixedLength)
 			}
 		}
 
@@ -246,16 +244,20 @@ func makeStructMarshaler(typ reflect.Type) (marshaler, error) {
 		var err error
 		for i, f := range fields {
 			if !isVariableSizeType(f.typ) {
+				fmt.Printf("%s pre-fixed index %d\n", f.name, fixedIndex)
 				fixedIndex, err = f.sszUtils.marshaler(val.Field(i), buf, fixedIndex)
 				if err != nil {
 					return 0, err
 				}
+				fmt.Printf("%s post-fixed index %d\n", f.name, fixedIndex)
 			} else {
 				//fmt.Printf("%s FIXED and index %d and t %s\n", f.name, currentOffsetIndex, tString)
+				fmt.Printf("%s pre-variable offset index %d\n", f.name, currentOffsetIndex)
 				nextOffsetIndex, err = f.sszUtils.marshaler(val.Field(f.index), buf, currentOffsetIndex)
 				if err != nil {
 					return 0, err
 				}
+				fmt.Printf("%s post-variable offset index %d\n", f.name, nextOffsetIndex)
 				// Write the offset.
 				offsetBuf := make([]byte, BytesPerLengthOffset)
 				binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
