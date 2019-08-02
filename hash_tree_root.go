@@ -219,8 +219,7 @@ func newBasicSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	var err error
 	for i := 0; i < val.Len(); i++ {
 		if isBasicType(val.Index(i).Kind()) {
-			innerBufSize := determineSize(val.Index(i))
-			innerBuf := make([]byte, innerBufSize)
+			innerBuf := make([]byte, elemSize)
 			if _, err = newMakeMarshaler(val.Index(i), typ.Elem(), innerBuf, 0); err != nil {
 				return [32]byte{}, err
 			}
