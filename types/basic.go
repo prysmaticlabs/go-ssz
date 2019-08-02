@@ -4,18 +4,15 @@ import (
 	"encoding/binary"
 	"fmt"
 	"reflect"
-	"time"
-
-	"github.com/karlseguin/ccache"
 )
 
 type BasicSSZ struct {
-	hashCache *ccache.Cache
+	hashCache map[string]interface{}
 }
 
 func NewBasicSSZ() *BasicSSZ {
 	return &BasicSSZ{
-		hashCache: ccache.New(ccache.Configure().MaxSize(100000)),
+		hashCache: make(map[string]interface{}),
 	}
 }
 
@@ -39,7 +36,7 @@ func (b *BasicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, star
 	}
 }
 
-func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type) ([32]byte, error) {
+func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	var chunks [][]byte
 	var err error
 	var hashKey string
@@ -48,9 +45,9 @@ func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 		return [32]byte{}, err
 	}
 	hashKey = string(buf)
-	res := b.hashCache.Get(hashKey)
+	res := b.hashCache[hashKey]
 	if res != nil {
-		return res.Value().([32]byte), nil
+		return res.([32]byte), nil
 	}
 
 	chunks, err = pack([][]byte{buf})
@@ -61,7 +58,7 @@ func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, err
 	}
-	b.hashCache.Set(hashKey, root, time.Hour)
+	b.hashCache[hashKey] = root
 	return root, nil
 }
 

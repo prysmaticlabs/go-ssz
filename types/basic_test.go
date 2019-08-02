@@ -1,26 +1,42 @@
 package types
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"reflect"
 	"testing"
 	"time"
 )
 
-func TestBasicSSZ_Root(t *testing.T) {
-	type args struct {
-		v interface{}
-	}
-	items := [120000]uint64{}
-	for i := 0; i < 120000; i++ {
-		items[i] = uint64(i)
-	}
-	val := reflect.ValueOf(items)
-	typ := reflect.TypeOf(items)
-	factory, _ := SSZFactory(val, typ)
+type fork struct {
+	PreviousVersion [4]uint16
+	CurrentVersion  [4]uint16
+	Epoch           uint64
+}
 
-	start := time.Now()
+func TestBasicSSZ_Root(t *testing.T) {
+	forkItem := fork{
+		PreviousVersion: [4]uint16{1, 2, 3, 4},
+		CurrentVersion:  [4]uint16{1, 2, 3, 4},
+		Epoch:           200,
+	}
+	val := reflect.ValueOf(forkItem)
+	typ := reflect.TypeOf(forkItem)
+	factory, _ := SSZFactory(val, typ)
 	got, err := factory.Root(val, typ)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := hex.DecodeString("3ad1264c33bc66b43a49b1258b88f34b8dbfa1649f17e6df550f589650d34992")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got[:], want) {
+		t.Errorf("want %#x, HashTreeRoot() = %#x", want, got)
+	}
+	start := time.Now()
+	got, err = factory.Root(val, typ)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,15 +49,4 @@ func TestBasicSSZ_Root(t *testing.T) {
 	}
 	end = time.Now()
 	fmt.Printf("%#x and time %v\n", got, end.Sub(start))
-
-	items[200] = uint64(302)
-	val = reflect.ValueOf(items)
-	typ = reflect.TypeOf(items)
-	start = time.Now()
-	got, err = factory.Root(val, typ)
-	if err != nil {
-		t.Fatal(err)
-	}
-	end = time.Now()
-	fmt.Printf("%#x and time %v and added one more item\n", got, end.Sub(start))
 }

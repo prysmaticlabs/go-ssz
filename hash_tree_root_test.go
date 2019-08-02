@@ -3,8 +3,10 @@ package ssz
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"sync"
 	"testing"
+	"time"
 )
 
 func init() {
@@ -17,6 +19,12 @@ type fork struct {
 	Epoch           uint64
 }
 
+type otherItem struct {
+	PreviousVersion [4]uint16
+	CurrentVersion  [4]uint16
+	Epoch           uint64
+}
+
 type accountBalances struct {
 	Balances []uint64 `ssz-max:"1099511627776"` // Large uint64 capacity.
 }
@@ -24,6 +32,21 @@ type accountBalances struct {
 type nilItem struct {
 	Field1 []*fork
 	Field2 uint64
+}
+
+func TestOtherItem(t *testing.T) {
+	otherItem := otherItem{
+		PreviousVersion: [4]uint16{1, 2, 3, 4},
+		CurrentVersion:  [4]uint16{1, 2, 3, 4},
+		Epoch:           200,
+	}
+	start := time.Now()
+	root, err := HashTreeRoot(otherItem)
+	if err != nil {
+		t.Fatal(err)
+	}
+	end := time.Now()
+	fmt.Printf("%#x and %v\n", root, end.Sub(start))
 }
 
 func TestNilPointerHashTreeRoot(t *testing.T) {
