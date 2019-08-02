@@ -14,13 +14,17 @@ func NewStructSSZ() *StructSSZ {
 	}
 }
 
+func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+	return 0, nil
+}
+
 func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	roots := [][]byte{}
 	hashKey := []byte{}
 	var err error
 	for i := 0; i < typ.NumField(); i++ {
 		factory, _ := SSZFactory(val.Field(i), val.Field(i).Type())
-		r, err := factory.Root(val.Field(i), val.Field(i).Type())
+		r, err := factory.Root(val.Field(i), val.Field(i).Type(), maxCapacity)
 		if err != nil {
 			return [32]byte{}, err
 		}
