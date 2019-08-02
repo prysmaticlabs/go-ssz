@@ -96,7 +96,7 @@ func makeMarshaler(typ reflect.Type) (marshaler, error) {
 }
 
 func marshalBool(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
-	if val.Bool() {
+	if val.Interface().(bool) {
 		buf[startOffset] = uint8(1)
 	} else {
 		buf[startOffset] = uint8(0)
@@ -105,55 +105,49 @@ func marshalBool(val reflect.Value, buf []byte, startOffset uint64) (uint64, err
 }
 
 func marshalUint8(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
-	v := val.Uint()
-	buf[startOffset] = uint8(v)
+	buf[startOffset] = val.Interface().(uint8)
 	return startOffset + 1, nil
 }
 
 func marshalUint16(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
-	v := val.Uint()
-	b := make([]byte, 2)
-	binary.LittleEndian.PutUint16(b, uint16(v))
-	copy(buf[startOffset:startOffset+2], b)
+	binary.LittleEndian.PutUint16(buf[startOffset:], val.Interface().(uint16))
 	return startOffset + 2, nil
 }
 
 func marshalUint32(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
-	v := val.Uint()
-	b := make([]byte, 4)
-	binary.LittleEndian.PutUint32(b, uint32(v))
-	copy(buf[startOffset:startOffset+4], b)
+	binary.LittleEndian.PutUint32(buf[startOffset:], val.Interface().(uint32))
 	return startOffset + 4, nil
 }
 
 func marshalUint64(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
-	v := val.Uint()
-	b := make([]byte, 8)
-	binary.LittleEndian.PutUint64(b, uint64(v))
-	copy(buf[startOffset:startOffset+8], b)
+	binary.LittleEndian.PutUint64(buf[startOffset:], val.Interface().(uint64))
 	return startOffset + 8, nil
 }
 
 func marshalByteSlice(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
-	if _, ok := val.Interface().(bitfield.Bitfield); ok {
-		newVal := reflect.New(reflect.TypeOf([]byte{})).Elem()
-		newVal.Set(val)
-		newSlice := newVal.Interface().([]byte)
-		copy(buf[startOffset:startOffset+uint64(val.Len())], newSlice)
-		return startOffset + uint64(len(newSlice)), nil
+	if bits, ok := val.Interface().(bitfield.Bitlist); ok {
+		copy(buf[startOffset:], bits[:])
+		return startOffset + uint64(len(bits)), nil
 	}
-	slice := val.Slice(0, val.Len()).Interface().([]byte)
-	copy(buf[startOffset:startOffset+uint64(len(slice))], slice)
-	return startOffset + uint64(val.Len()), nil
+	v := val.Interface().([]byte)
+	copy(buf[startOffset:], v)
+	return startOffset + uint64(len(v)), nil
 }
 
 func marshalByteArray(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
-	rawBytes := make([]byte, val.Len())
-	for i := 0; i < val.Len(); i++ {
-		rawBytes[i] = uint8(val.Index(i).Uint())
+	switch v := val.Interface().(type) {
+	case []uint8:
+		copy(buf[startOffset:], v)
+		return startOffset + uint64(len(v)), nil
+	case bitfield.Bitvector4:
+		copy(buf[startOffset:], v)
+		return startOffset + uint64(len(v)), nil
+	default:
+		for i := 0; i < val.Len(); i++ {
+			buf[int(startOffset)+i] = uint8(val.Index(i).Uint())
+		}
+		return startOffset + uint64(val.Len()), nil
 	}
-	copy(buf[startOffset:startOffset+uint64(len(rawBytes))], rawBytes)
-	return startOffset + uint64(len(rawBytes)), nil
 }
 
 func makeBasicSliceMarshaler(typ reflect.Type) (marshaler, error) {

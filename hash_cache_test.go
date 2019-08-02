@@ -2,7 +2,6 @@ package ssz
 
 import (
 	"bytes"
-	"io"
 	"reflect"
 	"testing"
 	"time"
@@ -58,7 +57,7 @@ func TestCache_byHash(t *testing.T) {
 		t.Fatal(err)
 	}
 	h, _ := highwayhash.New(make([]byte, 32))
-	if _, err := io.Copy(h, bytes.NewBuffer(k)); err != nil {
+	if _, err := h.Write(k); err != nil {
 		t.Fatal(err)
 	}
 	// We take the hash of the generate cache key.
