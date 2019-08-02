@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
 	"reflect"
 	"time"
 
@@ -81,7 +80,8 @@ func (b *hashCacheS) lookup(
 	}
 	// We take the hash of the generated cache key.
 	h, _ := highwayhash.New(make([]byte, 32))
-	if _, err := io.Copy(h, bytes.NewBuffer(cacheKey)); err != nil {
+
+	if _, err := h.Write(cacheKey); err != nil {
 		return [32]byte{}, err
 	}
 	hs := h.Sum(nil)
