@@ -88,4 +88,5 @@ go_test(
     ],
     embed = [":go_default_library"],
     deps = ["@com_github_minio_highwayhash//:go_default_library"],
+    race = "on",
 )
