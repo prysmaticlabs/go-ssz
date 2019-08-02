@@ -61,19 +61,19 @@ func recursiveMarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffs
 	kind := typ.Kind()
 	switch {
 	case kind == reflect.Bool:
-		return marshalBool(val, typ, buf, startOffset)
+		return marshalBool(val, buf, startOffset)
 	case kind == reflect.Uint8:
-		return marshalUint8(val, typ, buf, startOffset)
+		return marshalUint8(val, buf, startOffset)
 	case kind == reflect.Uint16:
-		return marshalUint16(val, typ, buf, startOffset)
+		return marshalUint16(val, buf, startOffset)
 	case kind == reflect.Uint32:
-		return marshalUint32(val, typ, buf, startOffset)
+		return marshalUint32(val, buf, startOffset)
 	case kind == reflect.Uint64:
-		return marshalUint64(val, typ, buf, startOffset)
+		return marshalUint64(val, buf, startOffset)
 	case kind == reflect.Slice && val.Type().Elem().Kind() == reflect.Uint8:
-		return marshalByteSlice(val, typ, buf, startOffset)
+		return marshalByteSlice(val, buf, startOffset)
 	case kind == reflect.Array && val.Type().Elem().Kind() == reflect.Uint8:
-		return marshalByteArray(val, typ, buf, startOffset)
+		return marshalByteArray(val, buf, startOffset)
 	case kind == reflect.Slice && isBasicTypeArray(val.Type().Elem(), val.Type().Elem().Kind()):
 		return basicSliceMarshaler(val, typ, buf, startOffset)
 	case kind == reflect.Slice && isBasicType(val.Type().Elem().Kind()):
@@ -91,7 +91,7 @@ func recursiveMarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffs
 	}
 }
 
-func marshalBool(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalBool(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	if val.Interface().(bool) {
 		buf[startOffset] = uint8(1)
 	} else {
@@ -100,27 +100,27 @@ func marshalBool(val reflect.Value, typ reflect.Type, buf []byte, startOffset ui
 	return startOffset + 1, nil
 }
 
-func marshalUint8(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalUint8(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	buf[startOffset] = val.Interface().(uint8)
 	return startOffset + 1, nil
 }
 
-func marshalUint16(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalUint16(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	binary.LittleEndian.PutUint16(buf[startOffset:], val.Interface().(uint16))
 	return startOffset + 2, nil
 }
 
-func marshalUint32(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalUint32(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	binary.LittleEndian.PutUint32(buf[startOffset:], val.Interface().(uint32))
 	return startOffset + 4, nil
 }
 
-func marshalUint64(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalUint64(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	binary.LittleEndian.PutUint64(buf[startOffset:], val.Interface().(uint64))
 	return startOffset + 8, nil
 }
 
-func marshalByteSlice(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalByteSlice(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	if bits, ok := val.Interface().(bitfield.Bitlist); ok {
 		copy(buf[startOffset:], bits[:])
 		return startOffset + uint64(len(bits)), nil
@@ -130,7 +130,7 @@ func marshalByteSlice(val reflect.Value, typ reflect.Type, buf []byte, startOffs
 	return startOffset + uint64(len(v)), nil
 }
 
-func marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalByteArray(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	switch v := val.Interface().(type) {
 	case []uint8:
 		copy(buf[startOffset:], v)
