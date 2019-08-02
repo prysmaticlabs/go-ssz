@@ -144,7 +144,9 @@ func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 		return [32]byte{}, err
 	}
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, bfield.Len())
+	if err := binary.Write(buf, binary.LittleEndian, bfield.Len()); err != nil {
+		return [32]byte{}, err
+	}
 	output := make([]byte, 32)
 	copy(output, buf.Bytes())
 	merkleRoot, err := bitwiseMerkleize(chunks, limit, true /* has limit */)
@@ -236,7 +238,9 @@ func newBasicSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64
 		return [32]byte{}, err
 	}
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, uint64(val.Len()))
+	if err := binary.Write(buf, binary.LittleEndian, uint64(val.Len())); err != nil {
+		return [32]byte{}, err
+	}
 	output := make([]byte, 32)
 	copy(output, buf.Bytes())
 	merkleRoot, err := bitwiseMerkleize(chunks, limit, true /* has limit */)
@@ -270,7 +274,10 @@ func newCompositeSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity ui
 		return [32]byte{}, err
 	}
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, uint64(val.Len()))
+	if err := binary.Write(buf, binary.LittleEndian, uint64(val.Len())); err != nil {
+		return [32]byte{}, err
+	}
+
 	copy(output, buf.Bytes())
 	objLen := maxCapacity
 	if maxCapacity == 0 {
@@ -311,7 +318,7 @@ func makeFieldsHasher(val reflect.Value, fields []field) ([32]byte, error) {
 			r, err = newMakeHasher(val.Field(f.index), f.typ, f.capacity)
 		}
 		if err != nil {
-			return [32]byte{}, fmt.Errorf("failed to hash field %s of struct: %v", val.Field(f.index).Type().Name(), err)
+			return [32]byte{}, fmt.Errorf("failed to hash field %s of struct: %v", f.name, err)
 		}
 		roots[i] = r[:]
 	}
