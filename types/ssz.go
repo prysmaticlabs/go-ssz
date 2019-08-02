@@ -3,7 +3,7 @@ package types
 import "reflect"
 
 var basicSSZ = NewBasicSSZ()
-var compositeSliceSSZ = NewCompositeSliceSSZ()
+var compositeArraySSZ = NewCompositeArraySSZ()
 var basicSliceSSZ = NewBasicSliceSSZ()
 
 type SSZAble interface {
@@ -16,11 +16,13 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 	case isBasicType(kind) || isBasicTypeArray(typ, typ.Kind()):
 		return basicSSZ, nil
 	case kind == reflect.Slice:
+		return basicSliceSSZ, nil
+	case kind == reflect.Array:
 		switch {
-		case isVariableSizeType(val.Type().Elem()):
-			return compositeSliceSSZ, nil
+		//case isVariableSizeType(val.Type().Elem()):
+		//	return compositeSliceSSZ, nil
 		default:
-			return basicSliceSSZ, nil
+			return compositeArraySSZ, nil
 		}
 	default:
 		return nil, nil
