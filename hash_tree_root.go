@@ -99,7 +99,7 @@ func newMakeHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32
 	case kind == reflect.Array:
 		return newCompositeArrayHasher(val, typ)
 	case kind == reflect.Struct:
-		return newMakeStructHasher(val, typ, maxCapacity)
+		return newMakeStructHasher(val, typ)
 	case kind == reflect.Ptr:
 		return newMakePtrHasher(val, typ, maxCapacity)
 	default:
@@ -290,7 +290,7 @@ func newCompositeSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity ui
 	return mixInLength(merkleRoot, output), nil
 }
 
-func newMakeStructHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func newMakeStructHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	fields, err := structFields(typ)
 	if err != nil {
 		return [32]byte{}, err
