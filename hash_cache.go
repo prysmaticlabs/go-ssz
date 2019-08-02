@@ -91,7 +91,7 @@ func (b *hashCacheS) lookup(
 	if exists {
 		return toBytes32(fetchedInfo.MerkleRoot), nil
 	}
-	res, err := newMakeHasher(rval, typ, maxCapacity)
+	res, err := recursiveHasher(rval, typ, maxCapacity)
 	if err != nil {
 		return [32]byte{}, err
 	}

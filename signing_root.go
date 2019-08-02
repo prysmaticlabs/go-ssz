@@ -35,5 +35,5 @@ func truncateAndHash(val reflect.Value) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, err
 	}
-	return makeFieldsHasher(val, truncated)
+	return fieldsHasher(val, truncated)
 }

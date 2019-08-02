@@ -32,13 +32,13 @@ func Unmarshal(input []byte, val interface{}) error {
 	if rval.IsNil() {
 		return errors.New("cannot output to pointer of nil value")
 	}
-	if _, err := newMakeUnmarshaler(input, rval.Elem(), rval.Elem().Type(), 0); err != nil {
+	if _, err := recursiveUnmarshaler(input, rval.Elem(), rval.Elem().Type(), 0); err != nil {
 		return fmt.Errorf("could not unmarshal input into type: %v, %v", rval.Elem().Type(), err)
 	}
 	return nil
 }
 
-func newMakeUnmarshaler(input []byte, val reflect.Value, typ reflect.Type, startOffset uint64) (uint64, error) {
+func recursiveUnmarshaler(input []byte, val reflect.Value, typ reflect.Type, startOffset uint64) (uint64, error) {
 	kind := typ.Kind()
 	switch {
 	case kind == reflect.Bool:
@@ -154,7 +154,7 @@ func newBasicSliceUmmarshaler(input []byte, val reflect.Value, typ reflect.Type,
 
 	var err error
 	index := startOffset
-	index, err = newMakeUnmarshaler(input, val.Index(0), typ.Elem(), index)
+	index, err = recursiveUnmarshaler(input, val.Index(0), typ.Elem(), index)
 	if err != nil {
 		return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
 	}
@@ -185,7 +185,7 @@ func newBasicSliceUmmarshaler(input []byte, val reflect.Value, typ reflect.Type,
 		if val.Type() == typ {
 			growConcreteSliceType(val, val.Type(), int(i)+1)
 		}
-		index, err = newMakeUnmarshaler(input, val.Index(int(i)), typ.Elem(), index)
+		index, err = recursiveUnmarshaler(input, val.Index(int(i)), typ.Elem(), index)
 		if err != nil {
 			return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
 		}
@@ -220,7 +220,7 @@ func newCompositeSliceUnmarshaler(input []byte, val reflect.Value, typ reflect.T
 		}
 		// We grow the slice's size to accommodate a new element being unmarshaled.
 		growConcreteSliceType(val, typ, i+1)
-		if _, err := newMakeUnmarshaler(input[currentOffset:nextOffset], val.Index(i), typ.Elem(), 0); err != nil {
+		if _, err := recursiveUnmarshaler(input[currentOffset:nextOffset], val.Index(i), typ.Elem(), 0); err != nil {
 			return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
 		}
 		i++
@@ -239,7 +239,7 @@ func newBasicArrayUnmarshaler(input []byte, val reflect.Value, typ reflect.Type,
 		if val.Index(i).Kind() == reflect.Ptr {
 			instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
 		}
-		index, err = newMakeUnmarshaler(input, val.Index(i), typ.Elem(), index)
+		index, err = recursiveUnmarshaler(input, val.Index(i), typ.Elem(), index)
 		if err != nil {
 			return 0, fmt.Errorf("failed to unmarshal element of array: %v", err)
 		}
@@ -268,7 +268,7 @@ func newCompositeArrayUnmarshaler(input []byte, val reflect.Value, typ reflect.T
 		if val.Index(i).Kind() == reflect.Ptr {
 			instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
 		}
-		if _, err := newMakeUnmarshaler(input[currentOffset:nextOffset], val.Index(i), typ.Elem(), 0); err != nil {
+		if _, err := recursiveUnmarshaler(input[currentOffset:nextOffset], val.Index(i), typ.Elem(), 0); err != nil {
 			return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
 		}
 		i++
@@ -337,7 +337,7 @@ func newStructUnmarshaler(input []byte, val reflect.Value, typ reflect.Type, sta
 		}
 		if fieldSize > 0 {
 			nextIndex = currentIndex + fieldSize
-			if _, err := newMakeUnmarshaler(input[currentIndex:nextIndex], val.Field(i), f.typ, 0); err != nil {
+			if _, err := recursiveUnmarshaler(input[currentIndex:nextIndex], val.Field(i), f.typ, 0); err != nil {
 				return 0, err
 			}
 			currentIndex = nextIndex
@@ -345,7 +345,7 @@ func newStructUnmarshaler(input []byte, val reflect.Value, typ reflect.Type, sta
 		} else {
 			firstOff := offsets[offsetIndex]
 			nextOff := offsets[offsetIndex+1]
-			if _, err := newMakeUnmarshaler(input[firstOff:nextOff], val.Field(i), f.typ, 0); err != nil {
+			if _, err := recursiveUnmarshaler(input[firstOff:nextOff], val.Field(i), f.typ, 0); err != nil {
 				return 0, err
 			}
 			offsetIndex++
@@ -356,7 +356,7 @@ func newStructUnmarshaler(input []byte, val reflect.Value, typ reflect.Type, sta
 }
 
 func newPtrUnmarshaler(input []byte, val reflect.Value, typ reflect.Type, startOffset uint64) (uint64, error) {
-	elemSize, err := newMakeUnmarshaler(input, val.Elem(), typ.Elem(), startOffset)
+	elemSize, err := recursiveUnmarshaler(input, val.Elem(), typ.Elem(), startOffset)
 	if err != nil {
 		return 0, fmt.Errorf("failed to unmarshal to object pointed by pointer: %v", err)
 	}

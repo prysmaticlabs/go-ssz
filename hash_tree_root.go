@@ -45,7 +45,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if useCache {
 		r, err = hashCache.lookup(rval, rval.Type(), 0)
 	} else {
-		r, err = newMakeHasher(rval, rval.Type(), 0)
+		r, err = recursiveHasher(rval, rval.Type(), 0)
 	}
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
@@ -75,7 +75,7 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 	if useCache {
 		r, err = hashCache.lookup(rval, rval.Type(), maxCapacity)
 	} else {
-		r, err = newMakeHasher(rval, rval.Type(), maxCapacity)
+		r, err = recursiveHasher(rval, rval.Type(), maxCapacity)
 	}
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
@@ -83,31 +83,31 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 	return r, nil
 }
 
-func newMakeHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func recursiveHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	kind := typ.Kind()
 	switch {
 	case isBasicType(kind) || isBasicTypeArray(typ, kind):
-		return newMakeBasicTypeHasher(val, typ)
+		return basicTypeHasher(val, typ)
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
-		return newBasicSliceHasher(val, typ, maxCapacity)
+		return basicSliceHasher(val, typ, maxCapacity)
 	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
-		return newBasicSliceHasher(val, typ, maxCapacity)
+		return basicSliceHasher(val, typ, maxCapacity)
 	case kind == reflect.Array && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
-		return newBasicArrayHasher(val, typ)
+		return basicArrayHasher(val, typ)
 	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
-		return newCompositeSliceHasher(val, typ, maxCapacity)
+		return compositeSliceHasher(val, typ, maxCapacity)
 	case kind == reflect.Array:
-		return newCompositeArrayHasher(val, typ)
+		return compositeArrayHasher(val, typ)
 	case kind == reflect.Struct:
-		return newMakeStructHasher(val, typ)
+		return structHasher(val, typ)
 	case kind == reflect.Ptr:
-		return newMakePtrHasher(val, typ, maxCapacity)
+		return ptrHasher(val, typ, maxCapacity)
 	default:
 		return [32]byte{}, fmt.Errorf("type %v is not hashable", typ)
 	}
 }
 
-func newMakeBasicTypeHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
+func basicTypeHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	var chunks [][]byte
 	var err error
 	if b, ok := val.Interface().([]byte); ok {
@@ -117,7 +117,7 @@ func newMakeBasicTypeHasher(val reflect.Value, typ reflect.Type) ([32]byte, erro
 		}
 	} else {
 		buf := make([]byte, determineSize(val))
-		if _, err := newMakeMarshaler(val, typ, buf, 0); err != nil {
+		if _, err := recursiveMarshal(val, typ, buf, 0); err != nil {
 			return [32]byte{}, err
 		}
 		chunks, err = pack([][]byte{buf})
@@ -156,11 +156,11 @@ func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	return mixInLength(merkleRoot, output), nil
 }
 
-func newBasicArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
+func basicArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	var leaves [][]byte
 	var err error
 	for i := 0; i < val.Len(); i++ {
-		r, err := newMakeHasher(val.Index(i), typ.Elem(), 0)
+		r, err := recursiveHasher(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
@@ -176,7 +176,7 @@ func newBasicArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) 
 	return bitwiseMerkleize(chunks, 1, false /* has limit */)
 }
 
-func newCompositeArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
+func compositeArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	roots := [][]byte{}
 	elemSize := uint64(0)
 	if isBasicType(typ.Elem().Kind()) {
@@ -187,7 +187,7 @@ func newCompositeArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, err
 	limit := (uint64(val.Len())*elemSize + 31) / 32
 	var err error
 	for i := 0; i < val.Len(); i++ {
-		r, err := newMakeHasher(val.Index(i), typ.Elem(), 0)
+		r, err := recursiveHasher(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
@@ -203,7 +203,7 @@ func newCompositeArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, err
 	return bitwiseMerkleize(chunks, limit, true /* has limit */)
 }
 
-func newBasicSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func basicSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	elemSize := uint64(0)
 	if isBasicType(typ.Elem().Kind()) {
 		elemSize = determineFixedSize(val, typ.Elem())
@@ -220,12 +220,12 @@ func newBasicSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	for i := 0; i < val.Len(); i++ {
 		if isBasicType(val.Index(i).Kind()) {
 			innerBuf := make([]byte, elemSize)
-			if _, err = newMakeMarshaler(val.Index(i), typ.Elem(), innerBuf, 0); err != nil {
+			if _, err = recursiveMarshal(val.Index(i), typ.Elem(), innerBuf, 0); err != nil {
 				return [32]byte{}, err
 			}
 			leaves = append(leaves, innerBuf)
 		} else {
-			r, err := newMakeHasher(val.Index(i), typ.Elem(), 0)
+			r, err := recursiveHasher(val.Index(i), typ.Elem(), 0)
 			if err != nil {
 				return [32]byte{}, err
 			}
@@ -249,7 +249,7 @@ func newBasicSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	return mixInLength(merkleRoot, output), nil
 }
 
-func newCompositeSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func compositeSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	roots := [][]byte{}
 	output := make([]byte, 32)
 	if val.Len() == 0 && maxCapacity == 0 {
@@ -262,7 +262,7 @@ func newCompositeSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity ui
 	}
 	var err error
 	for i := 0; i < val.Len(); i++ {
-		r, err := newMakeHasher(val.Index(i), typ.Elem(), 0)
+		r, err := recursiveHasher(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
@@ -289,15 +289,15 @@ func newCompositeSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity ui
 	return mixInLength(merkleRoot, output), nil
 }
 
-func newMakeStructHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
+func structHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	fields, err := structFields(typ)
 	if err != nil {
 		return [32]byte{}, err
 	}
-	return makeFieldsHasher(val, fields)
+	return fieldsHasher(val, fields)
 }
 
-func makeFieldsHasher(val reflect.Value, fields []field) ([32]byte, error) {
+func fieldsHasher(val reflect.Value, fields []field) ([32]byte, error) {
 	roots := make([][]byte, len(fields))
 	for i, f := range fields {
 		var r [32]byte
@@ -314,7 +314,7 @@ func makeFieldsHasher(val reflect.Value, fields []field) ([32]byte, error) {
 				f.capacity,
 			)
 		} else {
-			r, err = newMakeHasher(val.Field(f.index), f.typ, f.capacity)
+			r, err = recursiveHasher(val.Field(f.index), f.typ, f.capacity)
 		}
 		if err != nil {
 			return [32]byte{}, fmt.Errorf("failed to hash field %s of struct: %v", f.name, err)
@@ -324,9 +324,9 @@ func makeFieldsHasher(val reflect.Value, fields []field) ([32]byte, error) {
 	return bitwiseMerkleize(roots, uint64(len(fields)), true /* has limit */)
 }
 
-func newMakePtrHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func ptrHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	if val.IsNil() {
 		return [32]byte{}, nil
 	}
-	return newMakeHasher(val.Elem(), typ.Elem(), maxCapacity)
+	return recursiveHasher(val.Elem(), typ.Elem(), maxCapacity)
 }

@@ -51,47 +51,47 @@ func Marshal(val interface{}) ([]byte, error) {
 
 	// We pre-allocate a buffer-size depending on the value's calculated total byte size.
 	buf := make([]byte, determineSize(rval))
-	if _, err := newMakeMarshaler(rval, rval.Type(), buf, 0 /* start offset */); err != nil {
+	if _, err := recursiveMarshal(rval, rval.Type(), buf, 0 /* start offset */); err != nil {
 		return nil, fmt.Errorf("failed to marshal for type: %v", rval.Type())
 	}
 	return buf, nil
 }
 
-func newMakeMarshaler(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func recursiveMarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	kind := typ.Kind()
 	switch {
 	case kind == reflect.Bool:
-		return newMarshalBool(val, typ, buf, startOffset)
+		return marshalBool(val, typ, buf, startOffset)
 	case kind == reflect.Uint8:
-		return newMarshalUint8(val, typ, buf, startOffset)
+		return marshalUint8(val, typ, buf, startOffset)
 	case kind == reflect.Uint16:
-		return newMarshalUint16(val, typ, buf, startOffset)
+		return marshalUint16(val, typ, buf, startOffset)
 	case kind == reflect.Uint32:
-		return newMarshalUint32(val, typ, buf, startOffset)
+		return marshalUint32(val, typ, buf, startOffset)
 	case kind == reflect.Uint64:
-		return newMarshalUint64(val, typ, buf, startOffset)
+		return marshalUint64(val, typ, buf, startOffset)
 	case kind == reflect.Slice && val.Type().Elem().Kind() == reflect.Uint8:
-		return newMarshalByteSlice(val, typ, buf, startOffset)
+		return marshalByteSlice(val, typ, buf, startOffset)
 	case kind == reflect.Array && val.Type().Elem().Kind() == reflect.Uint8:
-		return newMarshalByteArray(val, typ, buf, startOffset)
+		return marshalByteArray(val, typ, buf, startOffset)
 	case kind == reflect.Slice && isBasicTypeArray(val.Type().Elem(), val.Type().Elem().Kind()):
-		return newmakeBasicSliceMarshaler(val, typ, buf, startOffset)
+		return basicSliceMarshaler(val, typ, buf, startOffset)
 	case kind == reflect.Slice && isBasicType(val.Type().Elem().Kind()):
-		return newmakeBasicSliceMarshaler(val, typ, buf, startOffset)
+		return basicSliceMarshaler(val, typ, buf, startOffset)
 	case kind == reflect.Slice && !isVariableSizeType(val.Type().Elem()):
-		return newmakeBasicSliceMarshaler(val, typ, buf, startOffset)
+		return basicSliceMarshaler(val, typ, buf, startOffset)
 	case kind == reflect.Slice || kind == reflect.Array:
-		return newmakeCompositeSliceMarshaler(val, typ, buf, startOffset)
+		return compositeSliceMarshaler(val, typ, buf, startOffset)
 	case kind == reflect.Struct:
-		return newmakeStructMarshaler(val, typ, buf, startOffset)
+		return structMarshaler(val, typ, buf, startOffset)
 	case kind == reflect.Ptr:
-		return newmakePtrMarshaler(val, typ, buf, startOffset)
+		return ptrMarshaler(val, typ, buf, startOffset)
 	default:
 		return 0, fmt.Errorf("type %v is not serializable", val.Type())
 	}
 }
 
-func newMarshalBool(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalBool(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	if val.Interface().(bool) {
 		buf[startOffset] = uint8(1)
 	} else {
@@ -100,27 +100,27 @@ func newMarshalBool(val reflect.Value, typ reflect.Type, buf []byte, startOffset
 	return startOffset + 1, nil
 }
 
-func newMarshalUint8(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalUint8(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	buf[startOffset] = val.Interface().(uint8)
 	return startOffset + 1, nil
 }
 
-func newMarshalUint16(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalUint16(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	binary.LittleEndian.PutUint16(buf[startOffset:], val.Interface().(uint16))
 	return startOffset + 2, nil
 }
 
-func newMarshalUint32(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalUint32(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	binary.LittleEndian.PutUint32(buf[startOffset:], val.Interface().(uint32))
 	return startOffset + 4, nil
 }
 
-func newMarshalUint64(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalUint64(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	binary.LittleEndian.PutUint64(buf[startOffset:], val.Interface().(uint64))
 	return startOffset + 8, nil
 }
 
-func newMarshalByteSlice(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalByteSlice(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	if bits, ok := val.Interface().(bitfield.Bitlist); ok {
 		copy(buf[startOffset:], bits[:])
 		return startOffset + uint64(len(bits)), nil
@@ -130,7 +130,7 @@ func newMarshalByteSlice(val reflect.Value, typ reflect.Type, buf []byte, startO
 	return startOffset + uint64(len(v)), nil
 }
 
-func newMarshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	switch v := val.Interface().(type) {
 	case []uint8:
 		copy(buf[startOffset:], v)
@@ -146,11 +146,11 @@ func newMarshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startO
 	}
 }
 
-func newmakeBasicSliceMarshaler(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func basicSliceMarshaler(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	index := startOffset
 	var err error
 	for i := 0; i < val.Len(); i++ {
-		index, err = newMakeMarshaler(val.Index(i), typ.Elem(), buf, index)
+		index, err = recursiveMarshal(val.Index(i), typ.Elem(), buf, index)
 		if err != nil {
 			return 0, err
 		}
@@ -158,14 +158,14 @@ func newmakeBasicSliceMarshaler(val reflect.Value, typ reflect.Type, buf []byte,
 	return index, nil
 }
 
-func newmakeCompositeSliceMarshaler(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func compositeSliceMarshaler(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	index := startOffset
 	var err error
 	if !isVariableSizeType(typ.Elem()) {
 		for i := 0; i < val.Len(); i++ {
 			// If each element is not variable size, we simply encode sequentially and write
 			// into the buffer at the last index we wrote at.
-			index, err = newMakeMarshaler(val.Index(i), typ.Elem(), buf, index)
+			index, err = recursiveMarshal(val.Index(i), typ.Elem(), buf, index)
 			if err != nil {
 				return 0, err
 			}
@@ -177,7 +177,7 @@ func newmakeCompositeSliceMarshaler(val reflect.Value, typ reflect.Type, buf []b
 		// If the elements are variable size, we need to include offset indices
 		// in the serialized output list.
 		for i := 0; i < val.Len(); i++ {
-			nextOffsetIndex, err = newMakeMarshaler(val.Index(i), typ.Elem(), buf, currentOffsetIndex)
+			nextOffsetIndex, err = recursiveMarshal(val.Index(i), typ.Elem(), buf, currentOffsetIndex)
 			if err != nil {
 				return 0, err
 			}
@@ -195,7 +195,7 @@ func newmakeCompositeSliceMarshaler(val reflect.Value, typ reflect.Type, buf []b
 	return index, nil
 }
 
-func newmakeStructMarshaler(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func structMarshaler(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	fields, err := structFields(typ)
 	if err != nil {
 		return 0, err
@@ -215,12 +215,12 @@ func newmakeStructMarshaler(val reflect.Value, typ reflect.Type, buf []byte, sta
 	nextOffsetIndex := currentOffsetIndex
 	for _, f := range fields {
 		if !isVariableSizeType(f.typ) {
-			fixedIndex, err = newMakeMarshaler(val.Field(f.index), f.typ, buf, fixedIndex)
+			fixedIndex, err = recursiveMarshal(val.Field(f.index), f.typ, buf, fixedIndex)
 			if err != nil {
 				return 0, err
 			}
 		} else {
-			nextOffsetIndex, err = newMakeMarshaler(val.Field(f.index), f.typ, buf, currentOffsetIndex)
+			nextOffsetIndex, err = recursiveMarshal(val.Field(f.index), f.typ, buf, currentOffsetIndex)
 			if err != nil {
 				return 0, err
 			}
@@ -237,10 +237,10 @@ func newmakeStructMarshaler(val reflect.Value, typ reflect.Type, buf []byte, sta
 	return currentOffsetIndex, nil
 }
 
-func newmakePtrMarshaler(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func ptrMarshaler(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	// Nil encodes to []byte{}.
 	if val.IsNil() {
 		return 0, nil
 	}
-	return newMakeMarshaler(val.Elem(), typ.Elem(), buf, startOffset)
+	return recursiveMarshal(val.Elem(), typ.Elem(), buf, startOffset)
 }
