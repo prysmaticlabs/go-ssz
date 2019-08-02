@@ -32,7 +32,7 @@ func (b *BasicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, star
 		return marshalUint32(val, buf, startOffset)
 	case kind == reflect.Uint64:
 		return marshalUint64(val, buf, startOffset)
-	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
+	case kind == reflect.Array && isBasicType(typ.Elem().Kind()):
 		return b.marshalBasicSlice(val, typ, buf, startOffset)
 	default:
 		return 0, fmt.Errorf("type %v is not serializable", val.Type())
@@ -43,35 +43,19 @@ func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	var chunks [][]byte
 	var err error
 	var hashKey string
-	if item, ok := val.Interface().([]byte); ok {
-		// Do a cache lookup.
-		hashKey = string(item)
-		res := b.hashCache.Get(hashKey)
-		if res != nil {
-			return res.Value().([32]byte), nil
-		}
+	buf := make([]byte, determineSize(val))
+	if _, err := b.Marshal(val, typ, buf, 0); err != nil {
+		return [32]byte{}, err
+	}
+	hashKey = string(buf)
+	res := b.hashCache.Get(hashKey)
+	if res != nil {
+		return res.Value().([32]byte), nil
+	}
 
-		chunks, err = pack([][]byte{item})
-		if err != nil {
-			return [32]byte{}, err
-		}
-	} else {
-		buf := make([]byte, determineSize(val))
-		if _, err := b.Marshal(val, typ, buf, 0); err != nil {
-			return [32]byte{}, err
-		}
-
-		hashKey = string(buf)
-		res := b.hashCache.Get(hashKey)
-		if res != nil {
-			fmt.Println("Found in the cache")
-			return res.Value().([32]byte), nil
-		}
-
-		chunks, err = pack([][]byte{buf})
-		if err != nil {
-			return [32]byte{}, err
-		}
+	chunks, err = pack([][]byte{buf})
+	if err != nil {
+		return [32]byte{}, err
 	}
 	root, err := bitwiseMerkleize(chunks, 1, false /* has limit */)
 	if err != nil {

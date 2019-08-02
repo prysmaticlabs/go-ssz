@@ -1,22 +1,23 @@
 package types
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
 )
 
 func TestBasicSSZ_Root(t *testing.T) {
-	factory := NewBasicSSZ()
 	type args struct {
 		v interface{}
 	}
-	items := []uint64{}
+	items := [120000]uint64{}
 	for i := 0; i < 120000; i++ {
-		items = append(items, uint64(i))
+		items[i] = uint64(i)
 	}
 	val := reflect.ValueOf(items)
 	typ := reflect.TypeOf(items)
+	factory, _ := SSZFactory(val, typ)
 
 	start := time.Now()
 	got, err := factory.Root(val, typ)
@@ -24,16 +25,16 @@ func TestBasicSSZ_Root(t *testing.T) {
 		t.Fatal(err)
 	}
 	end := time.Now()
-	t.Logf("%#x and time %v", got, end.Sub(start))
+	fmt.Printf("%#x and time %v\n", got, end.Sub(start))
 	start = time.Now()
 	got, err = factory.Root(val, typ)
 	if err != nil {
 		t.Fatal(err)
 	}
 	end = time.Now()
-	t.Logf("%#x and time %v", got, end.Sub(start))
+	fmt.Printf("%#x and time %v\n", got, end.Sub(start))
 
-	items = append(items, uint64(320323))
+	items[200] = uint64(302)
 	val = reflect.ValueOf(items)
 	typ = reflect.TypeOf(items)
 	start = time.Now()
@@ -42,5 +43,5 @@ func TestBasicSSZ_Root(t *testing.T) {
 		t.Fatal(err)
 	}
 	end = time.Now()
-	t.Logf("%#x and time %v and added one more item", got, end.Sub(start))
+	fmt.Printf("%#x and time %v and added one more item\n", got, end.Sub(start))
 }
