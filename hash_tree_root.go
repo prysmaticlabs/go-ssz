@@ -87,17 +87,17 @@ func newMakeHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32
 	kind := typ.Kind()
 	switch {
 	case isBasicType(kind) || isBasicTypeArray(typ, kind):
-		return newMakeBasicTypeHasher(val, typ, maxCapacity)
+		return newMakeBasicTypeHasher(val, typ)
 	case kind == reflect.Slice && isBasicType(typ.Elem().Kind()):
 		return newBasicSliceHasher(val, typ, maxCapacity)
 	case kind == reflect.Slice && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
 		return newBasicSliceHasher(val, typ, maxCapacity)
 	case kind == reflect.Array && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
-		return newBasicArrayHasher(val, typ, maxCapacity)
+		return newBasicArrayHasher(val, typ)
 	case kind == reflect.Slice && !isBasicType(typ.Elem().Kind()):
 		return newCompositeSliceHasher(val, typ, maxCapacity)
 	case kind == reflect.Array:
-		return newCompositeArrayHasher(val, typ, maxCapacity)
+		return newCompositeArrayHasher(val, typ)
 	case kind == reflect.Struct:
 		return newMakeStructHasher(val, typ, maxCapacity)
 	case kind == reflect.Ptr:
@@ -107,7 +107,7 @@ func newMakeHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32
 	}
 }
 
-func newMakeBasicTypeHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func newMakeBasicTypeHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	var chunks [][]byte
 	var err error
 	if b, ok := val.Interface().([]byte); ok {
@@ -154,16 +154,14 @@ func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	return mixInLength(merkleRoot, output), nil
 }
 
-func newBasicArrayHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func newBasicArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	var leaves [][]byte
 	var err error
 	for i := 0; i < val.Len(); i++ {
-		var r [32]byte
-		//if useCache {
-		//	r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
-		//} else {
-			r, err = newMakeHasher(val.Index(i), typ.Elem(), 0)
-		//}
+		r, err := newMakeHasher(val.Index(i), typ.Elem(), 0)
+		if err != nil {
+			return [32]byte{}, err
+		}
 		leaves = append(leaves, r[:])
 	}
 	chunks, err := pack(leaves)
@@ -176,7 +174,7 @@ func newBasicArrayHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	return bitwiseMerkleize(chunks, 1, false /* has limit */)
 }
 
-func newCompositeArrayHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func newCompositeArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 	roots := [][]byte{}
 	elemSize := uint64(0)
 	if isBasicType(typ.Elem().Kind()) {
@@ -187,12 +185,10 @@ func newCompositeArrayHasher(val reflect.Value, typ reflect.Type, maxCapacity ui
 	limit := (uint64(val.Len())*elemSize + 31) / 32
 	var err error
 	for i := 0; i < val.Len(); i++ {
-		var r [32]byte
-		//if useCache {
-		//	r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
-		//} else {
-			r, err = newMakeHasher(val.Index(i), typ.Elem(), 0)
-		//}
+		r, err := newMakeHasher(val.Index(i), typ.Elem(), 0)
+		if err != nil {
+			return [32]byte{}, err
+		}
 		roots = append(roots, r[:])
 	}
 	chunks, err := pack(roots)
@@ -228,12 +224,7 @@ func newBasicSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64
 			}
 			leaves = append(leaves, innerBuf)
 		} else {
-			var r [32]byte
-			//if useCache {
-			//	r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
-			//} else {
-				r, err = newMakeHasher(val.Index(i), typ.Elem(), 0)
-			//}
+			r, err := newMakeHasher(val.Index(i), typ.Elem(), 0)
 			if err != nil {
 				return [32]byte{}, err
 			}
@@ -268,12 +259,7 @@ func newCompositeSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity ui
 	}
 	var err error
 	for i := 0; i < val.Len(); i++ {
-		var r [32]byte
-		//if useCache {
-		//	r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
-		//} else {
-			r, err = newMakeHasher(val.Index(i), typ.Elem(), 0)
-		//}
+		r, err := newMakeHasher(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
