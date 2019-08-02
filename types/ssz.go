@@ -8,6 +8,7 @@ var basicSliceSSZ = NewBasicSliceSSZ()
 
 type SSZAble interface {
 	Root(reflect.Value, reflect.Type) ([32]byte, error)
+	Marshal(reflect.Value, reflect.Type, []byte, uint64) (uint64, error)
 }
 
 func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
