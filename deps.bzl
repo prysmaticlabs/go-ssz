@@ -106,6 +106,13 @@ def go_ssz_dependencies():
         importpath = "github.com/minio/highwayhash",
     )
 
+    _maybe(
+        go_repository,
+        name = "com_github_minio_sha256_simd",
+        commit = "05b4dd3047e5d6e86cb4e0477164b850cd896261",
+        importpath = "github.com/minio/sha256-simd",
+    )
+
 def _maybe(repo_rule, name, **kwargs):
     if name not in native.existing_rules():
         repo_rule(name = name, **kwargs)

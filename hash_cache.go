@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
 	"reflect"
 	"time"
 
@@ -80,7 +79,8 @@ func (b *hashCacheS) lookup(
 	}
 	// We take the hash of the generated cache key.
 	h, _ := highwayhash.New(make([]byte, 32))
-	if _, err := io.Copy(h, bytes.NewBuffer(cacheKey)); err != nil {
+
+	if _, err := h.Write(cacheKey); err != nil {
 		return [32]byte{}, err
 	}
 	hs := h.Sum(nil)
@@ -122,19 +122,12 @@ func generateCacheKey(v reflect.Value, typ reflect.Type, maxCapacity uint64) ([]
 	binary.LittleEndian.PutUint64(encodedCapacity, maxCapacity)
 	var buf []byte
 	var err error
-	if v.Kind() == reflect.Struct {
+	if typ.Kind() == reflect.Struct {
 		buf, err = generateStructHashKey(v)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		if v.Kind() != reflect.Struct || (v.Kind() == reflect.Ptr && !v.IsNil()) {
-			buf = make([]byte, determineSize(v))
-			if _, err := newMakeMarshaler(v, typ, buf, 0); err != nil {
-				return nil, err
-			}
-			binary.LittleEndian.PutUint64(encodedLength, uint64(len(buf)))
-		}
 		buf = append(buf, []byte(v.Type().String())...)
 	}
 	lengthMetadata := append(encodedCapacity, encodedLength...)

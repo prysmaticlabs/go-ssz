@@ -108,13 +108,22 @@ func newMakeHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32
 }
 
 func newMakeBasicTypeHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
-	buf := make([]byte, determineSize(val))
-	if _, err := newMakeMarshaler(val, typ, buf, 0); err != nil {
-		return [32]byte{}, err
-	}
-	chunks, err := pack([][]byte{buf})
-	if err != nil {
-		return [32]byte{}, err
+	var chunks [][]byte
+	var err error
+	if b, ok := val.Interface().([]byte); ok {
+		chunks, err = pack([][]byte{b})
+		if err != nil {
+			return [32]byte{}, err
+		}
+	} else {
+		buf := make([]byte, determineSize(val))
+		if _, err := newMakeMarshaler(val, typ, buf, 0); err != nil {
+			return [32]byte{}, err
+		}
+		chunks, err = pack([][]byte{buf})
+		if err != nil {
+			return [32]byte{}, err
+		}
 	}
 	return bitwiseMerkleize(chunks, 1, false /* has limit */)
 }
@@ -150,11 +159,11 @@ func newBasicArrayHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	var err error
 	for i := 0; i < val.Len(); i++ {
 		var r [32]byte
-		if useCache {
-			r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
-		} else {
+		//if useCache {
+		//	r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
+		//} else {
 			r, err = newMakeHasher(val.Index(i), typ.Elem(), 0)
-		}
+		//}
 		leaves = append(leaves, r[:])
 	}
 	chunks, err := pack(leaves)
@@ -179,11 +188,11 @@ func newCompositeArrayHasher(val reflect.Value, typ reflect.Type, maxCapacity ui
 	var err error
 	for i := 0; i < val.Len(); i++ {
 		var r [32]byte
-		if useCache {
-			r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
-		} else {
+		//if useCache {
+		//	r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
+		//} else {
 			r, err = newMakeHasher(val.Index(i), typ.Elem(), 0)
-		}
+		//}
 		roots = append(roots, r[:])
 	}
 	chunks, err := pack(roots)
@@ -220,11 +229,11 @@ func newBasicSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint64
 			leaves = append(leaves, innerBuf)
 		} else {
 			var r [32]byte
-			if useCache {
-				r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
-			} else {
+			//if useCache {
+			//	r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
+			//} else {
 				r, err = newMakeHasher(val.Index(i), typ.Elem(), 0)
-			}
+			//}
 			if err != nil {
 				return [32]byte{}, err
 			}
@@ -260,11 +269,11 @@ func newCompositeSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity ui
 	var err error
 	for i := 0; i < val.Len(); i++ {
 		var r [32]byte
-		if useCache {
-			r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
-		} else {
+		//if useCache {
+		//	r, err = hashCache.lookup(val.Index(i), typ.Elem(), 0)
+		//} else {
 			r, err = newMakeHasher(val.Index(i), typ.Elem(), 0)
-		}
+		//}
 		if err != nil {
 			return [32]byte{}, err
 		}
@@ -306,7 +315,7 @@ func makeFieldsHasher(val reflect.Value, fields []field) ([32]byte, error) {
 			roots[i] = r[:]
 			continue
 		}
-		if useCache {
+		if f.typ.Kind() == reflect.Struct && useCache {
 			r, err = hashCache.lookup(
 				val.Field(f.index),
 				f.typ,

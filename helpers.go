@@ -2,10 +2,11 @@ package ssz
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"fmt"
 	"math"
 	"reflect"
+
+	"github.com/minio/sha256-simd"
 )
 
 var (
@@ -13,15 +14,14 @@ var (
 	BytesPerChunk = 32
 	// BytesPerLengthOffset defines a constant for off-setting serialized chunks.
 	BytesPerLengthOffset = uint64(4)
-	zeroHashes           = make([][]byte, 100)
+	zeroHashes           = make([][32]byte, 100)
 )
 
 func init() {
-	zeroHashes[0] = make([]byte, 32)
 	for i := 1; i < 100; i++ {
-		leaf := append(zeroHashes[i-1], zeroHashes[i-1]...)
+		leaf := append(zeroHashes[i-1][:], zeroHashes[i-1][:]...)
 		result := hash(leaf)
-		zeroHashes[i] = result[:]
+		copy(zeroHashes[i][:], result[:])
 	}
 }
 
@@ -90,7 +90,7 @@ func bitwiseMerkleize(chunks [][]byte, limit uint64, hasLimit bool) ([32]byte, e
 		return [32]byte{}, fmt.Errorf("chunk count = %d cannot be greater than padding = %d", count, padding)
 	}
 	if padding == 0 {
-		return toBytes32(zeroHashes[0]), nil
+		return zeroHashes[0], nil
 	}
 
 	depth := uint64(bitLength(0))
@@ -105,11 +105,11 @@ func bitwiseMerkleize(chunks [][]byte, limit uint64, hasLimit bool) ([32]byte, e
 	}
 
 	if 1<<depth != count {
-		mergeChunks(layers, zeroHashes[0], count, count, depth)
+		mergeChunks(layers, zeroHashes[0][:], count, count, depth)
 	}
 
 	for i := depth; i < maxDepth; i++ {
-		res := hash(append(layers[i], zeroHashes[i]...))
+		res := hash2(layers[i], zeroHashes[i][:])
 		layers[i+1] = res[:]
 	}
 
@@ -121,13 +121,13 @@ func mergeChunks(layers [][]byte, currentRoot []byte, i, count, depth uint64) {
 	for {
 		if i&(1<<j) == 0 {
 			if i == count && j < depth {
-				res := hash(append(currentRoot[:], zeroHashes[j]...))
+				res := hash2(currentRoot[:], zeroHashes[j][:])
 				currentRoot = res[:]
 			} else {
 				break
 			}
 		} else {
-			res := hash(append(layers[j], currentRoot[:]...))
+			res := hash2(layers[j], currentRoot[:])
 			currentRoot = res[:]
 		}
 		j++
@@ -145,7 +145,16 @@ func bitLength(n uint64) uint64 {
 // Given a Merkle root root and a length length ("uint256" little-endian serialization)
 // return hash(root + length).
 func mixInLength(root [32]byte, length []byte) [32]byte {
-	return hash(append(root[:], length...))
+	var hash [32]byte
+	h := sha256.New()
+	h.Write(root[:])
+	h.Write(length)
+	// The hash interface never returns an error, for that reason
+	// we are not handling the error below. For reference, it is
+	// stated here https://golang.org/pkg/hash/#Hash
+	// #nosec G104
+	h.Sum(hash[:0])
+	return hash
 }
 
 // Instantiates a reflect value which may not have a concrete type to have a concrete type
@@ -177,15 +186,19 @@ func toBytes32(x []byte) [32]byte {
 
 // hash defines a function that returns the sha256 hash of the data passed in.
 func hash(data []byte) [32]byte {
-	var hash [32]byte
+	return sha256.Sum256(data)
+}
 
+// hash2 hashes two slices together
+func hash2(x, y []byte) [32]byte {
+	var hash [32]byte
 	h := sha256.New()
+	h.Write(x)
+	h.Write(y)
 	// The hash interface never returns an error, for that reason
 	// we are not handling the error below. For reference, it is
 	// stated here https://golang.org/pkg/hash/#Hash
 	// #nosec G104
-	h.Write(data)
 	h.Sum(hash[:0])
-
 	return hash
 }
