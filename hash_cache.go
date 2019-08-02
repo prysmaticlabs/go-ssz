@@ -127,8 +127,13 @@ func generateCacheKey(v reflect.Value, typ reflect.Type, maxCapacity uint64) ([]
 		if err != nil {
 			return nil, err
 		}
+	} else if typ.Kind() == reflect.Ptr {
+		buf, err = generateStructHashKey(v.Elem())
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		buf = append(buf, []byte(v.Type().String())...)
+		buf = append(buf, []byte(v.String())...)
 	}
 	lengthMetadata := append(encodedCapacity, encodedLength...)
 	buf = append(buf, lengthMetadata...)
