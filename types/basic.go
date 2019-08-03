@@ -1,9 +1,12 @@
 package types
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"reflect"
+
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 type BasicSSZ struct {
@@ -29,6 +32,8 @@ func (b *BasicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, star
 		return marshalUint32(val, buf, startOffset)
 	case kind == reflect.Uint64:
 		return marshalUint64(val, buf, startOffset)
+	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
+		return b.marshalByteArray(val, typ, buf, startOffset)
 	case kind == reflect.Array && isBasicType(typ.Elem().Kind()):
 		return b.marshalBasicSlice(val, typ, buf, startOffset)
 	default:
@@ -74,6 +79,22 @@ func (b *BasicSSZ) marshalBasicSlice(val reflect.Value, typ reflect.Type, buf []
 	return index, nil
 }
 
+func (b *BasicSSZ) marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+	switch v := val.Interface().(type) {
+	case []uint8:
+		copy(buf[startOffset:], v)
+		return startOffset + uint64(len(v)), nil
+	case bitfield.Bitvector4:
+		copy(buf[startOffset:], v)
+		return startOffset + uint64(len(v)), nil
+	default:
+		for i := 0; i < val.Len(); i++ {
+			buf[int(startOffset)+i] = uint8(val.Index(i).Uint())
+		}
+		return startOffset + uint64(val.Len()), nil
+	}
+}
+
 func marshalBool(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	if val.Interface().(bool) {
 		buf[startOffset] = uint8(1)
@@ -101,4 +122,32 @@ func marshalUint32(val reflect.Value, buf []byte, startOffset uint64) (uint64, e
 func marshalUint64(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	binary.LittleEndian.PutUint64(buf[startOffset:], val.Interface().(uint64))
 	return startOffset + 8, nil
+}
+
+func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
+	limit := (maxCapacity + 255) / 256
+	if val.IsNil() {
+		length := make([]byte, 32)
+		merkleRoot, err := bitwiseMerkleize([][]byte{}, limit, true /* has limit */)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		return mixInLength(merkleRoot, length), nil
+	}
+	bfield := val.Interface().(bitfield.Bitlist)
+	chunks, err := pack([][]byte{bfield.Bytes()})
+	if err != nil {
+		return [32]byte{}, err
+	}
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.LittleEndian, bfield.Len()); err != nil {
+		return [32]byte{}, err
+	}
+	output := make([]byte, 32)
+	copy(output, buf.Bytes())
+	merkleRoot, err := bitwiseMerkleize(chunks, limit, true /* has limit */)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	return mixInLength(merkleRoot, output), nil
 }

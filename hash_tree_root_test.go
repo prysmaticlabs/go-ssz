@@ -34,14 +34,26 @@ type nilItem struct {
 	Field2 uint64
 }
 
+type compactCommittee struct {
+	Indices    [10]uint64
+	Slashed    [10]uint64
+	BlockRoots [64][32]byte
+}
+
 func TestOtherItem(t *testing.T) {
-	otherItem := otherItem{
-		PreviousVersion: [4]uint16{1, 2, 3, 4},
-		CurrentVersion:  [4]uint16{1, 2, 3, 4},
-		Epoch:           200,
+	var roots [64][32]byte
+	for i := 0; i < 64; i++ {
+		enc := fmt.Sprintf("%d", i)
+		r := hash([]byte(enc))
+		roots[i] = r
+	}
+	item := compactCommittee{
+		Indices:    [10]uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+		Slashed:    [10]uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+		BlockRoots: roots,
 	}
 	start := time.Now()
-	root, err := HashTreeRoot(otherItem)
+	root, err := HashTreeRoot(item)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"reflect"
+
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 type BasicSliceSSZ struct {
@@ -37,7 +39,30 @@ func NewCompositeSliceSSZ() *CompositeSliceSSZ {
 }
 
 func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
-	return [32]byte{}, nil
+	factory, _ := SSZFactory(val.Elem(), typ.Elem())
+	limit := uint64(val.Len())
+	if limit == 0 {
+		limit = 1
+	}
+	var roots [][]byte
+	for i := 0; i < val.Len(); i++ {
+		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		roots = append(roots, r[:])
+	}
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.LittleEndian, uint64(val.Len())); err != nil {
+		return [32]byte{}, err
+	}
+	output := make([]byte, 32)
+	copy(output, buf.Bytes())
+	merkleRoot, err := bitwiseMerkleize(roots, limit, true /* has limit */)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	return mixInLength(merkleRoot, output), nil
 }
 
 func (b *CompositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
@@ -45,6 +70,9 @@ func (b *CompositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []b
 }
 
 func (b *BasicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+	if _, ok := val.Interface().(bitfield.Bitlist); ok {
+		return bitlistHasher(val, maxCapacity)
+	}
 	factory, _ := SSZFactory(val.Elem(), typ.Elem())
 	// TODO: Abstract into a chunk count function.
 	elemSize := determineFixedSize(val, typ.Elem())
@@ -86,7 +114,7 @@ func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	factory, _ := SSZFactory(val.Index(0), typ.Elem())
 	roots := [][]byte{}
 	hashKey := []byte{}
-	limit := uint64(10000)
+	limit := uint64(typ.Len())
 	var err error
 	for i := 0; i < val.Len(); i++ {
 		r, err := factory.Root(val.Index(i), typ.Elem(), 0)

@@ -1,6 +1,8 @@
 package types
 
-import "reflect"
+import (
+	"reflect"
+)
 
 var basicSSZ = NewBasicSSZ()
 var compositeArraySSZ = NewCompositeArraySSZ()

@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	useCache  = true
+	useCache  = false
 	hashCache = newHashCache(100000)
 )
 

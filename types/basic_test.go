@@ -7,20 +7,26 @@ import (
 	"time"
 )
 
-type fork struct {
-	PreviousVersion [4]uint16
-	CurrentVersion  [4]uint16
-	Epoch           uint64
+type compactCommittee struct {
+	Indices    [10]uint64
+	Slashed    [10]uint64
+	BlockRoots [64][32]byte
 }
 
 func TestBasicSSZ_Root(t *testing.T) {
-	forkItem := fork{
-		PreviousVersion: [4]uint16{1, 2, 3, 4},
-		CurrentVersion:  [4]uint16{1, 2, 3, 4},
-		Epoch:           200,
+	var roots [64][32]byte
+	for i := 0; i < 64; i++ {
+		enc := fmt.Sprintf("%d", i)
+		r := hash([]byte(enc))
+		roots[i] = r
 	}
-	val := reflect.ValueOf(forkItem)
-	typ := reflect.TypeOf(forkItem)
+	item := compactCommittee{
+		Indices:    [10]uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+		Slashed:    [10]uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+		BlockRoots: roots,
+	}
+	val := reflect.ValueOf(item)
+	typ := reflect.TypeOf(item)
 	factory, _ := SSZFactory(val, typ)
 	got, err := factory.Root(val, typ, 0)
 	if err != nil {

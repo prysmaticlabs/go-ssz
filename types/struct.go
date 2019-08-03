@@ -1,7 +1,10 @@
 package types
 
 import (
+	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 )
 
 type StructSSZ struct {
@@ -23,8 +26,13 @@ func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	hashKey := []byte{}
 	var err error
 	for i := 0; i < typ.NumField(); i++ {
-		factory, _ := SSZFactory(val.Field(i), val.Field(i).Type())
-		r, err := factory.Root(val.Field(i), val.Field(i).Type(), maxCapacity)
+		fType, err := determineFieldType(typ.Field(i))
+		if err != nil {
+			return [32]byte{}, err
+		}
+		fCapacity := determineFieldCapacity(typ.Field(i))
+		factory, _ := SSZFactory(val.Field(i), fType)
+		r, err := factory.Root(val.Field(i), fType, fCapacity)
 		if err != nil {
 			return [32]byte{}, err
 		}
@@ -41,4 +49,66 @@ func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	}
 	b.hashCache[string(hashKey)] = root
 	return root, nil
+}
+
+func determineFieldType(field reflect.StructField) (reflect.Type, error) {
+	fieldSizeTags, exists, err := parseSSZFieldTags(field)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse ssz struct field tags: %v", err)
+	}
+	if exists {
+		// If the field does indeed specify ssz struct tags, we infer the field's type.
+		return inferFieldTypeFromSizeTags(field, fieldSizeTags), nil
+	}
+	return field.Type, nil
+}
+
+func determineFieldCapacity(field reflect.StructField) uint64 {
+	tag, exists := field.Tag.Lookup("ssz-max")
+	if !exists {
+		return 0
+	}
+	val, err := strconv.ParseUint(tag, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return val
+}
+
+func parseSSZFieldTags(field reflect.StructField) ([]uint64, bool, error) {
+	tag, exists := field.Tag.Lookup("ssz-size")
+	if !exists {
+		return nil, false, nil
+	}
+	items := strings.Split(tag, ",")
+	sizes := make([]uint64, len(items))
+	var err error
+	for i := 0; i < len(items); i++ {
+		// If a field is unbounded, we mark it with a size of 0.
+		if items[i] == "?" {
+			sizes[i] = 0
+			continue
+		}
+		sizes[i], err = strconv.ParseUint(items[i], 10, 64)
+		if err != nil {
+			return nil, false, err
+		}
+	}
+	return sizes, true, nil
+}
+
+func inferFieldTypeFromSizeTags(field reflect.StructField, sizes []uint64) reflect.Type {
+	innerElement := field.Type.Elem()
+	for i := 1; i < len(sizes); i++ {
+		innerElement = innerElement.Elem()
+	}
+	currentType := innerElement
+	for i := len(sizes) - 1; i >= 0; i-- {
+		if sizes[i] == 0 {
+			currentType = reflect.SliceOf(currentType)
+		} else {
+			currentType = reflect.ArrayOf(int(sizes[i]), currentType)
+		}
+	}
+	return currentType
 }
