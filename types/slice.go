@@ -168,12 +168,13 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	hashKey := make([]byte, 0)
 	leaves := make([][]byte, numItems)
 	var err error
+	elemKind := typ.Elem().Kind()
 	for i := 0; i < numItems; i++ {
-		if typ.Elem().Kind() == reflect.Slice || typ.Elem().Kind() == reflect.Array {
-			if val.Index(i).Len() == 32 {
-				leaves[i] = val.Index(i).Interface().([]byte)
-				continue
-			}
+		if elemKind == reflect.Array && val.Index(i).Len() == 32 {
+			bts := val.Index(i).Interface().([]byte)
+			leaves[i] = bts
+			hashKey = append(hashKey, bts...)
+			continue
 		}
 		r, err := basicSSZ.Root(val.Index(i), typ.Elem(), 0)
 		if err != nil {
