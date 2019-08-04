@@ -62,12 +62,21 @@ func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	factory, _ := SSZFactory(val.Index(0), typ.Elem())
 	numItems := val.Len()
 	roots := make([][]byte, numItems)
+	hashKey := make([]byte, 32*numItems)
+	offset := 0
 	for i := 0; i < numItems; i++ {
 		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
 		roots[i] = r[:]
+		copy(hashKey[offset:offset+32], r[:])
+		offset += 32
+	}
+
+	res := b.hashCache[string(hashKey)]
+	if res != nil {
+		return res.([32]byte), nil
 	}
 	buf := new(bytes.Buffer)
 	if err := binary.Write(buf, binary.LittleEndian, uint64(val.Len())); err != nil {
@@ -82,7 +91,9 @@ func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	if err != nil {
 		return [32]byte{}, err
 	}
-	return mixInLength(merkleRoot, output), nil
+	result := mixInLength(merkleRoot, output)
+	b.hashCache[string(hashKey)] = result
+	return result, nil
 }
 
 func (b *CompositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
@@ -135,16 +146,18 @@ func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	factory, _ := SSZFactory(val.Index(0), typ.Elem())
 	numItems := val.Len()
 	roots := make([][]byte, numItems)
-	hashKey := []byte{}
+	hashKey := make([]byte, 32*numItems)
 	limit := uint64(typ.Len())
+	offset := 0
 	var err error
 	for i := 0; i < val.Len(); i++ {
 		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
-		hashKey = append(hashKey, r[:]...)
 		roots[i] = r[:]
+		copy(hashKey[offset:offset+32], r[:])
+		offset += 32
 	}
 
 	res := b.hashCache[string(hashKey)]
