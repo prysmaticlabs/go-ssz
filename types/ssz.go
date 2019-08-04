@@ -5,6 +5,7 @@ import (
 )
 
 var basicSSZ = NewBasicSSZ()
+var basicArraySSZ = NewBasicArraySSZ()
 var compositeArraySSZ = NewCompositeArraySSZ()
 var basicSliceSSZ = NewBasicSliceSSZ()
 var compositeSliceSSZ = NewCompositeSliceSSZ()
@@ -27,6 +28,8 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 		default:
 			return compositeSliceSSZ, nil
 		}
+	case kind == reflect.Array && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
+		return basicArraySSZ, nil
 	case kind == reflect.Array:
 		return compositeArraySSZ, nil
 	case kind == reflect.Struct:

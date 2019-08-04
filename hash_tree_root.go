@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"strings"
+	"time"
 	"fmt"
 	"reflect"
 
@@ -299,9 +301,11 @@ func structHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 
 func fieldsHasher(val reflect.Value, fields []field) ([32]byte, error) {
 	roots := make([][]byte, len(fields))
+	isState := strings.Contains(val.Type().Name(), "BeaconState")
 	for i, f := range fields {
 		var r [32]byte
 		var err error
+		start := time.Now()
 		if _, ok := val.Field(f.index).Interface().(bitfield.Bitlist); ok {
 			r, err = bitlistHasher(val.Field(f.index), f.capacity)
 			roots[i] = r[:]
@@ -319,7 +323,10 @@ func fieldsHasher(val reflect.Value, fields []field) ([32]byte, error) {
 		if err != nil {
 			return [32]byte{}, fmt.Errorf("failed to hash field %s of struct: %v", f.name, err)
 		}
-		//fmt.Printf("%s has root %#x\n", f.name, r)
+		end := time.Now()
+		if isState {
+			fmt.Printf("%s took %v and has root %#x\n", f.name, end.Sub(start), r)
+		}
 		roots[i] = r[:]
 	}
 	return bitwiseMerkleize(roots, uint64(len(fields)), true /* has limit */)

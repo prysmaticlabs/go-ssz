@@ -24,10 +24,12 @@ func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 }
 
 func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
-	roots := [][]byte{}
+	numFields := typ.NumField()
+	roots := make([][]byte, numFields)
 	hashKey := []byte{}
 	var err error
-	for i := 0; i < typ.NumField(); i++ {
+	//isState := strings.Contains(typ.Name(), "BeaconState")
+	for i := 0; i < numFields; i++ {
 		fCapacity := determineFieldCapacity(typ.Field(i))
 		if _, ok := val.Field(i).Interface().(bitfield.Bitlist); ok {
 			r, err := bitlistHasher(val.Field(i), fCapacity)
@@ -35,22 +37,26 @@ func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 				return [32]byte{}, nil
 			}
 			hashKey = append(hashKey, r[:]...)
-			roots = append(roots, r[:])
+			roots[i] = r[:]
 			continue
 		}
 		fType, err := determineFieldType(typ.Field(i))
 		if err != nil {
 			return [32]byte{}, err
 		}
-
 		factory, _ := SSZFactory(val.Field(i), fType)
+		//start := time.Now()
 		r, err := factory.Root(val.Field(i), fType, fCapacity)
 		if err != nil {
 			return [32]byte{}, err
 		}
-		//fmt.Printf("%s has root %#x\n", typ.Field(i).Name, r)
+		//end := time.Now()
+		//if isState {
+		//	fv := reflect.ValueOf(factory)
+		//	fmt.Printf("%s took time %v with factory %v\n", typ.Field(i).Name, end.Sub(start), fv.Type())
+		//}
 		hashKey = append(hashKey, r[:]...)
-		roots = append(roots, r[:])
+		roots[i] = r[:]
 	}
 	res := b.hashCache[string(hashKey)]
 	if res != nil {
