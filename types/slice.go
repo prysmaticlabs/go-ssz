@@ -165,14 +165,15 @@ func (b *CompositeArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []b
 
 func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	numItems := val.Len()
-	hashKey := make([]byte, 0)
+	hashKey := make([]byte, 32*numItems)
 	leaves := make([][]byte, numItems)
-	var err error
 	elemKind := typ.Elem().Kind()
+	offset := 0
+	var err error
 	for i := 0; i < numItems; i++ {
 		if elemKind == reflect.Array && val.Index(i).Len() == 32 {
 			leaves[i] = val.Index(i).Bytes()
-			hashKey = append(hashKey, leaves[i]...)
+			copy(hashKey[offset:offset+32], leaves[i])
 			continue
 		}
 		r, err := basicSSZ.Root(val.Index(i), typ.Elem(), 0)
@@ -180,7 +181,7 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 			return [32]byte{}, err
 		}
 		leaves[i] = r[:]
-		hashKey = append(hashKey, r[:]...)
+		copy(hashKey[offset:offset+32], r[:])
 	}
 	res := b.hashCache[string(hashKey)]
 	if res != nil {
