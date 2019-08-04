@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/prysmaticlabs/go-bitfield"
 )
 
 type StructSSZ struct {
@@ -31,7 +29,7 @@ func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	//isState := strings.Contains(typ.Name(), "BeaconState")
 	for i := 0; i < numFields; i++ {
 		fCapacity := determineFieldCapacity(typ.Field(i))
-		if _, ok := val.Field(i).Interface().(bitfield.Bitlist); ok {
+		if typ.Field(i).Name == "AggregationBits" {
 			r, err := bitlistHasher(val.Field(i), fCapacity)
 			if err != nil {
 				return [32]byte{}, nil

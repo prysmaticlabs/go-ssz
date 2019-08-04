@@ -171,9 +171,8 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	elemKind := typ.Elem().Kind()
 	for i := 0; i < numItems; i++ {
 		if elemKind == reflect.Array && val.Index(i).Len() == 32 {
-			bts := val.Index(i).Interface().([]byte)
-			leaves[i] = bts
-			hashKey = append(hashKey, bts...)
+			leaves[i] = val.Index(i).Bytes()
+			hashKey = append(hashKey, leaves[i]...)
 			continue
 		}
 		r, err := basicSSZ.Root(val.Index(i), typ.Elem(), 0)
