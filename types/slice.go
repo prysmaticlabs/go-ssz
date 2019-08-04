@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"reflect"
-
-	"github.com/prysmaticlabs/go-bitfield"
 )
 
 type BasicSliceSSZ struct {
@@ -17,6 +15,10 @@ type CompositeSliceSSZ struct {
 }
 
 type CompositeArraySSZ struct {
+	hashCache map[string]interface{}
+}
+
+type BitlistSSZ struct {
 	hashCache map[string]interface{}
 }
 
@@ -39,11 +41,15 @@ func NewCompositeSliceSSZ() *CompositeSliceSSZ {
 }
 
 func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
-	factory, _ := SSZFactory(val.Elem(), typ.Elem())
-	limit := uint64(val.Len())
-	if limit == 0 {
-		limit = 1
+	output := make([]byte, 32)
+	if val.Len() == 0 && maxCapacity == 0 {
+		merkleRoot, err := bitwiseMerkleize([][]byte{}, 0, true /* has limit */)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		return mixInLength(merkleRoot, output), nil
 	}
+	factory, _ := SSZFactory(val.Index(0), typ.Elem())
 	var roots [][]byte
 	for i := 0; i < val.Len(); i++ {
 		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
@@ -56,9 +62,12 @@ func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	if err := binary.Write(buf, binary.LittleEndian, uint64(val.Len())); err != nil {
 		return [32]byte{}, err
 	}
-	output := make([]byte, 32)
 	copy(output, buf.Bytes())
-	merkleRoot, err := bitwiseMerkleize(roots, limit, true /* has limit */)
+	objLen := maxCapacity
+	if maxCapacity == 0 {
+		objLen = uint64(val.Len())
+	}
+	merkleRoot, err := bitwiseMerkleize(roots, objLen, true /* has limit */)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -70,13 +79,13 @@ func (b *CompositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []b
 }
 
 func (b *BasicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
-	if _, ok := val.Interface().(bitfield.Bitlist); ok {
-		return bitlistHasher(val, maxCapacity)
-	}
-	factory, _ := SSZFactory(val.Elem(), typ.Elem())
-	// TODO: Abstract into a chunk count function.
+	var factory SSZAble
 	elemSize := determineFixedSize(val, typ.Elem())
 	limit := (maxCapacity*elemSize + 31) / 32
+	if val.Len() > 0 {
+		factory, _ = SSZFactory(val.Index(0), typ.Elem())
+		// TODO: Abstract into a chunk count function.
+	}
 	if limit == 0 {
 		limit = 1
 	}

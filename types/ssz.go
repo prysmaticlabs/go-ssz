@@ -31,6 +31,8 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 		return compositeArraySSZ, nil
 	case kind == reflect.Struct:
 		return structSSZ, nil
+	case kind == reflect.Ptr:
+		return SSZFactory(val.Elem(), typ.Elem())
 	default:
 		return nil, nil
 	}

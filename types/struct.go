@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 type StructSSZ struct {
@@ -26,16 +28,27 @@ func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	hashKey := []byte{}
 	var err error
 	for i := 0; i < typ.NumField(); i++ {
+		fCapacity := determineFieldCapacity(typ.Field(i))
+		if _, ok := val.Field(i).Interface().(bitfield.Bitlist); ok {
+			r, err := bitlistHasher(val.Field(i), fCapacity)
+			if err != nil {
+				return [32]byte{}, nil
+			}
+			hashKey = append(hashKey, r[:]...)
+			roots = append(roots, r[:])
+			continue
+		}
 		fType, err := determineFieldType(typ.Field(i))
 		if err != nil {
 			return [32]byte{}, err
 		}
-		fCapacity := determineFieldCapacity(typ.Field(i))
+
 		factory, _ := SSZFactory(val.Field(i), fType)
 		r, err := factory.Root(val.Field(i), fType, fCapacity)
 		if err != nil {
 			return [32]byte{}, err
 		}
+		//fmt.Printf("%s has root %#x\n", typ.Field(i).Name, r)
 		hashKey = append(hashKey, r[:]...)
 		roots = append(roots, r[:])
 	}
