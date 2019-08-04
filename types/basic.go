@@ -80,19 +80,8 @@ func (b *BasicSSZ) marshalBasicSlice(val reflect.Value, typ reflect.Type, buf []
 }
 
 func (b *BasicSSZ) marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
-	switch v := val.Interface().(type) {
-	case []uint8:
-		copy(buf[startOffset:], v)
-		return startOffset + uint64(len(v)), nil
-	case bitfield.Bitvector4:
-		copy(buf[startOffset:], v)
-		return startOffset + uint64(len(v)), nil
-	default:
-		for i := 0; i < val.Len(); i++ {
-			buf[int(startOffset)+i] = uint8(val.Index(i).Uint())
-		}
-		return startOffset + uint64(val.Len()), nil
-	}
+	copy(buf[startOffset:], val.Bytes())
+	return startOffset + uint64(val.Len()), nil
 }
 
 func marshalBool(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
