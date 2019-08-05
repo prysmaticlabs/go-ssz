@@ -140,7 +140,22 @@ func (b *BasicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 }
 
 func (b *BasicSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
-	return 0, nil
+	index := startOffset
+	var err error
+	if val.Len() == 0 {
+		return index, nil
+	}
+	factory, err := SSZFactory(val.Index(0), typ.Elem())
+	if err != nil {
+		return 0, err
+	}
+	for i := 0; i < val.Len(); i++ {
+		index, err = factory.Marshal(val.Index(i), typ.Elem(), buf, index)
+		if err != nil {
+			return 0, err
+		}
+	}
+	return index, nil
 }
 
 func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {

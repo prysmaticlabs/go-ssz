@@ -78,7 +78,9 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 		if valObj.IsNil() {
 			return [32]byte{}, errors.New("nil pointer given")
 		}
-		return types.StructFactory.FieldsHasher(valObj.Elem(), valObj.Elem().Type(), valObj.Elem().Type().NumField()-1)
+		elem := valObj.Elem()
+		elemType := valObj.Elem().Type()
+		return types.StructFactory.FieldsHasher(elem, elemType, elemType.NumField()-1)
 	}
 	return types.StructFactory.FieldsHasher(valObj, valObj.Type(), valObj.Type().NumField()-1)
 }

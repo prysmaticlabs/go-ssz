@@ -35,7 +35,7 @@ func (b *BasicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, star
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
 		return b.marshalByteArray(val, typ, buf, startOffset)
 	case kind == reflect.Array && isBasicType(typ.Elem().Kind()):
-		return b.marshalBasicSlice(val, typ, buf, startOffset)
+		return b.marshalBasicArray(val, typ, buf, startOffset)
 	default:
 		return 0, fmt.Errorf("type %v is not serializable", val.Type())
 	}
@@ -67,7 +67,7 @@ func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	return root, nil
 }
 
-func (b *BasicSSZ) marshalBasicSlice(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func (b *BasicSSZ) marshalBasicArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	index := startOffset
 	var err error
 	for i := 0; i < val.Len(); i++ {
