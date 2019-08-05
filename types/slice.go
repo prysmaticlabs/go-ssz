@@ -52,15 +52,22 @@ func NewCompositeSliceSSZ() *CompositeSliceSSZ {
 
 func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	output := make([]byte, 32)
-	if val.Len() == 0 || maxCapacity == 0 {
+	if val.Len() == 0 && maxCapacity == 0 {
 		merkleRoot, err := NewMerkleize([][]byte{}, 0, 0, true)
 		if err != nil {
 			return [32]byte{}, err
 		}
 		return mixInLength(merkleRoot, output), nil
 	}
-	factory, _ := SSZFactory(val.Index(0), typ.Elem())
 	numItems := val.Len()
+	var factory SSZAble
+	var err error
+	if numItems > 0 {
+		factory, err = SSZFactory(val.Index(0), typ.Elem())
+		if err != nil {
+			return [32]byte{}, err
+		}
+	}
 	roots := make([][]byte, numItems)
 	hashKey := make([]byte, 32*numItems)
 	offset := 0
@@ -201,13 +208,15 @@ func (b *BasicSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 }
 
 func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
-	factory, _ := SSZFactory(val.Index(0), typ.Elem())
+	factory, err := SSZFactory(val.Index(0), typ.Elem())
+	if err != nil {
+		return [32]byte{}, err
+	}
 	numItems := val.Len()
 	roots := make([][]byte, numItems)
 	hashKey := make([]byte, 32*numItems)
 	limit := uint64(typ.Len())
 	offset := 0
-	var err error
 	for i := 0; i < val.Len(); i++ {
 		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
 		if err != nil {

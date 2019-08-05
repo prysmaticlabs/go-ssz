@@ -104,7 +104,7 @@ func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 			continue
 		}
 		fCapacity := determineFieldCapacity(typ.Field(i))
-		if typ.Field(i).Name == "AggregationBits" {
+		if typ.Field(i).Name == "AggregationBits" || typ.Field(i).Name == "CustodyBits" {
 			r, err := bitlistHasher(val.Field(i), fCapacity)
 			if err != nil {
 				return [32]byte{}, nil
@@ -127,6 +127,7 @@ func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 			return [32]byte{}, err
 		}
 		roots[i] = r[:]
+		fmt.Printf("%s has root %#x\n", typ.Field(i).Name, r)
 		copy(hashKey[offset:offset+32], r[:])
 		offset += 32
 	}
