@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/binary"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -18,7 +19,61 @@ func NewStructSSZ() *StructSSZ {
 }
 
 func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
-	return 0, nil
+	fixedIndex := startOffset
+	fixedLength := uint64(0)
+	// For every field, we add up the total length of the items depending if they
+	// are variable or fixed-size fields.
+	for i := 0; i < typ.NumField(); i++ {
+		// We skip protobuf related metadata fields.
+		if strings.Contains(typ.Field(i).Name, "XXX") {
+			continue
+		}
+		fType, err := determineFieldType(typ.Field(i))
+		if err != nil {
+			return 0, err
+		}
+		if isVariableSizeType(fType) {
+			fixedLength += BytesPerLengthOffset
+		} else {
+			fixedLength += determineFixedSize(val.Field(i), fType)
+		}
+	}
+	currentOffsetIndex := startOffset + fixedLength
+	nextOffsetIndex := currentOffsetIndex
+	for i := 0; i < typ.NumField(); i++ {
+		// We skip protobuf related metadata fields.
+		if strings.Contains(typ.Field(i).Name, "XXX") {
+			continue
+		}
+		fType, err := determineFieldType(typ.Field(i))
+		if err != nil {
+			return 0, err
+		}
+		factory, err := SSZFactory(val.Field(i), fType)
+		if err != nil {
+			return 0, err
+		}
+		if !isVariableSizeType(fType) {
+			fixedIndex, err = factory.Marshal(val.Field(i), fType, buf, fixedIndex)
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			nextOffsetIndex, err = factory.Marshal(val.Field(i), fType, buf, currentOffsetIndex)
+			if err != nil {
+				return 0, err
+			}
+			// Write the offset.
+			offsetBuf := make([]byte, BytesPerLengthOffset)
+			binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
+			copy(buf[fixedIndex:fixedIndex+BytesPerLengthOffset], offsetBuf)
+
+			// We increase the offset indices accordingly.
+			currentOffsetIndex = nextOffsetIndex
+			fixedIndex += BytesPerLengthOffset
+		}
+	}
+	return currentOffsetIndex, nil
 }
 
 func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
@@ -57,7 +112,10 @@ func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 		if err != nil {
 			return [32]byte{}, err
 		}
-		factory, _ := SSZFactory(val.Field(i), fType)
+		factory, err := SSZFactory(val.Field(i), fType)
+		if err != nil {
+			return [32]byte{}, err
+		}
 		r, err := factory.Root(val.Field(i), fType, fCapacity)
 		if err != nil {
 			return [32]byte{}, err

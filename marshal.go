@@ -7,6 +7,8 @@ import (
 	"reflect"
 
 	"github.com/prysmaticlabs/go-bitfield"
+
+	"github.com/prysmaticlabs/go-ssz/types"
 )
 
 // Marshal a value and output the result into a byte slice.
@@ -51,7 +53,11 @@ func Marshal(val interface{}) ([]byte, error) {
 
 	// We pre-allocate a buffer-size depending on the value's calculated total byte size.
 	buf := make([]byte, determineSize(rval))
-	if _, err := recursiveMarshal(rval, rval.Type(), buf, 0 /* start offset */); err != nil {
+	factory, err := types.SSZFactory(rval, rval.Type())
+	if err != nil {
+		return nil, err
+	}
+	if _, err := factory.Marshal(rval, rval.Type(), buf, 0 /* start offset */); err != nil {
 		return nil, fmt.Errorf("failed to marshal for type: %v", rval.Type())
 	}
 	return buf, nil
