@@ -88,26 +88,26 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: []uint32{0, 0, 0}, ptr: new([]uint32)},
 		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
 		// Struct decoding test cases.
-		//{input: forkExample, ptr: new(fork)},
+		{input: forkExample, ptr: new(fork)},
 		//{input: nestedItemExample, ptr: new(nestedItem)},
 		//{input: nestedVarItemExample, ptr: new(nestedVarItem)},
-		//{input: varItemExample, ptr: new(varItem)},
-		//{input: varItemAmbiguous, ptr: new(varItem)},
+		{input: varItemExample, ptr: new(varItem)},
+		{input: varItemAmbiguous, ptr: new(varItem)},
 		//// Non-basic type slice/array test cases.
 		//{input: []fork{forkExample, forkExample}, ptr: new([]fork)},
-		//{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
-		//{input: [][][]uint64{{{1, 2}, {3}}, {{4, 5}}, {{0}}}, ptr: new([][][]uint64)},
+		{input: [][]uint64{{4, 3, 2}, {1}, {0}}, ptr: new([][]uint64)},
+		{input: [][][]uint64{{{1, 2}, {3}}, {{4, 5}}, {{0}}}, ptr: new([][][]uint64)},
 		//{input: [][3]uint64{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}, ptr: new([][3]uint64)},
 		//{input: [3][]uint64{{1, 2}, {4, 5, 6}, {7}}, ptr: new([3][]uint64)},
 		//{input: [][4]fork{{forkExample, forkExample, forkExample}}, ptr: new([][4]fork)},
-		//{input: [2]fork{forkExample, forkExample}, ptr: new([2]fork)},
+		{input: [2]fork{forkExample, forkExample}, ptr: new([2]fork)},
 		//// Pointer-type test cases.
-		//{input: &forkExample, ptr: new(fork)},
+		{input: &forkExample, ptr: new(fork)},
 		//{input: &nestedItemExample, ptr: new(nestedItem)},
 		//{input: []*fork{&forkExample, &forkExample}, ptr: new([]*fork)},
 		//{input: []*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([]*nestedItem)},
 		//{input: [2]*nestedItem{&nestedItemExample, &nestedItemExample}, ptr: new([2]*nestedItem)},
-		//{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
+		{input: [2]*fork{&forkExample, &forkExample}, ptr: new([2]*fork)},
 	}
 	for _, tt := range tests {
 		serializedItem, err := ssz.Marshal(tt.input)
