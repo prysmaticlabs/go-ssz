@@ -21,7 +21,7 @@ func NewStructSSZ() *StructSSZ {
 func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
-			return 0, nil
+			return startOffset, nil
 		}
 		return b.Marshal(val.Elem(), typ.Elem(), buf, startOffset)
 	}
