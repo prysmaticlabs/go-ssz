@@ -66,13 +66,6 @@ func Marshal(val interface{}) ([]byte, error) {
 	if _, err := factory.Marshal(rval, rval.Type(), buf, 0 /* start offset */); err != nil {
 		return nil, fmt.Errorf("failed to marshal for type: %v", rval.Type())
 	}
-
-	otherBuf := make([]byte, determineSize(rval))
-	if _, err := recursiveMarshal(rval, rval.Type(), otherBuf, 0); err != nil {
-		return nil, err
-	}
-	fmt.Println(buf)
-	fmt.Println(otherBuf)
 	return buf, nil
 }
 

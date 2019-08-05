@@ -80,5 +80,4 @@ go_test(
         "struct_utils_test.go",
     ],
     embed = [":go_default_library"],
-    race = "on",
 )

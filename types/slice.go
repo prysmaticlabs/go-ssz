@@ -52,8 +52,7 @@ func NewCompositeSliceSSZ() *CompositeSliceSSZ {
 
 func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	output := make([]byte, 32)
-	if val.Len() == 0 && maxCapacity == 0 {
-		//merkleRoot, err := bitwiseMerkleize([][]byte{}, 0, true /* has limit */)
+	if val.Len() == 0 || maxCapacity == 0 {
 		merkleRoot, err := NewMerkleize([][]byte{}, 0, 0, true)
 		if err != nil {
 			return [32]byte{}, err
