@@ -57,6 +57,12 @@ func Marshal(val interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if rval.Type().Kind() == reflect.Ptr {
+		if _, err := factory.Marshal(rval.Elem(), rval.Elem().Type(), buf, 0 /* start offset */); err != nil {
+			return nil, fmt.Errorf("failed to marshal for type: %v", rval.Elem().Type())
+		}
+		return buf, nil
+	}
 	if _, err := factory.Marshal(rval, rval.Type(), buf, 0 /* start offset */); err != nil {
 		return nil, fmt.Errorf("failed to marshal for type: %v", rval.Type())
 	}
