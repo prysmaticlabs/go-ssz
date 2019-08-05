@@ -74,8 +74,11 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 // usually contains the signature that which this data is the root for.
 func SigningRoot(val interface{}) ([32]byte, error) {
 	valObj := reflect.ValueOf(val)
-	if valObj.IsNil() {
-		return [32]byte{}, errors.New("nil pointer given")
+	if valObj.Type().Kind() == reflect.Ptr {
+		if valObj.IsNil() {
+			return [32]byte{}, errors.New("nil pointer given")
+		}
+		return types.StructFactory.FieldsHasher(valObj.Elem(), valObj.Elem().Type(), valObj.Elem().Type().NumField()-1)
 	}
 	return types.StructFactory.FieldsHasher(valObj, valObj.Type(), valObj.Type().NumField()-1)
 }

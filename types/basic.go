@@ -80,6 +80,12 @@ func (b *BasicSSZ) marshalBasicSlice(val reflect.Value, typ reflect.Type, buf []
 }
 
 func (b *BasicSSZ) marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+	if val.Type().Kind() == reflect.Array {
+		for i := 0; i < val.Len(); i++ {
+			buf[int(startOffset)+i] = uint8(val.Index(i).Uint())
+		}
+		return startOffset + uint64(val.Len()), nil
+	}
 	copy(buf[startOffset:], val.Bytes())
 	return startOffset + uint64(val.Len()), nil
 }

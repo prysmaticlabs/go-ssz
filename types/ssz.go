@@ -26,7 +26,7 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 		case isBasicType(typ.Elem().Kind()):
 			return BasicSliceFactory, nil
 		default:
-			return CompositeArrayFactory, nil
+			return CompositeSliceFactory, nil
 		}
 	case kind == reflect.Array && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
 		return BasicArrayFactory, nil
