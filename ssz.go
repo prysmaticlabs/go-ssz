@@ -18,6 +18,64 @@ func ToggleCache(enableTreeCache bool) {
 	useCache = enableTreeCache
 }
 
+// Marshal a value and output the result into a byte slice.
+// Given a struct with the following fields, one can marshal it as follows:
+//  type exampleStruct struct {
+//      Field1 uint8
+//      Field2 []byte
+//  }
+//
+//  ex := exampleStruct{
+//      Field1: 10,
+//      Field2: []byte{1, 2, 3, 4},
+//  }
+//  encoded, err := Marshal(ex)
+//  if err != nil {
+//      return fmt.Errorf("failed to marshal: %v", err)
+//  }
+//
+// One can also specify the specific size of a struct's field by using
+// ssz-specific field tags as follows:
+//
+//  type exampleStruct struct {
+//      Field1 uint8
+//      Field2 []byte `ssz:"size=32"`
+//  }
+//
+// This will treat `Field2` as as [32]byte array when marshaling. For unbounded
+// fields or multidimensional slices, ssz size tags can also be used as follows:
+//
+//  type exampleStruct struct {
+//      Field1 uint8
+//      Field2 [][]byte `ssz:"size=?,32"`
+//  }
+//
+// This will treat `Field2` as type [][32]byte when marshaling a
+// struct of that type.
+func Marshal(val interface{}) ([]byte, error) {
+	if val == nil {
+		return nil, errors.New("untyped-value nil cannot be marshaled")
+	}
+	rval := reflect.ValueOf(val)
+
+	// We pre-allocate a buffer-size depending on the value's calculated total byte size.
+	buf := make([]byte, determineSize(rval))
+	factory, err := types.SSZFactory(rval, rval.Type())
+	if err != nil {
+		return nil, err
+	}
+	if rval.Type().Kind() == reflect.Ptr {
+		if _, err := factory.Marshal(rval.Elem(), rval.Elem().Type(), buf, 0 /* start offset */); err != nil {
+			return nil, fmt.Errorf("failed to marshal for type: %v", rval.Elem().Type())
+		}
+		return buf, nil
+	}
+	if _, err := factory.Marshal(rval, rval.Type(), buf, 0 /* start offset */); err != nil {
+		return nil, fmt.Errorf("failed to marshal for type: %v", rval.Type())
+	}
+	return buf, nil
+}
+
 // HashTreeRoot determines the root hash using SSZ's Merkleization.
 // Given a struct with the following fields, one can tree hash it as follows:
 //  type exampleStruct struct {

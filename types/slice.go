@@ -74,9 +74,11 @@ func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 		offset += 32
 	}
 
-	res := b.hashCache[string(hashKey)]
-	if res != nil {
-		return res.([32]byte), nil
+	if numItems > 0 {
+		res := b.hashCache[string(hashKey)]
+		if res != nil {
+			return res.([32]byte), nil
+		}
 	}
 	buf := new(bytes.Buffer)
 	if err := binary.Write(buf, binary.LittleEndian, uint64(val.Len())); err != nil {
@@ -92,7 +94,9 @@ func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 		return [32]byte{}, err
 	}
 	result := mixInLength(merkleRoot, output)
-	b.hashCache[string(hashKey)] = result
+	if numItems > 0 {
+		b.hashCache[string(hashKey)] = result
+	}
 	return result, nil
 }
 
@@ -214,16 +218,19 @@ func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 		offset += 32
 	}
 
-	res := b.hashCache[string(hashKey)]
-	if res != nil {
-		return res.([32]byte), nil
+	if val.Len() > 0 {
+		res := b.hashCache[string(hashKey)]
+		if res != nil {
+			return res.([32]byte), nil
+		}
 	}
-	//root, err := bitwiseMerkleize(roots, limit, true /* has limit */)
 	root, err := NewMerkleize(roots, uint64(len(roots)), limit, true)
 	if err != nil {
 		return [32]byte{}, err
 	}
-	b.hashCache[string(hashKey)] = root
+	if val.Len() > 0 {
+		b.hashCache[string(hashKey)] = root
+	}
 	return root, nil
 }
 
@@ -290,15 +297,19 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		leaves[i] = r[:]
 		copy(hashKey[offset:offset+32], r[:])
 	}
-	res := b.hashCache[string(hashKey)]
-	if res != nil {
-		return res.([32]byte), nil
+	if numItems > 0 {
+		res := b.hashCache[string(hashKey)]
+		if res != nil {
+			return res.([32]byte), nil
+		}
 	}
 	root, err := NewMerkleize(leaves, uint64(len(leaves)), uint64(len(leaves)), false /* has limit */)
 	if err != nil {
 		return [32]byte{}, err
 	}
-	b.hashCache[string(hashKey)] = root
+	if numItems > 0 {
+		b.hashCache[string(hashKey)] = root
+	}
 	return root, nil
 }
 
