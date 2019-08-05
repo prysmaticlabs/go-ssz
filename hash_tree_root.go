@@ -243,6 +243,7 @@ func compositeSliceHasher(val reflect.Value, typ reflect.Type, maxCapacity uint6
 	if err != nil {
 		return [32]byte{}, err
 	}
+	fmt.Printf("COMPOSITE SLICE %s chunks %d objlen %d root %#x\n", typ, len(chunks), objLen, merkleRoot)
 	return mixInLength(merkleRoot, output), nil
 }
 

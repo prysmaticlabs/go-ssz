@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"reflect"
 )
 
@@ -80,7 +81,10 @@ func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 		copy(hashKey[offset:offset+32], r[:])
 		offset += 32
 	}
-
+	chunks, err := pack(roots)
+	if err != nil {
+		return [32]byte{}, err
+	}
 	if numItems > 0 {
 		res := b.hashCache[string(hashKey)]
 		if res != nil {
@@ -96,14 +100,14 @@ func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	if maxCapacity == 0 {
 		objLen = uint64(val.Len())
 	}
-	merkleRoot, err := NewMerkleize(roots, uint64(len(roots)), objLen, true)
+	merkleRoot, err := NewMerkleize(chunks, uint64(len(chunks)), objLen, true)
 	if err != nil {
 		return [32]byte{}, err
 	}
+	b.hashCache[string(hashKey)] = merkleRoot
+	fmt.Printf("COMPOSITE SLICE %s chunks %d objlen %d root %#x\n", typ, len(chunks), objLen, merkleRoot)
 	result := mixInLength(merkleRoot, output)
-	if numItems > 0 {
-		b.hashCache[string(hashKey)] = result
-	}
+	b.hashCache[string(hashKey)] = result
 	return result, nil
 }
 
