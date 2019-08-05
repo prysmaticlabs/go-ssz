@@ -26,11 +26,19 @@ func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 		return [32]byte{}, nil
 	}
 	numFields := typ.NumField()
+	return b.FieldsHasher(val, typ, numFields)
+}
+
+func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields int) ([32]byte, error) {
 	roots := make([][]byte, numFields)
 	hashKey := make([]byte, 32*numFields)
 	offset := 0
 	var err error
 	for i := 0; i < numFields; i++ {
+		// We skip protobuf related metadata fields.
+		if strings.Contains(typ.Field(i).Name, "XXX") {
+			continue
+		}
 		fCapacity := determineFieldCapacity(typ.Field(i))
 		if typ.Field(i).Name == "AggregationBits" {
 			r, err := bitlistHasher(val.Field(i), fCapacity)

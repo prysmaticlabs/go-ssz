@@ -46,7 +46,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 }
 
 // HashTreeRootWithCapacity determines the root hash of a dynamic list
-// using SSZ's merkleization and applies a max capacity value when computing the root.
+// using SSZ's Merkleization and applies a max capacity value when computing the root.
 // If the input is not a slice, the function returns an error.
 //
 //  accountBalances := []uint64{1, 2, 3, 4}
@@ -67,4 +67,15 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 		return [32]byte{}, fmt.Errorf("could generate tree hasher for type: %v: %v", rval.Type(), err)
 	}
 	return factory.Root(rval, rval.Type(), maxCapacity)
+}
+
+// SigningRoot truncates the last property of the struct passed in
+// and returns its tree hash. This is done because the last property
+// usually contains the signature that which this data is the root for.
+func SigningRoot(val interface{}) ([32]byte, error) {
+	valObj := reflect.ValueOf(val)
+	if valObj.IsNil() {
+		return [32]byte{}, errors.New("nil pointer given")
+	}
+	return types.StructFactory.FieldsHasher(valObj, valObj.Type(), valObj.Type().NumField()-1)
 }

@@ -4,12 +4,12 @@ import (
 	"reflect"
 )
 
-var basicSSZ = NewBasicSSZ()
-var basicArraySSZ = NewBasicArraySSZ()
-var compositeArraySSZ = NewCompositeArraySSZ()
-var basicSliceSSZ = NewBasicSliceSSZ()
-var compositeSliceSSZ = NewCompositeSliceSSZ()
-var structSSZ = NewStructSSZ()
+var StructFactory = NewStructSSZ()
+var BasicFactory = NewBasicSSZ()
+var BasicArrayFactory = NewBasicArraySSZ()
+var CompositeArrayFactory = NewCompositeArraySSZ()
+var BasicSliceFactory = NewBasicSliceSSZ()
+var CompositeSliceFactory = NewCompositeSliceSSZ()
 
 type SSZAble interface {
 	Root(reflect.Value, reflect.Type, uint64) ([32]byte, error)
@@ -20,20 +20,20 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 	kind := typ.Kind()
 	switch {
 	case isBasicType(kind) || isBasicTypeArray(typ, typ.Kind()):
-		return basicSSZ, nil
+		return BasicFactory, nil
 	case kind == reflect.Slice:
 		switch {
 		case isBasicType(typ.Elem().Kind()):
-			return basicSliceSSZ, nil
+			return BasicSliceFactory, nil
 		default:
-			return compositeSliceSSZ, nil
+			return CompositeArrayFactory, nil
 		}
 	case kind == reflect.Array && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
-		return basicArraySSZ, nil
+		return BasicArrayFactory, nil
 	case kind == reflect.Array:
-		return compositeArraySSZ, nil
+		return CompositeArrayFactory, nil
 	case kind == reflect.Struct:
-		return structSSZ, nil
+		return StructFactory, nil
 	case kind == reflect.Ptr:
 		return SSZFactory(val.Elem(), typ.Elem())
 	default:

@@ -3,10 +3,8 @@ package ssz
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"sync"
 	"testing"
-	"time"
 )
 
 func init() {
@@ -19,49 +17,17 @@ type fork struct {
 	Epoch           uint64
 }
 
-type otherItem struct {
-	PreviousVersion [4]uint16
-	CurrentVersion  [4]uint16
-	Epoch           uint64
-}
-
-type accountBalances struct {
-	Balances []uint64 `ssz-max:"1099511627776"` // Large uint64 capacity.
-}
-
-type nilItem struct {
-	Field1 []*fork
-	Field2 uint64
-}
-
-type compactCommittee struct {
-	Indices    [10]uint64
-	Slashed    [10]uint64
-	BlockRoots [64][32]byte
-}
-
-func TestOtherItem(t *testing.T) {
-	var roots [64][32]byte
-	for i := 0; i < 64; i++ {
-		enc := fmt.Sprintf("%d", i)
-		r := hash([]byte(enc))
-		roots[i] = r
-	}
-	item := compactCommittee{
-		Indices:    [10]uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-		Slashed:    [10]uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-		BlockRoots: roots,
-	}
-	start := time.Now()
-	root, err := HashTreeRoot(item)
-	if err != nil {
-		t.Fatal(err)
-	}
-	end := time.Now()
-	fmt.Printf("%#x and %v\n", root, end.Sub(start))
+type truncateSignatureCase struct {
+	Slot              uint64
+	PreviousBlockRoot []byte
+	Signature         []byte
 }
 
 func TestNilPointerHashTreeRoot(t *testing.T) {
+	type nilItem struct {
+		Field1 []*fork
+		Field2 uint64
+	}
 	useCache = true
 	i := &nilItem{
 		Field1: []*fork{nil},
@@ -117,6 +83,7 @@ func TestHashTreeRootWithCapacity_FailsWithNonSliceType(t *testing.T) {
 }
 
 func TestHashTreeRootWithCapacity_HashesCorrectly(t *testing.T) {
+
 	useCache = false
 	capacity := uint64(1099511627776)
 	balances := make([]uint64, 512)
@@ -141,6 +108,9 @@ func TestHashTreeRootWithCapacity_HashesCorrectly(t *testing.T) {
 
 // Regression test for https://github.com/prysmaticlabs/go-ssz/issues/46.
 func TestHashTreeRoot_EncodeSliceLengthCorrectly(t *testing.T) {
+	type accountBalances struct {
+		Balances []uint64 `ssz-max:"1099511627776"` // Large uint64 capacity.
+	}
 	useCache = false
 	acct := accountBalances{
 		Balances: make([]uint64, 512),
@@ -176,6 +146,101 @@ func TestHashTreeRoot_ConcurrentAccess(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		go func(tt *testing.T, w *sync.WaitGroup) {
 			if _, err := HashTreeRoot(item); err != nil {
+				tt.Fatal(err)
+			}
+			w.Done()
+		}(t, &wg)
+	}
+	wg.Wait()
+}
+
+func TestSigningRoot(t *testing.T) {
+	type signingRootTest struct {
+		Val1 interface{}
+		Val2 interface{}
+	}
+	type truncateLastCase struct {
+		Slot           uint64
+		StateRoot      []byte
+		TruncatedField []byte
+	}
+	var signingRootTests = []signingRootTest{
+		{
+			Val1: &truncateSignatureCase{Slot: 20, Signature: []byte{'A', 'B'}},
+			Val2: &truncateSignatureCase{Slot: 20, Signature: []byte("TESTING")},
+		},
+		{
+			Val1: &truncateSignatureCase{
+				Slot:              10,
+				PreviousBlockRoot: []byte{'a', 'b'},
+				Signature:         []byte("TESTINGDIFF")},
+			Val2: &truncateSignatureCase{
+				Slot:              10,
+				PreviousBlockRoot: []byte{'a', 'b'},
+				Signature:         []byte("TESTING23")},
+		},
+		{
+			Val1: truncateSignatureCase{Slot: 50, Signature: []byte("THIS")},
+			Val2: truncateSignatureCase{Slot: 50, Signature: []byte("DOESNT")},
+		},
+		{
+			Val1: truncateSignatureCase{Signature: []byte("MATTER")},
+			Val2: truncateSignatureCase{Signature: []byte("TESTING")},
+		},
+		{
+			Val1: truncateLastCase{
+				Slot:           5,
+				StateRoot:      []byte("MATTERS"),
+				TruncatedField: []byte("DOESNT MATTER"),
+			},
+			Val2: truncateLastCase{
+				Slot:           5,
+				StateRoot:      []byte("MATTERS"),
+				TruncatedField: []byte("SHOULDNT MATTER"),
+			},
+		},
+		{
+			Val1: truncateLastCase{
+				Slot:           550,
+				StateRoot:      []byte("SHOULD"),
+				TruncatedField: []byte("DOESNT"),
+			},
+			Val2: truncateLastCase{
+				Slot:           550,
+				StateRoot:      []byte("SHOULD"),
+				TruncatedField: []byte("SHOULDNT"),
+			},
+		},
+	}
+
+	for i, test := range signingRootTests {
+		output1, err := SigningRoot(test.Val1)
+		if err != nil {
+			t.Errorf("could not get the signing root of test %d, value 1 %v", i, err)
+		}
+		output2, err := SigningRoot(test.Val2)
+		if err != nil {
+			t.Errorf("could not get the signing root of test %d, value 2 %v", i, err)
+		}
+		// Check values have same result hash
+		if !bytes.Equal(output1[:], output2[:]) {
+			t.Errorf("test %d: hash mismatch: %X\n != %X", i, output1, output2)
+		}
+	}
+}
+
+func TestSigningRoot_ConcurrentAccess(t *testing.T) {
+	item := &truncateSignatureCase{
+		Slot:              10,
+		PreviousBlockRoot: []byte{'a', 'b'},
+		Signature:         []byte("TESTING23"),
+	}
+	var wg sync.WaitGroup
+	// We ensure the signing root function can be computed in a thread-safe manner.
+	wg.Add(100)
+	for i := 0; i < 100; i++ {
+		go func(tt *testing.T, w *sync.WaitGroup) {
+			if _, err := SigningRoot(item); err != nil {
 				tt.Fatal(err)
 			}
 			w.Done()
