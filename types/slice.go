@@ -406,6 +406,36 @@ func (b *CompositeArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []b
 	return index, nil
 }
 
+func (b *CompositeArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	currentIndex := startOffset
+	nextIndex := currentIndex
+	offsetVal := input[startOffset : startOffset+BytesPerLengthOffset]
+	firstOffset := startOffset + uint64(binary.LittleEndian.Uint32(offsetVal))
+	currentOffset := firstOffset
+	nextOffset := currentOffset
+	endOffset := uint64(len(input))
+	i := 0
+	for currentIndex < firstOffset {
+		nextIndex = currentIndex + BytesPerLengthOffset
+		if nextIndex == firstOffset {
+			nextOffset = endOffset
+		} else {
+			nextOffsetVal := input[nextIndex : nextIndex+BytesPerLengthOffset]
+			nextOffset = startOffset + uint64(binary.LittleEndian.Uint32(nextOffsetVal))
+		}
+		if val.Index(i).Kind() == reflect.Ptr {
+			instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
+		}
+		if _, err := recursiveUnmarshaler(input[currentOffset:nextOffset], val.Index(i), typ.Elem(), 0); err != nil {
+			return 0, err
+		}
+		i++
+		currentIndex = nextIndex
+		currentOffset = nextOffset
+	}
+	return currentIndex, nil
+}
+
 func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	numItems := val.Len()
 	hashKey := make([]byte, 32*numItems)
@@ -476,7 +506,7 @@ func (b *BasicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 		}
 		index, err = recursiveUnmarshaler(input, val.Index(i), typ.Elem(), index)
 		if err != nil {
-			return 0, fmt.Errorf("failed to unmarshal element of array: %v", err)
+			return 0, err
 		}
 		i++
 	}

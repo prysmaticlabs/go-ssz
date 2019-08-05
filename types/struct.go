@@ -82,6 +82,79 @@ func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 	return currentOffsetIndex, nil
 }
 
+func (b *StructSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	endOffset := uint64(len(input))
+	currentIndex := startOffset
+	nextIndex := currentIndex
+	fixedSizes := make([]uint64, typ.NumField())
+
+	for i := 0; i < len(fixedSizes); i++ {
+		if !isVariableSizeType(fields[i].typ) {
+			if val.Field(i).Kind() == reflect.Ptr {
+				instantiateConcreteTypeForElement(val.Field(i), fields[i].typ.Elem())
+			}
+			concreteVal := val.Field(i)
+			sszSizeTags, hasTags, err := parseSSZFieldTags(typ.Field(i))
+			if err != nil {
+				return 0, err
+			}
+			if hasTags {
+				concreteType := inferFieldTypeFromSizeTags(typ.Field(i), sszSizeTags)
+				concreteVal = reflect.New(concreteType).Elem()
+				// If the item is a slice, we grow it accordingly based on the size tags.
+				if val.Field(i).Kind() == reflect.Slice {
+					result := growSliceFromSizeTags(val.Field(i), sszSizeTags)
+					val.Field(i).Set(result)
+				}
+			}
+			fixedSz := determineFixedSize(concreteVal, fields[i].typ)
+			if fixedSz > 0 {
+				fixedSizes[i] = fixedSz
+			}
+		} else {
+			fixedSizes[i] = 0
+		}
+	}
+
+	offsets := make([]uint64, 0)
+	offsetIndexCounter := startOffset
+	for _, item := range fixedSizes {
+		if item > 0 {
+			offsetIndexCounter += item
+		} else {
+			offsetVal := input[offsetIndexCounter : offsetIndexCounter+BytesPerLengthOffset]
+			offsets = append(offsets, startOffset+uint64(binary.LittleEndian.Uint32(offsetVal)))
+			offsetIndexCounter += BytesPerLengthOffset
+		}
+	}
+	offsets = append(offsets, endOffset)
+	offsetIndex := uint64(0)
+	for i := 0; i < len(fields); i++ {
+		f := fields[i]
+		fieldSize := fixedSizes[i]
+		if val.Field(i).Kind() == reflect.Ptr {
+			instantiateConcreteTypeForElement(val.Field(i), fields[i].typ.Elem())
+		}
+		if fieldSize > 0 {
+			nextIndex = currentIndex + fieldSize
+			if _, err := recursiveUnmarshaler(input[currentIndex:nextIndex], val.Field(i), f.typ, 0); err != nil {
+				return 0, err
+			}
+			currentIndex = nextIndex
+
+		} else {
+			firstOff := offsets[offsetIndex]
+			nextOff := offsets[offsetIndex+1]
+			if _, err := recursiveUnmarshaler(input[firstOff:nextOff], val.Field(i), f.typ, 0); err != nil {
+				return 0, err
+			}
+			offsetIndex++
+			currentIndex += BytesPerLengthOffset
+		}
+	}
+	return currentIndex, nil
+}
+
 func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {

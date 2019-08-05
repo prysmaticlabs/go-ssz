@@ -51,6 +51,10 @@ func (n *NilFactory) Marshal(val reflect.Value, typ reflect.Type, buf []byte, st
 	return startOffset, nil
 }
 
+func (n *NilFactory) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+	return startOffset, nil
+}
+
 func (n *NilFactory) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	return [32]byte{}, nil
 }
