@@ -123,6 +123,7 @@ func basicArrayHasher(val reflect.Value, typ reflect.Type) ([32]byte, error) {
 		}
 		leaves = append(leaves, r[:])
 	}
+	fmt.Println(leaves)
 	chunks, err := pack(leaves)
 	if err != nil {
 		return [32]byte{}, err
@@ -269,7 +270,6 @@ func fieldsHasher(val reflect.Value, fields []field) ([32]byte, error) {
 		if err != nil {
 			return [32]byte{}, fmt.Errorf("failed to hash field %s of struct: %v", f.name, err)
 		}
-		fmt.Printf("%s has root %#x\n", f.name, r)
 		roots[i] = r[:]
 	}
 	return bitwiseMerkleize(roots, uint64(len(fields)), true /* has limit */)

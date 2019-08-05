@@ -216,7 +216,13 @@ func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	numItems := val.Len()
 	roots := make([][]byte, numItems)
 	hashKey := make([]byte, 32*numItems)
-	limit := uint64(typ.Len())
+	elemSize := uint64(0)
+	if isBasicType(typ.Elem().Kind()) {
+		elemSize = determineFixedSize(val, typ.Elem())
+	} else {
+		elemSize = 32
+	}
+	limit := (uint64(val.Len())*elemSize + 31) / 32
 	offset := 0
 	for i := 0; i < val.Len(); i++ {
 		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
@@ -227,14 +233,20 @@ func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 		copy(hashKey[offset:offset+32], r[:])
 		offset += 32
 	}
-
 	if val.Len() > 0 {
 		res := b.hashCache[string(hashKey)]
 		if res != nil {
 			return res.([32]byte), nil
 		}
 	}
-	root, err := NewMerkleize(roots, uint64(len(roots)), limit, true)
+	chunks, err := pack(roots)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	if val.Len() == 0 {
+		chunks = [][]byte{}
+	}
+	root, err := NewMerkleize(chunks, uint64(len(chunks)), limit, true)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -307,19 +319,23 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		leaves[i] = r[:]
 		copy(hashKey[offset:offset+32], r[:])
 	}
-	if numItems > 0 {
-		res := b.hashCache[string(hashKey)]
-		if res != nil {
-			return res.([32]byte), nil
-		}
-	}
-	root, err := NewMerkleize(leaves, uint64(len(leaves)), uint64(len(leaves)), false /* has limit */)
+	//if numItems > 0 {
+	//	res := b.hashCache[string(hashKey)]
+	//	if res != nil {
+	//		return res.([32]byte), nil
+	//	}
+	//}
+	chunks, err := pack(leaves)
 	if err != nil {
 		return [32]byte{}, err
 	}
-	if numItems > 0 {
-		b.hashCache[string(hashKey)] = root
+	root, err := NewMerkleize(chunks, uint64(len(chunks)), uint64(len(chunks)), false /* has limit */)
+	if err != nil {
+		return [32]byte{}, err
 	}
+	//if numItems > 0 {
+	//	b.hashCache[string(hashKey)] = root
+	//}
 	return root, nil
 }
 

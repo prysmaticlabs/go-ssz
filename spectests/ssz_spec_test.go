@@ -164,7 +164,7 @@ func TestYamlStaticSpecTests(t *testing.T) {
 		"ssz_minimal_nil.yaml",
 		"ssz_minimal_one.yaml",
 		"ssz_minimal_random.yaml",
-		//"ssz_minimal_random_chaos.yaml",
+		"ssz_minimal_random_chaos.yaml",
 		"ssz_minimal_zero.yaml",
 	}
 	for _, f := range yamlFileNames {
