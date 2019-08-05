@@ -191,7 +191,7 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 			copy(hashKey[offset:offset+32], leaves[i])
 			continue
 		}
-		r, err := basicSSZ.Root(val.Index(i), typ.Elem(), 0)
+		r, err := BasicFactory.Root(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
