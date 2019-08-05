@@ -106,6 +106,17 @@ func (b *CompositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []b
 	if err != nil {
 		return 0, err
 	}
+	if !isVariableSizeType(typ.Elem()) {
+		for i := 0; i < val.Len(); i++ {
+			// If each element is not variable size, we simply encode sequentially and write
+			// into the buffer at the last index we wrote at.
+			index, err = factory.Marshal(val.Index(i), typ.Elem(), buf, index)
+			if err != nil {
+				return 0, err
+			}
+		}
+		return index, nil
+	}
 	fixedIndex := index
 	currentOffsetIndex := startOffset + uint64(val.Len())*BytesPerLengthOffset
 	nextOffsetIndex := currentOffsetIndex
@@ -219,7 +230,6 @@ func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 
 func (b *CompositeArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	index := startOffset
-	var err error
 	if val.Len() == 0 {
 		return index, nil
 	}
@@ -227,12 +237,37 @@ func (b *CompositeArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []b
 	if err != nil {
 		return 0, err
 	}
+	if !isVariableSizeType(typ.Elem()) {
+		for i := 0; i < val.Len(); i++ {
+			// If each element is not variable size, we simply encode sequentially and write
+			// into the buffer at the last index we wrote at.
+			index, err = factory.Marshal(val.Index(i), typ.Elem(), buf, index)
+			if err != nil {
+				return 0, err
+			}
+		}
+		return index, nil
+	}
+	fixedIndex := index
+	currentOffsetIndex := startOffset + uint64(val.Len())*BytesPerLengthOffset
+	nextOffsetIndex := currentOffsetIndex
+	// If the elements are variable size, we need to include offset indices
+	// in the serialized output list.
 	for i := 0; i < val.Len(); i++ {
-		index, err = factory.Marshal(val.Index(i), typ.Elem(), buf, index)
+		nextOffsetIndex, err = factory.Marshal(val.Index(i), typ.Elem(), buf, currentOffsetIndex)
 		if err != nil {
 			return 0, err
 		}
+		// Write the offset.
+		offsetBuf := make([]byte, BytesPerLengthOffset)
+		binary.LittleEndian.PutUint32(offsetBuf, uint32(currentOffsetIndex-startOffset))
+		copy(buf[fixedIndex:fixedIndex+BytesPerLengthOffset], offsetBuf)
+
+		// We increase the offset indices accordingly.
+		currentOffsetIndex = nextOffsetIndex
+		fixedIndex += BytesPerLengthOffset
 	}
+	index = currentOffsetIndex
 	return index, nil
 }
 
