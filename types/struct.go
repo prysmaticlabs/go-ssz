@@ -22,6 +22,9 @@ func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 }
 
 func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+	if val.IsNil() {
+		return [32]byte{}, nil
+	}
 	numFields := typ.NumField()
 	roots := make([][]byte, numFields)
 	hashKey := make([]byte, 32*numFields)
