@@ -1,30 +1,24 @@
 package ssz
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
-	"time"
-
-	"github.com/prysmaticlabs/go-bitfield"
 
 	"github.com/prysmaticlabs/go-ssz/types"
 )
 
 var (
-	useCache  = false
-	hashCache = newHashCache(100000)
+	useCache = false
 )
 
 // ToggleCache allows to programmatically enable/disable the hash tree root cache.
+// TODO: Re-enable functionality.
 func ToggleCache(enableTreeCache bool) {
 	useCache = enableTreeCache
 }
 
-// HashTreeRoot determines the root hash using SSZ's merkleization.
+// HashTreeRoot determines the root hash using SSZ's Merkleization.
 // Given a struct with the following fields, one can tree hash it as follows:
 //  type exampleStruct struct {
 //      Field1 uint8
@@ -68,15 +62,9 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 	if rval.Kind() != reflect.Slice {
 		return [32]byte{}, fmt.Errorf("expected slice-kind input, received %v", rval.Kind())
 	}
-	var r [32]byte
-	var err error
-	if useCache {
-		r, err = hashCache.lookup(rval, rval.Type(), maxCapacity)
-	} else {
-		r, err = recursiveHasher(rval, rval.Type(), maxCapacity)
-	}
+	factory, err := types.SSZFactory(rval, rval.Type())
 	if err != nil {
-		return [32]byte{}, fmt.Errorf("could not tree hash type: %v: %v", rval.Type(), err)
+		return [32]byte{}, fmt.Errorf("could generate tree hasher for type: %v: %v", rval.Type(), err)
 	}
-	return r, nil
+	return factory.Root(rval, rval.Type(), maxCapacity)
 }
