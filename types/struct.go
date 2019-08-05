@@ -127,7 +127,6 @@ func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 			return [32]byte{}, err
 		}
 		roots[i] = r[:]
-		fmt.Printf("%s has root %#x\n", typ.Field(i).Name, r)
 		copy(hashKey[offset:offset+32], r[:])
 		offset += 32
 	}
