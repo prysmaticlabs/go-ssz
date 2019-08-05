@@ -33,9 +33,31 @@ func (b *BasicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, star
 	case kind == reflect.Uint64:
 		return marshalUint64(val, buf, startOffset)
 	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
-		return b.marshalByteArray(val, typ, buf, startOffset)
+		return marshalByteArray(val, typ, buf, startOffset)
 	case kind == reflect.Array && isBasicType(typ.Elem().Kind()):
 		return b.marshalBasicArray(val, typ, buf, startOffset)
+	default:
+		return 0, fmt.Errorf("type %v is not serializable", val.Type())
+	}
+}
+
+func (b *BasicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+	kind := typ.Kind()
+	switch {
+	case kind == reflect.Bool:
+		return unmarshalBool(val, typ, buf, startOffset)
+	case kind == reflect.Uint8:
+		return unmarshalUint8(val, typ, buf, startOffset)
+	case kind == reflect.Uint16:
+		return unmarshalUint16(val, typ, buf, startOffset)
+	case kind == reflect.Uint32:
+		return unmarshalUint32(val, typ, buf, startOffset)
+	case kind == reflect.Uint64:
+		return unmarshalUint64(val, typ, buf, startOffset)
+	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
+		return unmarshalByteArray(val, typ, buf, startOffset)
+	//case kind == reflect.Array && isBasicType(typ.Elem().Kind()):
+	//	return b.unmarshalBasicArray(val, typ, buf, startOffset)
 	default:
 		return 0, fmt.Errorf("type %v is not serializable", val.Type())
 	}
@@ -79,7 +101,7 @@ func (b *BasicSSZ) marshalBasicArray(val reflect.Value, typ reflect.Type, buf []
 	return index, nil
 }
 
-func (b *BasicSSZ) marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	if val.Type().Kind() == reflect.Array {
 		for i := 0; i < val.Len(); i++ {
 			buf[int(startOffset)+i] = uint8(val.Index(i).Uint())
@@ -88,6 +110,12 @@ func (b *BasicSSZ) marshalByteArray(val reflect.Value, typ reflect.Type, buf []b
 	}
 	copy(buf[startOffset:], val.Bytes())
 	return startOffset + uint64(val.Len()), nil
+}
+
+func unmarshalByteArray(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	offset := startOffset + uint64(len(input))
+	val.SetBytes(input[startOffset:offset])
+	return offset, nil
 }
 
 func marshalBool(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
@@ -99,8 +127,25 @@ func marshalBool(val reflect.Value, buf []byte, startOffset uint64) (uint64, err
 	return startOffset + 1, nil
 }
 
+func unmarshalBool(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	v := input[startOffset]
+	if v == 0 {
+		val.SetBool(false)
+	} else if v == 1 {
+		val.SetBool(true)
+	} else {
+		return 0, fmt.Errorf("expected 0 or 1 but received %d", v)
+	}
+	return startOffset + 1, nil
+}
+
 func marshalUint8(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	buf[startOffset] = val.Interface().(uint8)
+	return startOffset + 1, nil
+}
+
+func unmarshalUint8(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	val.SetUint(uint64(input[startOffset]))
 	return startOffset + 1, nil
 }
 
@@ -109,14 +154,38 @@ func marshalUint16(val reflect.Value, buf []byte, startOffset uint64) (uint64, e
 	return startOffset + 2, nil
 }
 
+func unmarshalUint16(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	offset := startOffset + 2
+	buf := make([]byte, 2)
+	copy(buf, input[startOffset:offset])
+	val.SetUint(uint64(binary.LittleEndian.Uint16(buf)))
+	return offset, nil
+}
+
 func marshalUint32(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	binary.LittleEndian.PutUint32(buf[startOffset:], val.Interface().(uint32))
 	return startOffset + 4, nil
 }
 
+func unmarshalUint32(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	offset := startOffset + 4
+	buf := make([]byte, 4)
+	copy(buf, input[startOffset:offset])
+	val.SetUint(uint64(binary.LittleEndian.Uint32(buf)))
+	return offset, nil
+}
+
 func marshalUint64(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
 	binary.LittleEndian.PutUint64(buf[startOffset:], val.Interface().(uint64))
 	return startOffset + 8, nil
+}
+
+func unmarshalUint64(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	offset := startOffset + 8
+	buf := make([]byte, 8)
+	copy(buf, input[startOffset:offset])
+	val.SetUint(binary.LittleEndian.Uint64(buf))
+	return offset, nil
 }
 
 func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
