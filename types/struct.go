@@ -24,9 +24,9 @@ func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	numFields := typ.NumField()
 	roots := make([][]byte, numFields)
-	hashKey := []byte{}
+	hashKey := make([]byte, 32*numFields)
+	offset := 0
 	var err error
-	//isState := strings.Contains(typ.Name(), "BeaconState")
 	for i := 0; i < numFields; i++ {
 		fCapacity := determineFieldCapacity(typ.Field(i))
 		if typ.Field(i).Name == "AggregationBits" {
@@ -34,8 +34,9 @@ func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 			if err != nil {
 				return [32]byte{}, nil
 			}
-			hashKey = append(hashKey, r[:]...)
 			roots[i] = r[:]
+			copy(hashKey[offset:offset+32], r[:])
+			offset += 32
 			continue
 		}
 		fType, err := determineFieldType(typ.Field(i))
@@ -43,24 +44,19 @@ func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 			return [32]byte{}, err
 		}
 		factory, _ := SSZFactory(val.Field(i), fType)
-		//start := time.Now()
 		r, err := factory.Root(val.Field(i), fType, fCapacity)
 		if err != nil {
 			return [32]byte{}, err
 		}
-		//end := time.Now()
-		//if isState {
-		//	fv := reflect.ValueOf(factory)
-		//	fmt.Printf("%s took time %v with factory %v\n", typ.Field(i).Name, end.Sub(start), fv.Type())
-		//}
-		hashKey = append(hashKey, r[:]...)
 		roots[i] = r[:]
+		copy(hashKey[offset:offset+32], r[:])
+		offset += 32
 	}
 	res := b.hashCache[string(hashKey)]
 	if res != nil {
 		return res.([32]byte), nil
 	}
-	root, err := bitwiseMerkleize(roots, uint64(typ.NumField()), true /* has limit */)
+	root, err := NewMerkleize(roots, uint64(numFields), uint64(numFields), true)
 	if err != nil {
 		return [32]byte{}, err
 	}

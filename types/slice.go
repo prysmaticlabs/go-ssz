@@ -200,7 +200,7 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	if res != nil {
 		return res.([32]byte), nil
 	}
-	root, err := bitwiseMerkleize(leaves, 1, false /* has limit */)
+	root, err := NewMerkleize(leaves, uint64(len(leaves)), uint64(len(leaves)), false /* has limit */)
 	if err != nil {
 		return [32]byte{}, err
 	}
