@@ -11,7 +11,6 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/tools/bazel"
 	"github.com/ghodss/yaml"
-
 	"github.com/prysmaticlabs/go-ssz"
 )
 

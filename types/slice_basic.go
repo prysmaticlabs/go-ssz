@@ -15,6 +15,7 @@ func newBasicSliceSSZ() *basicSliceSSZ {
 		hashCache: make(map[string]interface{}),
 	}
 }
+
 func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	var factory SSZAble
 	var limit uint64
