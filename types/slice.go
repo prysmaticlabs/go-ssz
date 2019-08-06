@@ -193,12 +193,14 @@ func (b *CompositeSliceSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input
 
 func (b *BasicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	var factory SSZAble
-	elemSize := determineFixedSize(val, typ.Elem())
-	limit := (maxCapacity*elemSize + 31) / 32
+	var limit uint64
+	var elemSize uint64
 	numItems := val.Len()
 	if numItems > 0 {
 		factory, _ = SSZFactory(val.Index(0), typ.Elem())
 		// TODO: Abstract into a chunk count function.
+		elemSize = determineFixedSize(val.Index(0), typ.Elem())
+		limit = (maxCapacity*elemSize + 31) / 32
 	}
 	if limit == 0 {
 		limit = 1
