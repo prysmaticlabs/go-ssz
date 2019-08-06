@@ -4,10 +4,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 type basicSSZ struct {
 	hashCache map[string]interface{}
+	lock      sync.Mutex
 }
 
 func newBasicSSZ() *basicSSZ {
@@ -69,7 +71,9 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 		return [32]byte{}, err
 	}
 	hashKey = string(buf)
+	b.lock.Lock()
 	res := b.hashCache[hashKey]
+	b.lock.Unlock()
 	if res != nil {
 		return res.([32]byte), nil
 	}
@@ -85,7 +89,9 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	if err != nil {
 		return [32]byte{}, err
 	}
+	b.lock.Lock()
 	b.hashCache[hashKey] = root
+	b.lock.Unlock()
 	return root, nil
 }
 

@@ -3,10 +3,12 @@ package types
 import (
 	"encoding/binary"
 	"reflect"
+	"sync"
 )
 
 type compositeArraySSZ struct {
 	hashCache map[string]interface{}
+	lock      sync.Mutex
 }
 
 func newCompositeArraySSZ() *compositeArraySSZ {
@@ -40,8 +42,10 @@ func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 		copy(hashKey[offset:offset+32], r[:])
 		offset += 32
 	}
-	if val.Len() > 0 {
+	if val.Len() > 0 && !isVariableSizeType(typ.Elem()) {
+		b.lock.Lock()
 		res := b.hashCache[string(hashKey)]
+		b.lock.Unlock()
 		if res != nil {
 			return res.([32]byte), nil
 		}
@@ -57,8 +61,10 @@ func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	if err != nil {
 		return [32]byte{}, err
 	}
-	if val.Len() > 0 {
+	if val.Len() > 0 && !isVariableSizeType(typ.Elem()) {
+		b.lock.Lock()
 		b.hashCache[string(hashKey)] = root
+		b.lock.Unlock()
 	}
 	return root, nil
 }

@@ -3,10 +3,12 @@ package types
 import (
 	"bytes"
 	"reflect"
+	"sync"
 )
 
 type basicArraySSZ struct {
 	hashCache map[string]interface{}
+	lock      sync.Mutex
 }
 
 func newBasicArraySSZ() *basicArraySSZ {
@@ -43,7 +45,9 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		offset += 32
 	}
 	if !bytes.Equal(hashKey, make([]byte, 32*numItems)) {
+		b.lock.Lock()
 		res := b.hashCache[string(hashKey)]
+		b.lock.Unlock()
 		if res != nil {
 			return res.([32]byte), nil
 		}
@@ -57,7 +61,9 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		return [32]byte{}, err
 	}
 	if !bytes.Equal(hashKey, make([]byte, 32*numItems)) {
+		b.lock.Lock()
 		b.hashCache[string(hashKey)] = root
+		b.lock.Unlock()
 	}
 	return root, nil
 }

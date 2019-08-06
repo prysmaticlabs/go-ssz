@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"reflect"
+	"sync"
 )
 
 type compositeSliceSSZ struct {
 	hashCache map[string]interface{}
+	lock      sync.Mutex
 }
 
 func newCompositeSliceSSZ() *compositeSliceSSZ {
@@ -50,8 +52,10 @@ func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	if err != nil {
 		return [32]byte{}, err
 	}
-	if numItems > 0 {
+	if numItems > 0 && !isVariableSizeType(typ.Elem()) {
+		b.lock.Lock()
 		res := b.hashCache[string(hashKey)]
+		b.lock.Unlock()
 		if res != nil {
 			return res.([32]byte), nil
 		}
@@ -70,7 +74,11 @@ func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 		return [32]byte{}, err
 	}
 	result := mixInLength(root, output)
-	b.hashCache[string(hashKey)] = result
+	if numItems > 0 && !isVariableSizeType(typ.Elem()) {
+		b.lock.Lock()
+		b.hashCache[string(hashKey)] = result
+		b.lock.Unlock()
+	}
 	return result, nil
 }
 
