@@ -26,13 +26,20 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 		switch {
 		case isBasicType(typ.Elem().Kind()):
 			return BasicSliceFactory, nil
+		case !isVariableSizeType(typ.Elem()):
+			return BasicSliceFactory, nil
 		default:
 			return CompositeSliceFactory, nil
 		}
-	case kind == reflect.Array && isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
-		return BasicArrayFactory, nil
 	case kind == reflect.Array:
-		return CompositeArrayFactory, nil
+		switch {
+		case isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
+			return BasicArrayFactory, nil
+		case !isVariableSizeType(typ.Elem()):
+			return BasicArrayFactory, nil
+		default:
+			return CompositeArrayFactory, nil
+		}
 	case kind == reflect.Struct:
 		return StructFactory, nil
 	case kind == reflect.Ptr:
