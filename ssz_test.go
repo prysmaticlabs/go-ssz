@@ -7,10 +7,6 @@ import (
 	"testing"
 )
 
-func init() {
-	useCache = true
-}
-
 type fork struct {
 	PreviousVersion [4]byte
 	CurrentVersion  [4]byte
@@ -28,7 +24,6 @@ func TestNilPointerHashTreeRoot(t *testing.T) {
 		Field1 []*fork
 		Field2 uint64
 	}
-	useCache = true
 	i := &nilItem{
 		Field1: []*fork{nil},
 		Field2: 10,
@@ -105,7 +100,6 @@ func TestHashTreeRoot_EncodeSliceLengthCorrectly(t *testing.T) {
 	type accountBalances struct {
 		Balances []uint64 `ssz-max:"1099511627776"` // Large uint64 capacity.
 	}
-	useCache = false
 	acct := accountBalances{
 		Balances: make([]uint64, 512),
 	}
@@ -125,7 +119,6 @@ func TestHashTreeRoot_EncodeSliceLengthCorrectly(t *testing.T) {
 	if !bytes.Equal(root[:], want) {
 		t.Errorf("Mismatched roots, wanted %#x == %#x", root, want)
 	}
-	useCache = true
 }
 
 func TestHashTreeRoot_ConcurrentAccess(t *testing.T) {
