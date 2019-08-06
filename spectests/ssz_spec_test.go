@@ -158,13 +158,13 @@ func TestYamlGenericSpecTests(t *testing.T) {
 func TestYamlStaticSpecTests(t *testing.T) {
 	topPath := "/eth2_spec_tests/tests/ssz_static/core/"
 	yamlFileNames := []string{
-		//"ssz_mainnet_random.yaml",
-		//"ssz_minimal_lengthy.yaml",
-		//"ssz_minimal_max.yaml",
-		//"ssz_minimal_nil.yaml",
-		//"ssz_minimal_one.yaml",
-		//"ssz_minimal_random.yaml",
-		//"ssz_minimal_random_chaos.yaml",
+		"ssz_mainnet_random.yaml",
+		"ssz_minimal_lengthy.yaml",
+		"ssz_minimal_max.yaml",
+		"ssz_minimal_nil.yaml",
+		"ssz_minimal_one.yaml",
+		"ssz_minimal_random.yaml",
+		"ssz_minimal_random_chaos.yaml",
 		"ssz_minimal_zero.yaml",
 	}
 	for _, f := range yamlFileNames {
@@ -300,129 +300,129 @@ func runMinimalSpecTestCases(t *testing.T, s *SszMinimalTest) {
 				})
 			})
 		}
-		//if !isEmpty(testCase.Crosslink.Value) {
-		//	t.Run("Crosslink", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:             testCase.Crosslink.Value,
-		//			unmarshalTarget: new(MinimalCrosslink),
-		//			expected:        testCase.Crosslink.Serialized,
-		//			expectedRoot:    testCase.Crosslink.Root,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.Deposit.Value) {
-		//	t.Run("Deposit", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:             testCase.Deposit.Value,
-		//			unmarshalTarget: new(MinimalDeposit),
-		//			expected:        testCase.Deposit.Serialized,
-		//			expectedRoot:    testCase.Deposit.Root,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.DepositData.Value) {
-		//	t.Run("DepositData", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:             testCase.DepositData.Value,
-		//			unmarshalTarget: new(MinimalDepositData),
-		//			expected:        testCase.DepositData.Serialized,
-		//			expectedRoot:    testCase.DepositData.Root,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.Eth1Data.Value) {
-		//	t.Run("Eth1Data", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:             testCase.Eth1Data.Value,
-		//			unmarshalTarget: new(MinimalEth1Data),
-		//			expected:        testCase.Eth1Data.Serialized,
-		//			expectedRoot:    testCase.Eth1Data.Root,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.Fork.Value) {
-		//	t.Run("Fork", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:             testCase.Fork.Value,
-		//			unmarshalTarget: new(MinimalFork),
-		//			expected:        testCase.Fork.Serialized,
-		//			expectedRoot:    testCase.Fork.Root,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.HistoricalBatch.Value) {
-		//	t.Run("HistoricalBatch", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:             testCase.HistoricalBatch.Value,
-		//			unmarshalTarget: new(MinimalHistoricalBatch),
-		//			expected:        testCase.HistoricalBatch.Serialized,
-		//			expectedRoot:    testCase.HistoricalBatch.Root,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.IndexedAttestation.Value) {
-		//	t.Run("IndexedAttestation", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:                 testCase.IndexedAttestation.Value,
-		//			unmarshalTarget:     new(MinimalIndexedAttestation),
-		//			expected:            testCase.IndexedAttestation.Serialized,
-		//			expectedRoot:        testCase.IndexedAttestation.Root,
-		//			expectedSigningRoot: testCase.IndexedAttestation.SigningRoot,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.PendingAttestation.Value) {
-		//	t.Run("PendingAttestation", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:             testCase.PendingAttestation.Value,
-		//			unmarshalTarget: new(MinimalPendingAttestation),
-		//			expected:        testCase.PendingAttestation.Serialized,
-		//			expectedRoot:    testCase.PendingAttestation.Root,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.ProposerSlashing.Value) {
-		//	t.Run("ProposerSlashing", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:             testCase.ProposerSlashing.Value,
-		//			unmarshalTarget: new(MinimalProposerSlashing),
-		//			expected:        testCase.ProposerSlashing.Serialized,
-		//			expectedRoot:    testCase.ProposerSlashing.Root,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.Transfer.Value) {
-		//	t.Run("Transfer", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:                 testCase.Transfer.Value,
-		//			unmarshalTarget:     new(MinimalTransfer),
-		//			expected:            testCase.Transfer.Serialized,
-		//			expectedRoot:        testCase.Transfer.Root,
-		//			expectedSigningRoot: testCase.Transfer.SigningRoot,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.Validator.Value) {
-		//	t.Run("Validator", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:             testCase.Validator.Value,
-		//			unmarshalTarget: new(MinimalValidator),
-		//			expected:        testCase.Validator.Serialized,
-		//			expectedRoot:    testCase.Validator.Root,
-		//		})
-		//	})
-		//}
-		//if !isEmpty(testCase.VoluntaryExit.Value) {
-		//	t.Run("VoluntaryExit", func(t *testing.T) {
-		//		compareSSZEncoding(t, &sszComparisonConfig{
-		//			val:                 testCase.VoluntaryExit.Value,
-		//			unmarshalTarget:     new(MinimalVoluntaryExit),
-		//			expected:            testCase.VoluntaryExit.Serialized,
-		//			expectedRoot:        testCase.VoluntaryExit.Root,
-		//			expectedSigningRoot: testCase.VoluntaryExit.SigningRoot,
-		//		})
-		//	})
-		//}
+		if !isEmpty(testCase.Crosslink.Value) {
+			t.Run("Crosslink", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:             testCase.Crosslink.Value,
+					unmarshalTarget: new(MinimalCrosslink),
+					expected:        testCase.Crosslink.Serialized,
+					expectedRoot:    testCase.Crosslink.Root,
+				})
+			})
+		}
+		if !isEmpty(testCase.Deposit.Value) {
+			t.Run("Deposit", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:             testCase.Deposit.Value,
+					unmarshalTarget: new(MinimalDeposit),
+					expected:        testCase.Deposit.Serialized,
+					expectedRoot:    testCase.Deposit.Root,
+				})
+			})
+		}
+		if !isEmpty(testCase.DepositData.Value) {
+			t.Run("DepositData", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:             testCase.DepositData.Value,
+					unmarshalTarget: new(MinimalDepositData),
+					expected:        testCase.DepositData.Serialized,
+					expectedRoot:    testCase.DepositData.Root,
+				})
+			})
+		}
+		if !isEmpty(testCase.Eth1Data.Value) {
+			t.Run("Eth1Data", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:             testCase.Eth1Data.Value,
+					unmarshalTarget: new(MinimalEth1Data),
+					expected:        testCase.Eth1Data.Serialized,
+					expectedRoot:    testCase.Eth1Data.Root,
+				})
+			})
+		}
+		if !isEmpty(testCase.Fork.Value) {
+			t.Run("Fork", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:             testCase.Fork.Value,
+					unmarshalTarget: new(MinimalFork),
+					expected:        testCase.Fork.Serialized,
+					expectedRoot:    testCase.Fork.Root,
+				})
+			})
+		}
+		if !isEmpty(testCase.HistoricalBatch.Value) {
+			t.Run("HistoricalBatch", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:             testCase.HistoricalBatch.Value,
+					unmarshalTarget: new(MinimalHistoricalBatch),
+					expected:        testCase.HistoricalBatch.Serialized,
+					expectedRoot:    testCase.HistoricalBatch.Root,
+				})
+			})
+		}
+		if !isEmpty(testCase.IndexedAttestation.Value) {
+			t.Run("IndexedAttestation", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:                 testCase.IndexedAttestation.Value,
+					unmarshalTarget:     new(MinimalIndexedAttestation),
+					expected:            testCase.IndexedAttestation.Serialized,
+					expectedRoot:        testCase.IndexedAttestation.Root,
+					expectedSigningRoot: testCase.IndexedAttestation.SigningRoot,
+				})
+			})
+		}
+		if !isEmpty(testCase.PendingAttestation.Value) {
+			t.Run("PendingAttestation", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:             testCase.PendingAttestation.Value,
+					unmarshalTarget: new(MinimalPendingAttestation),
+					expected:        testCase.PendingAttestation.Serialized,
+					expectedRoot:    testCase.PendingAttestation.Root,
+				})
+			})
+		}
+		if !isEmpty(testCase.ProposerSlashing.Value) {
+			t.Run("ProposerSlashing", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:             testCase.ProposerSlashing.Value,
+					unmarshalTarget: new(MinimalProposerSlashing),
+					expected:        testCase.ProposerSlashing.Serialized,
+					expectedRoot:    testCase.ProposerSlashing.Root,
+				})
+			})
+		}
+		if !isEmpty(testCase.Transfer.Value) {
+			t.Run("Transfer", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:                 testCase.Transfer.Value,
+					unmarshalTarget:     new(MinimalTransfer),
+					expected:            testCase.Transfer.Serialized,
+					expectedRoot:        testCase.Transfer.Root,
+					expectedSigningRoot: testCase.Transfer.SigningRoot,
+				})
+			})
+		}
+		if !isEmpty(testCase.Validator.Value) {
+			t.Run("Validator", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:             testCase.Validator.Value,
+					unmarshalTarget: new(MinimalValidator),
+					expected:        testCase.Validator.Serialized,
+					expectedRoot:    testCase.Validator.Root,
+				})
+			})
+		}
+		if !isEmpty(testCase.VoluntaryExit.Value) {
+			t.Run("VoluntaryExit", func(t *testing.T) {
+				compareSSZEncoding(t, &sszComparisonConfig{
+					val:                 testCase.VoluntaryExit.Value,
+					unmarshalTarget:     new(MinimalVoluntaryExit),
+					expected:            testCase.VoluntaryExit.Serialized,
+					expectedRoot:        testCase.VoluntaryExit.Root,
+					expectedSigningRoot: testCase.VoluntaryExit.SigningRoot,
+				})
+			})
+		}
 	}
 }
 

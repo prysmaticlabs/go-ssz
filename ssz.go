@@ -76,6 +76,41 @@ func Marshal(val interface{}) ([]byte, error) {
 	return buf, nil
 }
 
+// Unmarshal SSZ encoded data and output it into the object pointed by pointer val.
+// Given a struct with the following fields, and some encoded bytes of type []byte,
+// one can then unmarshal the bytes into a pointer of the struct as follows:
+//  type exampleStruct1 struct {
+//      Field1 uint8
+//      Field2 []byte
+//  }
+//
+//  var targetStruct exampleStruct1
+//  if err := Unmarshal(encodedBytes, &targetStruct); err != nil {
+//      return fmt.Errorf("failed to unmarshal: %v", err)
+//  }
+func Unmarshal(input []byte, val interface{}) error {
+	if val == nil {
+		return errors.New("cannot unmarshal into untyped, nil value")
+	}
+	rval := reflect.ValueOf(val)
+	rtyp := rval.Type()
+	// val must be a pointer, otherwise we refuse to unmarshal
+	if rtyp.Kind() != reflect.Ptr {
+		return errors.New("can only unmarshal into a pointer target")
+	}
+	if rval.IsNil() {
+		return errors.New("cannot output to pointer of nil value")
+	}
+	factory, err := types.SSZFactory(rval.Elem(), rtyp.Elem())
+	if err != nil {
+		return err
+	}
+	if _, err := factory.Unmarshal(rval.Elem(), rval.Elem().Type(), input, 0); err != nil {
+		return fmt.Errorf("could not unmarshal input into type: %v, %v", rval.Elem().Type(), err)
+	}
+	return nil
+}
+
 // HashTreeRoot determines the root hash using SSZ's Merkleization.
 // Given a struct with the following fields, one can tree hash it as follows:
 //  type exampleStruct struct {

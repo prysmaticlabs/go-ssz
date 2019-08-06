@@ -59,7 +59,6 @@ go_library(
         "helpers.go",
         "ssz.go",
         "struct_utils.go",
-        "unmarshal.go",
     ],
     importpath = "github.com/prysmaticlabs/go-ssz",
     visibility = ["//visibility:public"],
