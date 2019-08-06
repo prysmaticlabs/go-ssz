@@ -2,11 +2,11 @@ package types
 
 import (
 	"bytes"
-	"fmt"
-	"math"
 	"reflect"
 
 	"github.com/minio/sha256-simd"
+	"github.com/protolambda/zssz/htr"
+	"github.com/protolambda/zssz/merkle"
 )
 
 var (
@@ -79,67 +79,12 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 // number of chunks is a power of two, Merkleize the chunks, and return the root.
 // Note that merkleize on a single chunk is simply that chunk, i.e. the identity
 // when the number of chunks is one.
-func bitwiseMerkleize(chunks [][]byte, limit uint64, hasLimit bool) ([32]byte, error) {
-	padding := limit
-	if !hasLimit {
-		padding = uint64(len(chunks))
+func bitwiseMerkleize(chunks [][]byte, count uint64, limit uint64) ([32]byte, error) {
+	hasher := htr.HashFn(hash)
+	leafIndexer := func(i uint64) []byte {
+		return chunks[i]
 	}
-	count := uint64(len(chunks))
-
-	if count > padding {
-		return [32]byte{}, fmt.Errorf("chunk count = %d cannot be greater than padding = %d", count, padding)
-	}
-	if padding == 0 {
-		return zeroHashes[0], nil
-	}
-
-	depth := uint64(bitLength(0))
-	if bitLength(count-1) > depth {
-		depth = bitLength(count - 1)
-	}
-	maxDepth := bitLength(padding - 1)
-	layers := make([][]byte, maxDepth+1)
-
-	for idx, chunk := range chunks {
-		mergeChunks(layers, chunk, uint64(idx), count, depth)
-	}
-
-	if 1<<depth != count {
-		mergeChunks(layers, zeroHashes[0][:], count, count, depth)
-	}
-
-	for i := depth; i < maxDepth; i++ {
-		res := hash2(layers[i], zeroHashes[i][:])
-		layers[i+1] = res[:]
-	}
-
-	return toBytes32(layers[maxDepth]), nil
-}
-
-func mergeChunks(layers [][]byte, currentRoot []byte, i, count, depth uint64) {
-	j := uint64(0)
-	for {
-		if i&(1<<j) == 0 {
-			if i == count && j < depth {
-				res := hash2(currentRoot[:], zeroHashes[j][:])
-				currentRoot = res[:]
-			} else {
-				break
-			}
-		} else {
-			res := hash2(layers[j], currentRoot[:])
-			currentRoot = res[:]
-		}
-		j++
-	}
-	layers[j] = currentRoot[:]
-}
-
-func bitLength(n uint64) uint64 {
-	if n == 0 {
-		return 0
-	}
-	return uint64(math.Log2(float64(n))) + 1
+	return merkle.Merkleize(hasher, count, limit, leafIndexer), nil
 }
 
 // Given a Merkle root root and a length length ("uint256" little-endian serialization)

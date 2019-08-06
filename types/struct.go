@@ -230,7 +230,7 @@ func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 	if res != nil {
 		return res.([32]byte), nil
 	}
-	root, err := NewMerkleize(roots, uint64(numFields), uint64(numFields), true)
+	root, err := bitwiseMerkleize(roots, uint64(numFields), uint64(numFields))
 	if err != nil {
 		return [32]byte{}, err
 	}

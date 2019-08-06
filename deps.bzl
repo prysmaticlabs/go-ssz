@@ -113,6 +113,13 @@ def go_ssz_dependencies():
         importpath = "github.com/minio/sha256-simd",
     )
 
+    _maybe(
+        go_repository,
+        name = "com_github_protolambda_zssz",
+        commit = "632f11e5e281660402bd0ac58f76090f3503def0",
+        importpath = "github.com/protolambda/zssz",
+    )
+
 def _maybe(repo_rule, name, **kwargs):
     if name not in native.existing_rules():
         repo_rule(name = name, **kwargs)

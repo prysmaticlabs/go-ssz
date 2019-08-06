@@ -81,7 +81,7 @@ func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	if err != nil {
 		return [32]byte{}, err
 	}
-	root, err := NewMerkleize(chunks, uint64(len(chunks)), uint64(len(chunks)), false /* has limit */)
+	root, err := bitwiseMerkleize(chunks, uint64(len(chunks)), uint64(len(chunks)))
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -192,7 +192,7 @@ func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	limit := (maxCapacity + 255) / 256
 	if val.IsNil() {
 		length := make([]byte, 32)
-		merkleRoot, err := bitwiseMerkleize([][]byte{}, limit, true /* has limit */)
+		merkleRoot, err := bitwiseMerkleize([][]byte{}, 1, limit)
 		if err != nil {
 			return [32]byte{}, err
 		}
@@ -209,7 +209,7 @@ func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	}
 	output := make([]byte, 32)
 	copy(output, buf.Bytes())
-	merkleRoot, err := NewMerkleize(chunks, uint64(len(chunks)), limit, true /* has limit */)
+	merkleRoot, err := bitwiseMerkleize(chunks, uint64(len(chunks)), limit)
 	if err != nil {
 		return [32]byte{}, err
 	}
