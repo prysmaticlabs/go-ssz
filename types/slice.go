@@ -512,13 +512,19 @@ func (b *BasicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 	index := startOffset
 	size := val.Len()
 	var err error
-	factory, err := SSZFactory(val.Index(0), typ.Elem())
-	if err != nil {
-		return 0, err
-	}
+	var factory SSZAble
 	for i < size {
 		if val.Index(i).Kind() == reflect.Ptr {
 			instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
+			factory, err = SSZFactory(val.Index(i), typ.Elem().Elem())
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			factory, err = SSZFactory(val.Index(i), typ.Elem())
+			if err != nil {
+				return 0, err
+			}
 		}
 		index, err = factory.Unmarshal(val.Index(i), typ.Elem(), input, index)
 		if err != nil {
