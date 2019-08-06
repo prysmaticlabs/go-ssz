@@ -40,8 +40,6 @@ func (b *structSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 
 func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields int) ([32]byte, error) {
 	roots := make([][]byte, numFields)
-	hashKey := make([]byte, 32*numFields)
-	offset := 0
 	var err error
 	for i := 0; i < numFields; i++ {
 		// We skip protobuf related metadata fields.
@@ -55,8 +53,6 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 				return [32]byte{}, nil
 			}
 			roots[i] = r[:]
-			copy(hashKey[offset:offset+32], r[:])
-			offset += 32
 			continue
 		}
 		fType, err := determineFieldType(typ.Field(i))
@@ -72,18 +68,11 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 			return [32]byte{}, err
 		}
 		roots[i] = r[:]
-		copy(hashKey[offset:offset+32], r[:])
-		offset += 32
-	}
-	res := b.hashCache[string(hashKey)]
-	if res != nil {
-		return res.([32]byte), nil
 	}
 	root, err := bitwiseMerkleize(roots, uint64(numFields), uint64(numFields))
 	if err != nil {
 		return [32]byte{}, err
 	}
-	b.hashCache[string(hashKey)] = root
 	return root, nil
 }
 

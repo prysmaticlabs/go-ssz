@@ -68,4 +68,5 @@ go_test(
         "ssz_test.go",
     ],
     embed = [":go_default_library"],
+    race = "on",
 )
