@@ -199,20 +199,32 @@ func (b *BasicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	if numItems > 0 {
 		factory, _ = SSZFactory(val.Index(0), typ.Elem())
 		// TODO: Abstract into a chunk count function.
-		elemSize = determineFixedSize(val.Index(0), typ.Elem())
-		limit = (maxCapacity*elemSize + 31) / 32
 	}
+	if isBasicType(typ.Elem().Kind()) {
+		elemSize = determineFixedSize(val, typ.Elem())
+	} else {
+		elemSize = 32
+	}
+	limit = (maxCapacity*elemSize + 31) / 32
 	if limit == 0 {
 		limit = 1
 	}
 	leaves := make([][]byte, numItems)
 	var err error
 	for i := 0; i < numItems; i++ {
-		innerBuf := make([]byte, elemSize)
-		if _, err = factory.Marshal(val.Index(i), typ.Elem(), innerBuf, 0); err != nil {
-			return [32]byte{}, err
+		if isBasicType(val.Index(i).Kind()) {
+			innerBuf := make([]byte, elemSize)
+			if _, err = factory.Marshal(val.Index(i), typ.Elem(), innerBuf, 0); err != nil {
+				return [32]byte{}, err
+			}
+			leaves[i] = innerBuf
+		} else {
+			r, err := factory.Root(val.Index(i), typ.Elem(), 0)
+			if err != nil {
+				return [32]byte{}, err
+			}
+			leaves = append(leaves, r[:])
 		}
-		leaves[i] = innerBuf
 	}
 	chunks, err := pack(leaves)
 	if err != nil {

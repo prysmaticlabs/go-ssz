@@ -5,10 +5,10 @@ go_library(
     srcs = [
         "basic.go",
         "determine_size.go",
+        "factory.go",
         "helpers.go",
-        "newmerkle.go",
+        "merkleize.go",
         "slice.go",
-        "ssz.go",
         "struct.go",
     ],
     importpath = "github.com/prysmaticlabs/go-ssz/types",
