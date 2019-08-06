@@ -26,7 +26,9 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		return [32]byte{}, err
 	}
 	for i := 0; i < numItems; i++ {
-		if elemKind == reflect.Array && val.Index(i).Len() == 32 {
+		// If we are marshaling an byte array of length 32, we shortcut the computations and
+		// simply return it as an identity root.
+		if elemKind == reflect.Array && typ.Elem().Elem().Kind() == reflect.Uint8 && val.Index(i).Len() == 32 {
 			leaves[i] = val.Index(i).Bytes()
 			copy(hashKey[offset:offset+32], leaves[i])
 			offset += 32

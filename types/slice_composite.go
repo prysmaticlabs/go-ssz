@@ -19,11 +19,11 @@ func newCompositeSliceSSZ() *compositeSliceSSZ {
 func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	output := make([]byte, 32)
 	if val.Len() == 0 && maxCapacity == 0 {
-		merkleRoot, err := bitwiseMerkleize([][]byte{}, 0, 0)
+		root, err := bitwiseMerkleize([][]byte{}, 0, 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
-		return mixInLength(merkleRoot, output), nil
+		return mixInLength(root, output), nil
 	}
 	numItems := val.Len()
 	var factory SSZAble
@@ -65,11 +65,11 @@ func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	if maxCapacity == 0 {
 		objLen = uint64(val.Len())
 	}
-	merkleRoot, err := bitwiseMerkleize(chunks, uint64(len(chunks)), objLen)
+	root, err := bitwiseMerkleize(chunks, uint64(len(chunks)), objLen)
 	if err != nil {
 		return [32]byte{}, err
 	}
-	result := mixInLength(merkleRoot, output)
+	result := mixInLength(root, output)
 	b.hashCache[string(hashKey)] = result
 	return result, nil
 }

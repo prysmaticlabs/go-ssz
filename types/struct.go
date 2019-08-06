@@ -1,11 +1,14 @@
 package types
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 // UnboundedSSZFieldSizeMarker is the character used to specify a ssz field should have
@@ -47,7 +50,7 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 		}
 		fCapacity := determineFieldCapacity(typ.Field(i))
 		if typ.Field(i).Name == "AggregationBits" || typ.Field(i).Name == "CustodyBits" {
-			r, err := bitlistHasher(val.Field(i), fCapacity)
+			r, err := bitlistRoot(val.Field(i), fCapacity)
 			if err != nil {
 				return [32]byte{}, nil
 			}
@@ -236,6 +239,34 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		}
 	}
 	return currentIndex, nil
+}
+
+func bitlistRoot(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
+	limit := (maxCapacity + 255) / 256
+	if val.IsNil() {
+		length := make([]byte, 32)
+		root, err := bitwiseMerkleize([][]byte{}, 1, limit)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		return mixInLength(root, length), nil
+	}
+	bfield := val.Interface().(bitfield.Bitlist)
+	chunks, err := pack([][]byte{bfield.Bytes()})
+	if err != nil {
+		return [32]byte{}, err
+	}
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.LittleEndian, bfield.Len()); err != nil {
+		return [32]byte{}, err
+	}
+	output := make([]byte, 32)
+	copy(output, buf.Bytes())
+	root, err := bitwiseMerkleize(chunks, uint64(len(chunks)), limit)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	return mixInLength(root, output), nil
 }
 
 func determineFieldType(field reflect.StructField) (reflect.Type, error) {

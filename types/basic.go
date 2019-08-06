@@ -1,12 +1,9 @@
 package types
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"reflect"
-
-	"github.com/prysmaticlabs/go-bitfield"
 )
 
 type basicSSZ struct {
@@ -77,6 +74,9 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 		return res.([32]byte), nil
 	}
 
+	// In order to find the root of a basic type, we simply marshal it,
+	// split the marshaling into chunks, and compute the most simple
+	// Merkleization over the chunks.
 	chunks, err = pack([][]byte{buf})
 	if err != nil {
 		return [32]byte{}, err
@@ -186,32 +186,4 @@ func unmarshalUint64(val reflect.Value, typ reflect.Type, input []byte, startOff
 	copy(buf, input[startOffset:offset])
 	val.SetUint(binary.LittleEndian.Uint64(buf))
 	return offset, nil
-}
-
-func bitlistHasher(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
-	limit := (maxCapacity + 255) / 256
-	if val.IsNil() {
-		length := make([]byte, 32)
-		merkleRoot, err := bitwiseMerkleize([][]byte{}, 1, limit)
-		if err != nil {
-			return [32]byte{}, err
-		}
-		return mixInLength(merkleRoot, length), nil
-	}
-	bfield := val.Interface().(bitfield.Bitlist)
-	chunks, err := pack([][]byte{bfield.Bytes()})
-	if err != nil {
-		return [32]byte{}, err
-	}
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.LittleEndian, bfield.Len()); err != nil {
-		return [32]byte{}, err
-	}
-	output := make([]byte, 32)
-	copy(output, buf.Bytes())
-	merkleRoot, err := bitwiseMerkleize(chunks, uint64(len(chunks)), limit)
-	if err != nil {
-		return [32]byte{}, err
-	}
-	return mixInLength(merkleRoot, output), nil
 }
