@@ -468,14 +468,17 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	leaves := make([][]byte, numItems)
 	elemKind := typ.Elem().Kind()
 	offset := 0
-	var err error
+	factory, err := SSZFactory(val.Index(0), typ.Elem())
+	if err != nil {
+		return [32]byte{}, err
+	}
 	for i := 0; i < numItems; i++ {
 		if elemKind == reflect.Array && val.Index(i).Len() == 32 {
 			leaves[i] = val.Index(i).Bytes()
 			copy(hashKey[offset:offset+32], leaves[i])
 			continue
 		}
-		r, err := BasicFactory.Root(val.Index(i), typ.Elem(), 0)
+		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
