@@ -1,6 +1,8 @@
 package types
 
 import (
+	"bytes"
+	"fmt"
 	"reflect"
 )
 
@@ -41,13 +43,15 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		leaves[i] = r[:]
 		copy(hashKey[offset:offset+32], r[:])
 	}
-	// TODO: ADD BACK CACHING AFTER ENSURING NO COLLISIONS OCCUR.
-	//if numItems > 0 {
-	//	res := b.hashCache[string(hashKey)]
-	//	if res != nil {
-	//		return res.([32]byte), nil
-	//	}
-	//}
+	if !bytes.Equal(hashKey, make([]byte, 32*numItems)) {
+		fmt.Println("not empty")
+		res := b.hashCache[string(hashKey)]
+		if res != nil {
+			fmt.Printf("exists %#x\n", res.([32]byte))
+			fmt.Printf("%v\n", hashKey)
+			return res.([32]byte), nil
+		}
+	}
 	chunks, err := pack(leaves)
 	if err != nil {
 		return [32]byte{}, err
@@ -56,9 +60,10 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	if err != nil {
 		return [32]byte{}, err
 	}
-	//if numItems > 0 {
-	//	b.hashCache[string(hashKey)] = root
-	//}
+	if !bytes.Equal(hashKey, make([]byte, 32*numItems)) {
+		fmt.Printf("saving root %#x %v\n", root, hashKey)
+		b.hashCache[string(hashKey)] = root
+	}
 	return root, nil
 }
 
