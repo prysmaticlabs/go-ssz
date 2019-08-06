@@ -34,7 +34,7 @@ func Unmarshal(input []byte, val interface{}) error {
 	if rval.IsNil() {
 		return errors.New("cannot output to pointer of nil value")
 	}
-	factory, err := types.SSZFactory(rval, rtyp)
+	factory, err := types.SSZFactory(rval.Elem(), rtyp.Elem())
 	if err != nil {
 		return err
 	}

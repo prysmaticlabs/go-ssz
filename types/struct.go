@@ -83,6 +83,12 @@ func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 }
 
 func (b *StructSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	if typ.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return startOffset, nil
+		}
+		return b.Unmarshal(val.Elem(), typ.Elem(), input, startOffset)
+	}
 	endOffset := uint64(len(input))
 	currentIndex := startOffset
 	nextIndex := currentIndex
@@ -140,7 +146,7 @@ func (b *StructSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 			return 0, err
 		}
 		if val.Field(i).Kind() == reflect.Ptr {
-			instantiateConcreteTypeForElement(val.Field(i), fType)
+			instantiateConcreteTypeForElement(val.Field(i), fType.Elem())
 		}
 		factory, err := SSZFactory(val.Field(i), fType)
 		if err != nil {

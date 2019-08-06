@@ -54,10 +54,10 @@ func (b *BasicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, st
 		return unmarshalUint32(val, typ, buf, startOffset)
 	case kind == reflect.Uint64:
 		return unmarshalUint64(val, typ, buf, startOffset)
-	case kind == reflect.Array && typ.Elem().Kind() == reflect.Uint8:
+	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return unmarshalByteArray(val, typ, buf, startOffset)
-	//case kind == reflect.Array && isBasicType(typ.Elem().Kind()):
-	//	return b.unmarshalBasicArray(val, typ, buf, startOffset)
+	case kind == reflect.Array && isBasicType(typ.Elem().Kind()):
+		return BasicArrayFactory.Unmarshal(val, typ, buf, startOffset)
 	default:
 		return 0, fmt.Errorf("type %v is not serializable", val.Type())
 	}
