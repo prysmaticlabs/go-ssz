@@ -8,16 +8,6 @@ import (
 	"github.com/prysmaticlabs/go-ssz/types"
 )
 
-var (
-	useCache = false
-)
-
-// ToggleCache allows to programmatically enable/disable the hash tree root cache.
-// TODO: Re-enable functionality.
-func ToggleCache(enableTreeCache bool) {
-	useCache = enableTreeCache
-}
-
 // Marshal a value and output the result into a byte slice.
 // Given a struct with the following fields, one can marshal it as follows:
 //  type exampleStruct struct {

@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 )
 
@@ -34,6 +33,7 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		if elemKind == reflect.Array && val.Index(i).Len() == 32 {
 			leaves[i] = val.Index(i).Bytes()
 			copy(hashKey[offset:offset+32], leaves[i])
+			offset += 32
 			continue
 		}
 		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
@@ -42,13 +42,11 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		}
 		leaves[i] = r[:]
 		copy(hashKey[offset:offset+32], r[:])
+		offset += 32
 	}
 	if !bytes.Equal(hashKey, make([]byte, 32*numItems)) {
-		fmt.Println("not empty")
 		res := b.hashCache[string(hashKey)]
 		if res != nil {
-			fmt.Printf("exists %#x\n", res.([32]byte))
-			fmt.Printf("%v\n", hashKey)
 			return res.([32]byte), nil
 		}
 	}
@@ -61,7 +59,6 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		return [32]byte{}, err
 	}
 	if !bytes.Equal(hashKey, make([]byte, 32*numItems)) {
-		fmt.Printf("saving root %#x %v\n", root, hashKey)
 		b.hashCache[string(hashKey)] = root
 	}
 	return root, nil
