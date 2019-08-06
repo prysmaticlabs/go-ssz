@@ -24,6 +24,66 @@ func NewStructSSZ() *StructSSZ {
 	}
 }
 
+func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+	if typ.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return [32]byte{}, nil
+		}
+		return b.Root(val.Elem(), typ.Elem(), maxCapacity)
+	}
+	numFields := typ.NumField()
+	return b.FieldsHasher(val, typ, numFields)
+}
+
+func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields int) ([32]byte, error) {
+	roots := make([][]byte, numFields)
+	hashKey := make([]byte, 32*numFields)
+	offset := 0
+	var err error
+	for i := 0; i < numFields; i++ {
+		// We skip protobuf related metadata fields.
+		if strings.Contains(typ.Field(i).Name, "XXX") {
+			continue
+		}
+		fCapacity := determineFieldCapacity(typ.Field(i))
+		if typ.Field(i).Name == "AggregationBits" || typ.Field(i).Name == "CustodyBits" {
+			r, err := bitlistHasher(val.Field(i), fCapacity)
+			if err != nil {
+				return [32]byte{}, nil
+			}
+			roots[i] = r[:]
+			copy(hashKey[offset:offset+32], r[:])
+			offset += 32
+			continue
+		}
+		fType, err := determineFieldType(typ.Field(i))
+		if err != nil {
+			return [32]byte{}, err
+		}
+		factory, err := SSZFactory(val.Field(i), fType)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		r, err := factory.Root(val.Field(i), fType, fCapacity)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		roots[i] = r[:]
+		copy(hashKey[offset:offset+32], r[:])
+		offset += 32
+	}
+	res := b.hashCache[string(hashKey)]
+	if res != nil {
+		return res.([32]byte), nil
+	}
+	root, err := bitwiseMerkleize(roots, uint64(numFields), uint64(numFields))
+	if err != nil {
+		return [32]byte{}, err
+	}
+	b.hashCache[string(hashKey)] = root
+	return root, nil
+}
+
 func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
@@ -176,66 +236,6 @@ func (b *StructSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		}
 	}
 	return currentIndex, nil
-}
-
-func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
-	if typ.Kind() == reflect.Ptr {
-		if val.IsNil() {
-			return [32]byte{}, nil
-		}
-		return b.Root(val.Elem(), typ.Elem(), maxCapacity)
-	}
-	numFields := typ.NumField()
-	return b.FieldsHasher(val, typ, numFields)
-}
-
-func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields int) ([32]byte, error) {
-	roots := make([][]byte, numFields)
-	hashKey := make([]byte, 32*numFields)
-	offset := 0
-	var err error
-	for i := 0; i < numFields; i++ {
-		// We skip protobuf related metadata fields.
-		if strings.Contains(typ.Field(i).Name, "XXX") {
-			continue
-		}
-		fCapacity := determineFieldCapacity(typ.Field(i))
-		if typ.Field(i).Name == "AggregationBits" || typ.Field(i).Name == "CustodyBits" {
-			r, err := bitlistHasher(val.Field(i), fCapacity)
-			if err != nil {
-				return [32]byte{}, nil
-			}
-			roots[i] = r[:]
-			copy(hashKey[offset:offset+32], r[:])
-			offset += 32
-			continue
-		}
-		fType, err := determineFieldType(typ.Field(i))
-		if err != nil {
-			return [32]byte{}, err
-		}
-		factory, err := SSZFactory(val.Field(i), fType)
-		if err != nil {
-			return [32]byte{}, err
-		}
-		r, err := factory.Root(val.Field(i), fType, fCapacity)
-		if err != nil {
-			return [32]byte{}, err
-		}
-		roots[i] = r[:]
-		copy(hashKey[offset:offset+32], r[:])
-		offset += 32
-	}
-	res := b.hashCache[string(hashKey)]
-	if res != nil {
-		return res.([32]byte), nil
-	}
-	root, err := bitwiseMerkleize(roots, uint64(numFields), uint64(numFields))
-	if err != nil {
-		return [32]byte{}, err
-	}
-	b.hashCache[string(hashKey)] = root
-	return root, nil
 }
 
 func determineFieldType(field reflect.StructField) (reflect.Type, error) {

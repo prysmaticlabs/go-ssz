@@ -3,11 +3,14 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "go_default_library",
     srcs = [
+        "array_basic.go",
+        "array_composite.go",
         "basic.go",
         "determine_size.go",
         "factory.go",
         "helpers.go",
-        "slice.go",
+        "slice_basic.go",
+        "slice_composite.go",
         "struct.go",
     ],
     importpath = "github.com/prysmaticlabs/go-ssz/types",

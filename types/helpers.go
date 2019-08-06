@@ -25,6 +25,18 @@ func init() {
 	}
 }
 
+// Given ordered BYTES_PER_CHUNK-byte chunks, if necessary utilize zero chunks so that the
+// number of chunks is a power of two, Merkleize the chunks, and return the root.
+// Note that merkleize on a single chunk is simply that chunk, i.e. the identity
+// when the number of chunks is one.
+func bitwiseMerkleize(chunks [][]byte, count uint64, limit uint64) ([32]byte, error) {
+	hasher := htr.HashFn(hash)
+	leafIndexer := func(i uint64) []byte {
+		return chunks[i]
+	}
+	return merkle.Merkleize(hasher, count, limit, leafIndexer), nil
+}
+
 // Given ordered objects of the same basic type, serialize them, pack them into BYTES_PER_CHUNK-byte
 // chunks, right-pad the last chunk with zero bytes, and return the chunks.
 // Basic types are either bool, or uintN where N = {8, 16, 32, 64, 128, 256}.
@@ -75,18 +87,6 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 	return chunks, nil
 }
 
-// Given ordered BYTES_PER_CHUNK-byte chunks, if necessary utilize zero chunks so that the
-// number of chunks is a power of two, Merkleize the chunks, and return the root.
-// Note that merkleize on a single chunk is simply that chunk, i.e. the identity
-// when the number of chunks is one.
-func bitwiseMerkleize(chunks [][]byte, count uint64, limit uint64) ([32]byte, error) {
-	hasher := htr.HashFn(hash)
-	leafIndexer := func(i uint64) []byte {
-		return chunks[i]
-	}
-	return merkle.Merkleize(hasher, count, limit, leafIndexer), nil
-}
-
 // Given a Merkle root root and a length length ("uint256" little-endian serialization)
 // return hash(root + length).
 func mixInLength(root [32]byte, length []byte) [32]byte {
@@ -120,32 +120,9 @@ func growConcreteSliceType(val reflect.Value, typ reflect.Type, length int) {
 	}
 }
 
-// toBytes32 is a convenience method for converting a byte slice to a fix
-// sized 32 byte array. This method will truncate the input if it is larger
-// than 32 bytes.
-func toBytes32(x []byte) [32]byte {
-	var y [32]byte
-	copy(y[:], x)
-	return y
-}
-
 // hash defines a function that returns the sha256 hash of the data passed in.
 func hash(data []byte) [32]byte {
 	return sha256.Sum256(data)
-}
-
-// hash2 hashes two slices together
-func hash2(x, y []byte) [32]byte {
-	var hash [32]byte
-	h := sha256.New()
-	h.Write(x)
-	h.Write(y)
-	// The hash interface never returns an error, for that reason
-	// we are not handling the error below. For reference, it is
-	// stated here https://golang.org/pkg/hash/#Hash
-	// #nosec G104
-	h.Sum(hash[:0])
-	return hash
 }
 
 func growSliceFromSizeTags(val reflect.Value, sizes []uint64) reflect.Value {
