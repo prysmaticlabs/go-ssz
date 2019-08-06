@@ -485,6 +485,7 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		leaves[i] = r[:]
 		copy(hashKey[offset:offset+32], r[:])
 	}
+	// TODO: ADD BACK CACHING AFTER ENSURING NO COLLISIONS OCCUR.
 	//if numItems > 0 {
 	//	res := b.hashCache[string(hashKey)]
 	//	if res != nil {
