@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/prysmaticlabs/go-ssz/types"
 )
 
 // Unmarshal SSZ encoded data and output it into the object pointed by pointer val.
@@ -32,7 +34,11 @@ func Unmarshal(input []byte, val interface{}) error {
 	if rval.IsNil() {
 		return errors.New("cannot output to pointer of nil value")
 	}
-	if _, err := recursiveUnmarshaler(input, rval.Elem(), rval.Elem().Type(), 0); err != nil {
+	factory, err := types.SSZFactory(rval, rtyp)
+	if err != nil {
+		return err
+	}
+	if _, err := factory.Unmarshal(rval.Elem(), rval.Elem().Type(), input, 0); err != nil {
 		return fmt.Errorf("could not unmarshal input into type: %v, %v", rval.Elem().Type(), err)
 	}
 	return nil

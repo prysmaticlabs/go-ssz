@@ -177,8 +177,12 @@ func (b *CompositeSliceSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input
 		}
 		// We grow the slice's size to accommodate a new element being unmarshaled.
 		growConcreteSliceType(val, typ, i+1)
-		if _, err := recursiveUnmarshaler(input[currentOffset:nextOffset], val.Index(i), typ.Elem(), 0); err != nil {
-			return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
+		factory, err := SSZFactory(val.Index(i), typ.Elem())
+		if err != nil {
+			return 0, err
+		}
+		if _, err := factory.Unmarshal(val.Index(i), typ.Elem(), input[currentOffset:nextOffset], 0); err != nil {
+			return 0, err
 		}
 		i++
 		currentIndex = nextIndex
@@ -275,9 +279,13 @@ func (b *BasicSliceSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 
 	var err error
 	index := startOffset
-	index, err = recursiveUnmarshaler(input, val.Index(0), typ.Elem(), index)
+	factory, err := SSZFactory(val.Index(0), typ.Elem())
 	if err != nil {
-		return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
+		return 0, err
+	}
+	index, err = factory.Unmarshal(val.Index(0), typ.Elem(), input, index)
+	if err != nil {
+		return 0, err
 	}
 
 	elementSize := index - startOffset
@@ -306,9 +314,9 @@ func (b *BasicSliceSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 		if val.Type() == typ {
 			growConcreteSliceType(val, val.Type(), int(i)+1)
 		}
-		index, err = recursiveUnmarshaler(input, val.Index(int(i)), typ.Elem(), index)
+		index, err = factory.Unmarshal(val.Index(int(i)), typ.Elem(), input, index)
 		if err != nil {
-			return 0, fmt.Errorf("failed to unmarshal element of slice: %v", err)
+			return 0, err
 		}
 		i++
 	}
@@ -415,6 +423,10 @@ func (b *CompositeArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input
 	nextOffset := currentOffset
 	endOffset := uint64(len(input))
 	i := 0
+	factory, err := SSZFactory(val.Index(0), typ.Elem())
+	if err != nil {
+		return 0, err
+	}
 	for currentIndex < firstOffset {
 		nextIndex = currentIndex + BytesPerLengthOffset
 		if nextIndex == firstOffset {
@@ -426,7 +438,7 @@ func (b *CompositeArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input
 		if val.Index(i).Kind() == reflect.Ptr {
 			instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
 		}
-		if _, err := recursiveUnmarshaler(input[currentOffset:nextOffset], val.Index(i), typ.Elem(), 0); err != nil {
+		if _, err := factory.Unmarshal(val.Index(i), typ.Elem(), input[currentOffset:nextOffset], 0); err != nil {
 			return 0, err
 		}
 		i++
@@ -500,11 +512,15 @@ func (b *BasicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 	index := startOffset
 	size := val.Len()
 	var err error
+	factory, err := SSZFactory(val.Index(0), typ.Elem())
+	if err != nil {
+		return 0, err
+	}
 	for i < size {
 		if val.Index(i).Kind() == reflect.Ptr {
 			instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
 		}
-		index, err = recursiveUnmarshaler(input, val.Index(i), typ.Elem(), index)
+		index, err = factory.Unmarshal(val.Index(i), typ.Elem(), input, index)
 		if err != nil {
 			return 0, err
 		}

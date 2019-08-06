@@ -89,9 +89,13 @@ func (b *StructSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 	fixedSizes := make([]uint64, typ.NumField())
 
 	for i := 0; i < len(fixedSizes); i++ {
-		if !isVariableSizeType(fields[i].typ) {
+		fType, err := determineFieldType(typ.Field(i))
+		if err != nil {
+			return 0, err
+		}
+		if !isVariableSizeType(fType) {
 			if val.Field(i).Kind() == reflect.Ptr {
-				instantiateConcreteTypeForElement(val.Field(i), fields[i].typ.Elem())
+				instantiateConcreteTypeForElement(val.Field(i), fType.Elem())
 			}
 			concreteVal := val.Field(i)
 			sszSizeTags, hasTags, err := parseSSZFieldTags(typ.Field(i))
@@ -107,7 +111,7 @@ func (b *StructSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 					val.Field(i).Set(result)
 				}
 			}
-			fixedSz := determineFixedSize(concreteVal, fields[i].typ)
+			fixedSz := determineFixedSize(concreteVal, fType)
 			if fixedSz > 0 {
 				fixedSizes[i] = fixedSz
 			}
@@ -129,15 +133,22 @@ func (b *StructSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 	}
 	offsets = append(offsets, endOffset)
 	offsetIndex := uint64(0)
-	for i := 0; i < len(fields); i++ {
-		f := fields[i]
+	for i := 0; i < typ.NumField(); i++ {
 		fieldSize := fixedSizes[i]
+		fType, err := determineFieldType(typ.Field(i))
+		if err != nil {
+			return 0, err
+		}
 		if val.Field(i).Kind() == reflect.Ptr {
-			instantiateConcreteTypeForElement(val.Field(i), fields[i].typ.Elem())
+			instantiateConcreteTypeForElement(val.Field(i), fType)
+		}
+		factory, err := SSZFactory(val.Field(i), fType)
+		if err != nil {
+			return 0, err
 		}
 		if fieldSize > 0 {
 			nextIndex = currentIndex + fieldSize
-			if _, err := recursiveUnmarshaler(input[currentIndex:nextIndex], val.Field(i), f.typ, 0); err != nil {
+			if _, err := factory.Unmarshal(val.Field(i), fType, input[currentIndex:nextIndex], 0); err != nil {
 				return 0, err
 			}
 			currentIndex = nextIndex
@@ -145,7 +156,7 @@ func (b *StructSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		} else {
 			firstOff := offsets[offsetIndex]
 			nextOff := offsets[offsetIndex+1]
-			if _, err := recursiveUnmarshaler(input[firstOff:nextOff], val.Field(i), f.typ, 0); err != nil {
+			if _, err := factory.Unmarshal(val.Field(i), fType, input[firstOff:nextOff], 0); err != nil {
 				return 0, err
 			}
 			offsetIndex++
