@@ -1,4 +1,4 @@
-package ssz
+package types
 
 import (
 	"reflect"
@@ -136,6 +136,8 @@ func BenchmarkMerkleize(b *testing.B) {
 		input[i] = make([]byte, BytesPerChunk)
 	}
 	for n := 0; n < b.N; n++ {
-		bitwiseMerkleize(input, 1, false /* has limit */)
+		if _, err := bitwiseMerkleize(input, 1, false /* has limit */); err != nil {
+			b.Fatal(err)
+		}
 	}
 }

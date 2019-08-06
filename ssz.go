@@ -59,7 +59,7 @@ func Marshal(val interface{}) ([]byte, error) {
 	rval := reflect.ValueOf(val)
 
 	// We pre-allocate a buffer-size depending on the value's calculated total byte size.
-	buf := make([]byte, determineSize(rval))
+	buf := make([]byte, DetermineSize(rval))
 	factory, err := types.SSZFactory(rval, rval.Type())
 	if err != nil {
 		return nil, err

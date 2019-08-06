@@ -5,6 +5,21 @@ import (
 	"strings"
 )
 
+// DetermineSize returns the required byte size of a buffer for
+// using SSZ to marshal an object.
+func DetermineSize(val reflect.Value) uint64 {
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return 0
+		}
+		return DetermineSize(val.Elem())
+	}
+	if isVariableSizeType(val.Type()) {
+		return determineVariableSize(val, val.Type())
+	}
+	return determineFixedSize(val, val.Type())
+}
+
 func isBasicType(kind reflect.Kind) bool {
 	return kind == reflect.Bool ||
 		kind == reflect.Uint8 ||
@@ -101,7 +116,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	case kind == reflect.Slice || kind == reflect.Array:
 		totalSize := uint64(0)
 		for i := 0; i < val.Len(); i++ {
-			varSize := determineSize(val.Index(i))
+			varSize := DetermineSize(val.Index(i))
 			if isVariableSizeType(typ.Elem()) {
 				totalSize += varSize + BytesPerLengthOffset
 			} else {
@@ -137,17 +152,4 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	default:
 		return 0
 	}
-}
-
-func determineSize(val reflect.Value) uint64 {
-	if val.Kind() == reflect.Ptr {
-		if val.IsNil() {
-			return 0
-		}
-		return determineSize(val.Elem())
-	}
-	if isVariableSizeType(val.Type()) {
-		return determineVariableSize(val, val.Type())
-	}
-	return determineFixedSize(val, val.Type())
 }

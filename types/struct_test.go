@@ -1,4 +1,4 @@
-package ssz
+package types
 
 import (
 	"reflect"

@@ -21,7 +21,11 @@ go_library(
 
 go_test(
     name = "go_default_test",
-    srcs = ["basic_test.go"],
+    srcs = [
+        "basic_test.go",
+        "helpers_test.go",
+        "struct_test.go",
+    ],
     embed = [":go_default_library"],
     deps = ["@com_github_prysmaticlabs_go_bitfield//:go_default_library"],
 )

@@ -67,7 +67,7 @@ func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	var chunks [][]byte
 	var err error
 	var hashKey string
-	buf := make([]byte, determineSize(val))
+	buf := make([]byte, DetermineSize(val))
 	if _, err := b.Marshal(val, typ, buf, 0); err != nil {
 		return [32]byte{}, err
 	}

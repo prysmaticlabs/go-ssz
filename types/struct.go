@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+// UnboundedSSZFieldSizeMarker is the character used to specify a ssz field should have
+// unbounded size, which is useful when describing slices of arrays such as [][32]byte.
+// The ssz struct tag for such field type would be `ssz:"size=?,32"`. A question mark
+// is chosen as the default value given its simplicity to represent unbounded size.
+var UnboundedSSZFieldSizeMarker = "?"
+
 type StructSSZ struct {
 	hashCache map[string]interface{}
 }
@@ -266,7 +272,7 @@ func parseSSZFieldTags(field reflect.StructField) ([]uint64, bool, error) {
 	var err error
 	for i := 0; i < len(items); i++ {
 		// If a field is unbounded, we mark it with a size of 0.
-		if items[i] == "?" {
+		if items[i] == UnboundedSSZFieldSizeMarker {
 			sizes[i] = 0
 			continue
 		}
