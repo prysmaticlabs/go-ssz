@@ -9,17 +9,17 @@ import (
 	"github.com/prysmaticlabs/go-bitfield"
 )
 
-type BasicSSZ struct {
+type basicSSZ struct {
 	hashCache map[string]interface{}
 }
 
-func NewBasicSSZ() *BasicSSZ {
-	return &BasicSSZ{
+func newBasicSSZ() *basicSSZ {
+	return &basicSSZ{
 		hashCache: make(map[string]interface{}),
 	}
 }
 
-func (b *BasicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func (b *basicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	kind := typ.Kind()
 	switch {
 	case kind == reflect.Bool:
@@ -41,7 +41,7 @@ func (b *BasicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, star
 	}
 }
 
-func (b *BasicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func (b *basicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	kind := typ.Kind()
 	switch {
 	case kind == reflect.Bool:
@@ -57,13 +57,13 @@ func (b *BasicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, st
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return unmarshalByteArray(val, typ, buf, startOffset)
 	case kind == reflect.Array && isBasicType(typ.Elem().Kind()):
-		return BasicArrayFactory.Unmarshal(val, typ, buf, startOffset)
+		return basicArrayFactory.Unmarshal(val, typ, buf, startOffset)
 	default:
 		return 0, fmt.Errorf("type %v is not serializable", val.Type())
 	}
 }
 
-func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	var chunks [][]byte
 	var err error
 	var hashKey string
@@ -89,7 +89,7 @@ func (b *BasicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	return root, nil
 }
 
-func (b *BasicSSZ) marshalBasicArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func (b *basicSSZ) marshalBasicArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	index := startOffset
 	var err error
 	for i := 0; i < val.Len(); i++ {

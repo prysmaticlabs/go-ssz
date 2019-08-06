@@ -5,21 +5,17 @@ import (
 	"reflect"
 )
 
-type BasicArraySSZ struct {
+type basicArraySSZ struct {
 	hashCache map[string]interface{}
 }
 
-type BitlistSSZ struct {
-	hashCache map[string]interface{}
-}
-
-func NewBasicArraySSZ() *BasicArraySSZ {
-	return &BasicArraySSZ{
+func newBasicArraySSZ() *basicArraySSZ {
+	return &basicArraySSZ{
 		hashCache: make(map[string]interface{}),
 	}
 }
 
-func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	numItems := val.Len()
 	hashKey := make([]byte, 32*numItems)
 	leaves := make([][]byte, numItems)
@@ -64,7 +60,7 @@ func (b *BasicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	return root, nil
 }
 
-func (b *BasicArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func (b *basicArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	index := startOffset
 	var err error
 	if val.Len() == 0 {
@@ -83,7 +79,7 @@ func (b *BasicArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 	return index, nil
 }
 
-func (b *BasicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+func (b *basicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
 	i := 0
 	index := startOffset
 	size := val.Len()

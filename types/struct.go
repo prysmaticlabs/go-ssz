@@ -14,17 +14,17 @@ import (
 // is chosen as the default value given its simplicity to represent unbounded size.
 var UnboundedSSZFieldSizeMarker = "?"
 
-type StructSSZ struct {
+type structSSZ struct {
 	hashCache map[string]interface{}
 }
 
-func NewStructSSZ() *StructSSZ {
-	return &StructSSZ{
+func newStructSSZ() *structSSZ {
+	return &structSSZ{
 		hashCache: make(map[string]interface{}),
 	}
 }
 
-func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *structSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
 			return [32]byte{}, nil
@@ -35,7 +35,7 @@ func (b *StructSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 	return b.FieldsHasher(val, typ, numFields)
 }
 
-func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields int) ([32]byte, error) {
+func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields int) ([32]byte, error) {
 	roots := make([][]byte, numFields)
 	hashKey := make([]byte, 32*numFields)
 	offset := 0
@@ -84,7 +84,7 @@ func (b *StructSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 	return root, nil
 }
 
-func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
 			return startOffset, nil
@@ -148,7 +148,7 @@ func (b *StructSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 	return currentOffsetIndex, nil
 }
 
-func (b *StructSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
 			return startOffset, nil

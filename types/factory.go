@@ -4,41 +4,52 @@ import (
 	"reflect"
 )
 
-var StructFactory = NewStructSSZ()
-var BasicFactory = NewBasicSSZ()
-var BasicArrayFactory = NewBasicArraySSZ()
-var CompositeArrayFactory = NewCompositeArraySSZ()
-var BasicSliceFactory = NewBasicSliceSSZ()
-var CompositeSliceFactory = NewCompositeSliceSSZ()
+// StructFactory exports an implementation of a interface
+// containing helpers for marshaling/unmarshaling, and determining
+// the hash tree root of struct values.
+var StructFactory = newStructSSZ()
 
+var basicFactory = newBasicSSZ()
+var basicArrayFactory = newBasicArraySSZ()
+var compositeArrayFactory = newCompositeArraySSZ()
+var basicSliceFactory = newBasicSliceSSZ()
+var compositeSliceFactory = newCompositeSliceSSZ()
+
+// SSZAble defines a type which can marshal/unmarshal and compute its
+// hash tree root according to the Simple Serialize specification.
+// See: https://github.com/ethereum/eth2.0-specs/blob/v0.8.2/specs/simple-serialize.md.
 type SSZAble interface {
-	Root(reflect.Value, reflect.Type, uint64) ([32]byte, error)
-	Marshal(reflect.Value, reflect.Type, []byte, uint64) (uint64, error)
-	Unmarshal(reflect.Value, reflect.Type, []byte, uint64) (uint64, error)
+	Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error)
+	Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error)
+	Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error)
 }
 
+// SSZFactory recursively walks down a type and determines which SSZ-able
+// core type it belongs to, and then returns and implementation of
+// SSZ-able that contains marshal, unmarshal, and hash tree root related
+// functions for use.
 func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 	kind := typ.Kind()
 	switch {
 	case isBasicType(kind) || isBasicTypeArray(typ, typ.Kind()):
-		return BasicFactory, nil
+		return basicFactory, nil
 	case kind == reflect.Slice:
 		switch {
 		case isBasicType(typ.Elem().Kind()):
-			return BasicSliceFactory, nil
+			return basicSliceFactory, nil
 		case !isVariableSizeType(typ.Elem()):
-			return BasicSliceFactory, nil
+			return basicSliceFactory, nil
 		default:
-			return CompositeSliceFactory, nil
+			return compositeSliceFactory, nil
 		}
 	case kind == reflect.Array:
 		switch {
 		case isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
-			return BasicArrayFactory, nil
+			return basicArrayFactory, nil
 		case !isVariableSizeType(typ.Elem()):
-			return BasicArrayFactory, nil
+			return basicArrayFactory, nil
 		default:
-			return CompositeArrayFactory, nil
+			return compositeArrayFactory, nil
 		}
 	case kind == reflect.Struct:
 		return StructFactory, nil

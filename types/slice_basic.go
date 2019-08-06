@@ -6,16 +6,16 @@ import (
 	"reflect"
 )
 
-type BasicSliceSSZ struct {
+type basicSliceSSZ struct {
 	hashCache map[string]interface{}
 }
 
-func NewBasicSliceSSZ() *BasicSliceSSZ {
-	return &BasicSliceSSZ{
+func newBasicSliceSSZ() *basicSliceSSZ {
+	return &basicSliceSSZ{
 		hashCache: make(map[string]interface{}),
 	}
 }
-func (b *BasicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	var factory SSZAble
 	var limit uint64
 	var elemSize uint64
@@ -69,7 +69,7 @@ func (b *BasicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	return mixInLength(merkleRoot, output), nil
 }
 
-func (b *BasicSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func (b *basicSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	index := startOffset
 	var err error
 	if val.Len() == 0 {
@@ -88,7 +88,7 @@ func (b *BasicSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 	return index, nil
 }
 
-func (b *BasicSliceSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+func (b *basicSliceSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
 	if len(input) == 0 {
 		newVal := reflect.MakeSlice(val.Type(), 0, 0)
 		val.Set(newVal)

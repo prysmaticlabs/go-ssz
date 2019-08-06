@@ -6,17 +6,17 @@ import (
 	"reflect"
 )
 
-type CompositeSliceSSZ struct {
+type compositeSliceSSZ struct {
 	hashCache map[string]interface{}
 }
 
-func NewCompositeSliceSSZ() *CompositeSliceSSZ {
-	return &CompositeSliceSSZ{
+func newCompositeSliceSSZ() *compositeSliceSSZ {
+	return &compositeSliceSSZ{
 		hashCache: make(map[string]interface{}),
 	}
 }
 
-func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	output := make([]byte, 32)
 	if val.Len() == 0 && maxCapacity == 0 {
 		merkleRoot, err := bitwiseMerkleize([][]byte{}, 0, 0)
@@ -74,7 +74,7 @@ func (b *CompositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	return result, nil
 }
 
-func (b *CompositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func (b *compositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	index := startOffset
 	if val.Len() == 0 {
 		return index, nil
@@ -117,7 +117,7 @@ func (b *CompositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []b
 	return index, nil
 }
 
-func (b *CompositeSliceSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+func (b *compositeSliceSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
 	if len(input) == 0 {
 		newVal := reflect.MakeSlice(val.Type(), 0, 0)
 		val.Set(newVal)

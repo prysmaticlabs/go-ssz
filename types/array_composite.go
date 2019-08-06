@@ -5,17 +5,17 @@ import (
 	"reflect"
 )
 
-type CompositeArraySSZ struct {
+type compositeArraySSZ struct {
 	hashCache map[string]interface{}
 }
 
-func NewCompositeArraySSZ() *CompositeArraySSZ {
-	return &CompositeArraySSZ{
+func newCompositeArraySSZ() *compositeArraySSZ {
+	return &compositeArraySSZ{
 		hashCache: make(map[string]interface{}),
 	}
 }
 
-func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	factory, err := SSZFactory(val.Index(0), typ.Elem())
 	if err != nil {
 		return [32]byte{}, err
@@ -63,7 +63,7 @@ func (b *CompositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	return root, nil
 }
 
-func (b *CompositeArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+func (b *compositeArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	index := startOffset
 	if val.Len() == 0 {
 		return index, nil
@@ -106,7 +106,7 @@ func (b *CompositeArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []b
 	return index, nil
 }
 
-func (b *CompositeArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+func (b *compositeArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
 	currentIndex := startOffset
 	nextIndex := currentIndex
 	offsetVal := input[startOffset : startOffset+BytesPerLengthOffset]
