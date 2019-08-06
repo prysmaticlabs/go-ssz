@@ -39,7 +39,6 @@ func TestNilPointerHashTreeRoot(t *testing.T) {
 }
 
 func TestHashTreeRoot(t *testing.T) {
-	useCache = false
 	var currentVersion [4]byte
 	var previousVersion [4]byte
 	prev, err := hex.DecodeString("9f41bd5b")
@@ -71,7 +70,6 @@ func TestHashTreeRoot(t *testing.T) {
 }
 
 func TestHashTreeRootWithCapacity_FailsWithNonSliceType(t *testing.T) {
-	useCache = false
 	forkItem := fork{
 		Epoch: 11971467576204192310,
 	}
@@ -79,12 +77,9 @@ func TestHashTreeRootWithCapacity_FailsWithNonSliceType(t *testing.T) {
 	if _, err := HashTreeRootWithCapacity(forkItem, capacity); err == nil {
 		t.Error("Expected hash tree root to fail with non-slice type")
 	}
-	useCache = true
 }
 
 func TestHashTreeRootWithCapacity_HashesCorrectly(t *testing.T) {
-
-	useCache = false
 	capacity := uint64(1099511627776)
 	balances := make([]uint64, 512)
 	for i := 0; i < len(balances); i++ {
@@ -103,7 +98,6 @@ func TestHashTreeRootWithCapacity_HashesCorrectly(t *testing.T) {
 	if !bytes.Equal(root[:], want) {
 		t.Errorf("Mismatched roots, wanted %#x == %#x", root, want)
 	}
-	useCache = true
 }
 
 // Regression test for https://github.com/prysmaticlabs/go-ssz/issues/46.
