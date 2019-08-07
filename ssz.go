@@ -57,12 +57,12 @@ func Marshal(val interface{}) ([]byte, error) {
 	}
 	if rval.Type().Kind() == reflect.Ptr {
 		if _, err := factory.Marshal(rval.Elem(), rval.Elem().Type(), buf, 0 /* start offset */); err != nil {
-			return nil, fmt.Errorf("failed to marshal for type: %v", rval.Elem().Type())
+			return nil, errors.Wrapf(err, "failed to marshal for type: %v", rval.Elem().Type())
 		}
 		return buf, nil
 	}
 	if _, err := factory.Marshal(rval, rval.Type(), buf, 0 /* start offset */); err != nil {
-		return nil, fmt.Errorf("failed to marshal for type: %v", rval.Type())
+		return nil, errors.Wrapf(err, "failed to marshal for type: %v", rval.Type())
 	}
 	return buf, nil
 }
@@ -167,7 +167,7 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 		totalFields := 0
 		for i := 0; i < elemType.NumField(); i++ {
 			// We skip protobuf related metadata fields.
-			if strings.Contains(elemType.Field(i).Name, "XXX") {
+			if strings.Contains(elemType.Field(i).Name, "XXX_") {
 				continue
 			}
 			totalFields++
@@ -177,7 +177,7 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 	totalFields := 0
 	for i := 0; i < valObj.Type().NumField(); i++ {
 		// We skip protobuf related metadata fields.
-		if strings.Contains(valObj.Type().Field(i).Name, "XXX") {
+		if strings.Contains(valObj.Type().Field(i).Name, "XXX_") {
 			continue
 		}
 		totalFields++

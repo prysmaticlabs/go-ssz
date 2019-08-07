@@ -129,6 +129,7 @@ func TestHashTreeRoot_ConcurrentAccess(t *testing.T) {
 	}
 	var wg sync.WaitGroup
 	// We ensure the hash tree root function can be computed in a thread-safe manner.
+	// No panic from this test is a successful run.
 	wg.Add(100)
 	for i := 0; i < 100; i++ {
 		go func(tt *testing.T, w *sync.WaitGroup) {
@@ -224,6 +225,7 @@ func TestSigningRoot_ConcurrentAccess(t *testing.T) {
 	}
 	var wg sync.WaitGroup
 	// We ensure the signing root function can be computed in a thread-safe manner.
+	// No panic from this test is a successful run.
 	wg.Add(100)
 	for i := 0; i < 100; i++ {
 		go func(tt *testing.T, w *sync.WaitGroup) {

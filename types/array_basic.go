@@ -19,7 +19,7 @@ func newBasicArraySSZ() *basicArraySSZ {
 
 func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	numItems := val.Len()
-	hashKey := make([]byte, 32*numItems)
+	hashKey := make([]byte, BytesPerChunk*numItems)
 	leaves := make([][]byte, numItems)
 	elemKind := typ.Elem().Kind()
 	offset := 0
@@ -48,7 +48,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		copy(hashKey[offset:offset+32], r[:])
 		offset += 32
 	}
-	if !bytes.Equal(hashKey, make([]byte, 32*numItems)) {
+	if !bytes.Equal(hashKey, make([]byte, BytesPerChunk*numItems)) {
 		b.lock.Lock()
 		res := b.hashCache[string(hashKey)]
 		b.lock.Unlock()
@@ -64,7 +64,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	if err != nil {
 		return [32]byte{}, err
 	}
-	if !bytes.Equal(hashKey, make([]byte, 32*numItems)) {
+	if !bytes.Equal(hashKey, make([]byte, BytesPerChunk*numItems)) {
 		b.lock.Lock()
 		b.hashCache[string(hashKey)] = root
 		b.lock.Unlock()

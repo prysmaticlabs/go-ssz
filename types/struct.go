@@ -44,7 +44,7 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 	totalCountedFields := uint64(0)
 	for i := 0; i < numFields; i++ {
 		// We skip protobuf related metadata fields.
-		if strings.Contains(typ.Field(i).Name, "XXX") {
+		if strings.Contains(typ.Field(i).Name, "XXX_") {
 			continue
 		}
 		totalCountedFields++
@@ -91,7 +91,7 @@ func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 	// are variable or fixed-size fields.
 	for i := 0; i < typ.NumField(); i++ {
 		// We skip protobuf related metadata fields.
-		if strings.Contains(typ.Field(i).Name, "XXX") {
+		if strings.Contains(typ.Field(i).Name, "XXX_") {
 			continue
 		}
 		fType, err := determineFieldType(typ.Field(i))
@@ -108,7 +108,7 @@ func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 	nextOffsetIndex := currentOffsetIndex
 	for i := 0; i < typ.NumField(); i++ {
 		// We skip protobuf related metadata fields.
-		if strings.Contains(typ.Field(i).Name, "XXX") {
+		if strings.Contains(typ.Field(i).Name, "XXX_") {
 			continue
 		}
 		fType, err := determineFieldType(typ.Field(i))
@@ -156,7 +156,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 
 	for i := 0; i < len(fixedSizes); i++ {
 		// We skip protobuf related metadata fields.
-		if strings.Contains(typ.Field(i).Name, "XXX") {
+		if strings.Contains(typ.Field(i).Name, "XXX_") {
 			continue
 		}
 		fType, err := determineFieldType(typ.Field(i))
@@ -205,7 +205,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 	offsetIndex := uint64(0)
 	for i := 0; i < typ.NumField(); i++ {
 		// We skip protobuf related metadata fields.
-		if strings.Contains(typ.Field(i).Name, "XXX") {
+		if strings.Contains(typ.Field(i).Name, "XXX_") {
 			continue
 		}
 		fieldSize := fixedSizes[i]

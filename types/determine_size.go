@@ -87,7 +87,7 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
 		for i := 0; i < typ.NumField(); i++ {
-			if strings.Contains(typ.Field(i).Name, "XXX") {
+			if strings.Contains(typ.Field(i).Name, "XXX_") {
 				continue
 			}
 			f := typ.Field(i)
@@ -127,7 +127,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
 		for i := 0; i < typ.NumField(); i++ {
-			if strings.Contains(typ.Field(i).Name, "XXX") {
+			if strings.Contains(typ.Field(i).Name, "XXX_") {
 				continue
 			}
 			f := typ.Field(i)
