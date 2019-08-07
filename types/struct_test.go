@@ -1,4 +1,4 @@
-package ssz
+package types
 
 import (
 	"reflect"
@@ -57,7 +57,7 @@ func TestDetermineFieldCapacity_HandlesOverflow(t *testing.T) {
 		Data string `ssz-max:"18446744073709551615"` // max uint64
 	}{}
 
-	result, _ := determineFieldCapacity(reflect.TypeOf(input).Field(0))
+	result := determineFieldCapacity(reflect.TypeOf(input).Field(0))
 	want := uint64(18446744073709551615)
 	if result != want {
 		t.Errorf("got: %d, wanted %d", result, want)

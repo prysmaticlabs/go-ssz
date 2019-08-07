@@ -1,4 +1,4 @@
-package ssz
+package types
 
 import (
 	"reflect"
@@ -75,7 +75,7 @@ func TestPack_OK(t *testing.T) {
 
 func TestMerkleize_Identity(t *testing.T) {
 	want := make([]byte, BytesPerChunk)
-	output, err := bitwiseMerkleize([][]byte{}, 0, true /* has limit */)
+	output, err := bitwiseMerkleize([][]byte{}, 0, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestMerkleize_OK(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := bitwiseMerkleize(tt.input, 1, false /* has limit */)
+			got, err := bitwiseMerkleize(tt.input, uint64(len(tt.input)), uint64(len(tt.input)))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -136,6 +136,8 @@ func BenchmarkMerkleize(b *testing.B) {
 		input[i] = make([]byte, BytesPerChunk)
 	}
 	for n := 0; n < b.N; n++ {
-		bitwiseMerkleize(input, 1, false /* has limit */)
+		if _, err := bitwiseMerkleize(input, uint64(len(input)), 1); err != nil {
+			b.Fatal(err)
+		}
 	}
 }

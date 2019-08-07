@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	ssz "github.com/prysmaticlabs/go-ssz"
+	"github.com/prysmaticlabs/go-ssz"
 )
 
 type fork struct {

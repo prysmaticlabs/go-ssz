@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "array_basic.go",
+        "array_composite.go",
+        "basic.go",
+        "determine_size.go",
+        "factory.go",
+        "helpers.go",
+        "slice_basic.go",
+        "slice_composite.go",
+        "struct.go",
+    ],
+    importpath = "github.com/prysmaticlabs/go-ssz/types",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_minio_sha256_simd//:go_default_library",
+        "@com_github_pkg_errors//:go_default_library",
+        "@com_github_protolambda_zssz//htr:go_default_library",
+        "@com_github_protolambda_zssz//merkle:go_default_library",
+        "@com_github_prysmaticlabs_go_bitfield//:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "helpers_test.go",
+        "struct_test.go",
+    ],
+    embed = [":go_default_library"],
+)

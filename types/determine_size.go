@@ -1,8 +1,24 @@
-package ssz
+package types
 
 import (
 	"reflect"
+	"strings"
 )
+
+// DetermineSize returns the required byte size of a buffer for
+// using SSZ to marshal an object.
+func DetermineSize(val reflect.Value) uint64 {
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return 0
+		}
+		return DetermineSize(val.Elem())
+	}
+	if isVariableSizeType(val.Type()) {
+		return determineVariableSize(val, val.Type())
+	}
+	return determineFixedSize(val, val.Type())
+}
 
 func isBasicType(kind reflect.Kind) bool {
 	return kind == reflect.Bool ||
@@ -14,10 +30,6 @@ func isBasicType(kind reflect.Kind) bool {
 
 func isBasicTypeArray(typ reflect.Type, kind reflect.Kind) bool {
 	return kind == reflect.Array && isBasicType(typ.Elem().Kind())
-}
-
-func isBasicTypeSlice(typ reflect.Type, kind reflect.Kind) bool {
-	return kind == reflect.Slice && isBasicType(typ.Elem().Kind())
 }
 
 func isVariableSizeType(typ reflect.Type) bool {
@@ -74,12 +86,16 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 		return num
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
-		fields, err := structFields(typ)
-		if err != nil {
-			return 0
-		}
-		for _, f := range fields {
-			totalSize += determineFixedSize(val.Field(f.index), f.typ)
+		for i := 0; i < typ.NumField(); i++ {
+			if strings.Contains(typ.Field(i).Name, "XXX_") {
+				continue
+			}
+			f := typ.Field(i)
+			fType, err := determineFieldType(f)
+			if err != nil {
+				return 0
+			}
+			totalSize += determineFixedSize(val.Field(i), fType)
 		}
 		return totalSize
 	case kind == reflect.Ptr:
@@ -100,7 +116,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	case kind == reflect.Slice || kind == reflect.Array:
 		totalSize := uint64(0)
 		for i := 0; i < val.Len(); i++ {
-			varSize := determineSize(val.Index(i))
+			varSize := DetermineSize(val.Index(i))
 			if isVariableSizeType(typ.Elem()) {
 				totalSize += varSize + BytesPerLengthOffset
 			} else {
@@ -110,16 +126,20 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 		return totalSize
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
-		fields, err := structFields(typ)
-		if err != nil {
-			return 0
-		}
-		for _, f := range fields {
-			if isVariableSizeType(f.typ) {
-				varSize := determineVariableSize(val.Field(f.index), f.typ)
+		for i := 0; i < typ.NumField(); i++ {
+			if strings.Contains(typ.Field(i).Name, "XXX_") {
+				continue
+			}
+			f := typ.Field(i)
+			fType, err := determineFieldType(f)
+			if err != nil {
+				return 0
+			}
+			if isVariableSizeType(fType) {
+				varSize := determineVariableSize(val.Field(i), fType)
 				totalSize += varSize + BytesPerLengthOffset
 			} else {
-				varSize := determineFixedSize(val.Field(f.index), f.typ)
+				varSize := determineFixedSize(val.Field(i), fType)
 				totalSize += varSize
 			}
 		}
@@ -132,17 +152,4 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	default:
 		return 0
 	}
-}
-
-func determineSize(val reflect.Value) uint64 {
-	if val.Kind() == reflect.Ptr {
-		if val.IsNil() {
-			return 0
-		}
-		return determineSize(val.Elem())
-	}
-	if isVariableSizeType(val.Type()) {
-		return determineVariableSize(val, val.Type())
-	}
-	return determineFixedSize(val, val.Type())
 }
