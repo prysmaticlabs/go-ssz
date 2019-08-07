@@ -8,7 +8,6 @@ import (
 // containing helpers for marshaling/unmarshaling, and determining
 // the hash tree root of struct values.
 var StructFactory = newStructSSZ()
-
 var basicFactory = newBasicSSZ()
 var basicArrayFactory = newBasicArraySSZ()
 var compositeArrayFactory = newCompositeArraySSZ()
