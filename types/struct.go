@@ -41,11 +41,13 @@ func (b *structSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64
 func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields int) ([32]byte, error) {
 	roots := make([][]byte, numFields)
 	var err error
+	totalCountedFields := uint64(0)
 	for i := 0; i < numFields; i++ {
 		// We skip protobuf related metadata fields.
 		if strings.Contains(typ.Field(i).Name, "XXX") {
 			continue
 		}
+		totalCountedFields += 1
 		fCapacity := determineFieldCapacity(typ.Field(i))
 		if typ.Field(i).Name == "AggregationBits" || typ.Field(i).Name == "CustodyBits" {
 			r, err := bitlistRoot(val.Field(i), fCapacity)
@@ -69,7 +71,7 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 		}
 		roots[i] = r[:]
 	}
-	root, err := bitwiseMerkleize(roots, uint64(numFields), uint64(numFields))
+	root, err := bitwiseMerkleize(roots, totalCountedFields, totalCountedFields)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -153,6 +155,10 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 	fixedSizes := make([]uint64, typ.NumField())
 
 	for i := 0; i < len(fixedSizes); i++ {
+		// We skip protobuf related metadata fields.
+		if strings.Contains(typ.Field(i).Name, "XXX") {
+			continue
+		}
 		fType, err := determineFieldType(typ.Field(i))
 		if err != nil {
 			return 0, err
@@ -198,6 +204,10 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 	offsets = append(offsets, endOffset)
 	offsetIndex := uint64(0)
 	for i := 0; i < typ.NumField(); i++ {
+		// We skip protobuf related metadata fields.
+		if strings.Contains(typ.Field(i).Name, "XXX") {
+			continue
+		}
 		fieldSize := fixedSizes[i]
 		fType, err := determineFieldType(typ.Field(i))
 		if err != nil {
