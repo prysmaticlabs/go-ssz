@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/prysmaticlabs/go-ssz/types"
 )
@@ -163,7 +164,23 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 		}
 		elem := valObj.Elem()
 		elemType := valObj.Elem().Type()
-		return types.StructFactory.FieldsHasher(elem, elemType, elemType.NumField()-1)
+		totalFields := 0
+		for i := 0; i < elemType.NumField(); i++ {
+			// We skip protobuf related metadata fields.
+			if strings.Contains(elemType.Field(i).Name, "XXX") {
+				continue
+			}
+			totalFields++
+		}
+		return types.StructFactory.FieldsHasher(elem, elemType, totalFields-1)
 	}
-	return types.StructFactory.FieldsHasher(valObj, valObj.Type(), valObj.Type().NumField()-1)
+	totalFields := 0
+	for i := 0; i < valObj.Type().NumField(); i++ {
+		// We skip protobuf related metadata fields.
+		if strings.Contains(valObj.Type().Field(i).Name, "XXX") {
+			continue
+		}
+		totalFields++
+	}
+	return types.StructFactory.FieldsHasher(valObj, valObj.Type(), totalFields-1)
 }
