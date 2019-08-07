@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"reflect"
-	"sync"
 )
 
 type basicSliceSSZ struct {
 	hashCache map[string]interface{}
-	lock      sync.Mutex
 }
 
 func newBasicSliceSSZ() *basicSliceSSZ {
@@ -40,8 +38,6 @@ func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		limit = 1
 	}
 	leaves := make([][]byte, numItems)
-	hashKey := make([]byte, 32*numItems)
-	offset := 0
 	for i := 0; i < numItems; i++ {
 		if isBasicType(val.Index(i).Kind()) {
 			innerBuf := make([]byte, elemSize)
@@ -55,16 +51,6 @@ func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 				return [32]byte{}, err
 			}
 			leaves[i] = r[:]
-		}
-		copy(hashKey[offset:offset+32], leaves[i])
-		offset += 32
-	}
-	if val.Len() > 0 && !isVariableSizeType(typ.Elem()) {
-		b.lock.Lock()
-		res := b.hashCache[string(hashKey)]
-		b.lock.Unlock()
-		if res != nil {
-			return res.([32]byte), nil
 		}
 	}
 	chunks, err := pack(leaves)
@@ -81,13 +67,7 @@ func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	if err != nil {
 		return [32]byte{}, err
 	}
-	result := mixInLength(merkleRoot, output)
-	if val.Len() > 0 && !isVariableSizeType(typ.Elem()) {
-		b.lock.Lock()
-		b.hashCache[string(hashKey)] = result
-		b.lock.Unlock()
-	}
-	return result, nil
+	return mixInLength(merkleRoot, output), nil
 }
 
 func (b *basicSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
