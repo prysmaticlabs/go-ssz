@@ -18,11 +18,15 @@ func newCompositeArraySSZ() *compositeArraySSZ {
 }
 
 func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
-	factory, err := SSZFactory(val.Index(0), typ.Elem())
-	if err != nil {
-		return [32]byte{}, err
-	}
+	var factory SSZAble
+	var err error
 	numItems := val.Len()
+	if numItems > 0 {
+		factory, err = SSZFactory(val.Index(0), typ.Elem())
+		if err != nil {
+			return [32]byte{}, err
+		}
+	}
 	roots := make([][]byte, numItems)
 	elemSize := uint64(0)
 	if isBasicType(typ.Elem().Kind()) {
