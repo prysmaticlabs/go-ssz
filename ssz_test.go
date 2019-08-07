@@ -217,10 +217,15 @@ func TestSigningRoot(t *testing.T) {
 }
 
 func TestSigningRoot_ConcurrentAccess(t *testing.T) {
-	item := &truncateSignatureCase{
-		Slot:              10,
-		PreviousBlockRoot: []byte{'a', 'b'},
-		Signature:         []byte("TESTING23"),
+	//item := &truncateSignatureCase{
+	//	Slot:              10,
+	//	PreviousBlockRoot: []byte{'a', 'b'},
+	//	Signature:         []byte("TESTING23"),
+	//}
+	item := &fork{
+		PreviousVersion: [4]byte{1, 2, 3, 4},
+		CurrentVersion:  [4]byte{5, 6, 7, 8},
+		Epoch:           2,
 	}
 	var wg sync.WaitGroup
 	// We ensure the signing root function can be computed in a thread-safe manner.
