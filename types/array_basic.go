@@ -23,9 +23,13 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	leaves := make([][]byte, numItems)
 	elemKind := typ.Elem().Kind()
 	offset := 0
-	factory, err := SSZFactory(val.Index(0), typ.Elem())
-	if err != nil {
-		return [32]byte{}, err
+	var factory SSZAble
+	var err error
+	if numItems > 0 {
+		factory, err = SSZFactory(val.Index(0), typ.Elem())
+		if err != nil {
+			return [32]byte{}, err
+		}
 	}
 	for i := 0; i < numItems; i++ {
 		// If we are marshaling an byte array of length 32, we shortcut the computations and
