@@ -115,7 +115,7 @@ func Unmarshal(input []byte, val interface{}) error {
 //  }
 //  root, err := HashTreeRoot(ex)
 //  if err != nil {
-//      return fmt.Errorf("failed to compute root: %v", err)
+//      return errors.Wrap(err, "failed to compute root")
 //  }
 func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if val == nil {
