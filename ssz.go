@@ -97,7 +97,7 @@ func Unmarshal(input []byte, val interface{}) error {
 		return err
 	}
 	if _, err := factory.Unmarshal(rval.Elem(), rval.Elem().Type(), input, 0); err != nil {
-		return errors.Wrapf(err, "could not unmarshal input into type: %v, %v", rval.Elem().Type())
+		return errors.Wrapf(err, "could not unmarshal input into type: %v", rval.Elem().Type())
 	}
 	return nil
 }
