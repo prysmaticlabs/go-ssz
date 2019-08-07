@@ -65,18 +65,18 @@ func (b *basicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, st
 func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	var chunks [][]byte
 	var err error
-	var hashKey string
+	//var hashKey string
 	buf := make([]byte, DetermineSize(val))
 	if _, err := b.Marshal(val, typ, buf, 0); err != nil {
 		return [32]byte{}, err
 	}
-	hashKey = string(buf)
-	b.lock.Lock()
-	res := b.hashCache[hashKey]
-	b.lock.Unlock()
-	if res != nil {
-		return res.([32]byte), nil
-	}
+	//hashKey = string(buf)
+	//b.lock.Lock()
+	//res := b.hashCache[hashKey]
+	//b.lock.Unlock()
+	//if res != nil {
+	//	return res.([32]byte), nil
+	//}
 
 	// In order to find the root of a basic type, we simply marshal it,
 	// split the marshaling into chunks, and compute the most simple
@@ -89,9 +89,9 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	if err != nil {
 		return [32]byte{}, err
 	}
-	b.lock.Lock()
-	b.hashCache[hashKey] = root
-	b.lock.Unlock()
+	//b.lock.Lock()
+	//b.hashCache[hashKey] = root
+	//b.lock.Unlock()
 	return root, nil
 }
 
