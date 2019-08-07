@@ -1,11 +1,11 @@
 package ssz
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/go-ssz/types"
 )
 
@@ -97,7 +97,7 @@ func Unmarshal(input []byte, val interface{}) error {
 		return err
 	}
 	if _, err := factory.Unmarshal(rval.Elem(), rval.Elem().Type(), input, 0); err != nil {
-		return fmt.Errorf("could not unmarshal input into type: %v, %v", rval.Elem().Type(), err)
+		return errors.Wrapf(err, "could not unmarshal input into type: %v, %v", rval.Elem().Type())
 	}
 	return nil
 }
@@ -124,7 +124,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	rval := reflect.ValueOf(val)
 	factory, err := types.SSZFactory(rval, rval.Type())
 	if err != nil {
-		return [32]byte{}, fmt.Errorf("could generate tree hasher for type: %v: %v", rval.Type(), err)
+		return [32]byte{}, errors.Wrapf(err, "could generate tree hasher for type: %v", rval.Type())
 	}
 	return factory.Root(rval, rval.Type(), 0)
 }
@@ -148,7 +148,7 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 	}
 	factory, err := types.SSZFactory(rval, rval.Type())
 	if err != nil {
-		return [32]byte{}, fmt.Errorf("could generate tree hasher for type: %v: %v", rval.Type(), err)
+		return [32]byte{}, errors.Wrapf(err, "could generate tree hasher for type: %v", rval.Type())
 	}
 	return factory.Root(rval, rval.Type(), maxCapacity)
 }

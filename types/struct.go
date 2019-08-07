@@ -3,11 +3,11 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/go-bitfield"
 )
 
@@ -271,7 +271,7 @@ func bitlistRoot(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 func determineFieldType(field reflect.StructField) (reflect.Type, error) {
 	fieldSizeTags, exists, err := parseSSZFieldTags(field)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse ssz struct field tags: %v", err)
+		return nil, errors.Wrap(err, "could not parse ssz struct field tags")
 	}
 	if exists {
 		// If the field does indeed specify ssz struct tags, we infer the field's type.
