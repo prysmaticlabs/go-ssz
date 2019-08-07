@@ -47,7 +47,7 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 		if strings.Contains(typ.Field(i).Name, "XXX") {
 			continue
 		}
-		totalCountedFields += 1
+		totalCountedFields++
 		fCapacity := determineFieldCapacity(typ.Field(i))
 		if typ.Field(i).Name == "AggregationBits" || typ.Field(i).Name == "CustodyBits" {
 			r, err := bitlistRoot(val.Field(i), fCapacity)
