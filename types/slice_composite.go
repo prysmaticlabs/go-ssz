@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"reflect"
-	"sync"
 )
 
 type compositeSliceSSZ struct {
 	hashCache map[string]interface{}
-	lock      sync.Mutex
 }
 
 func newCompositeSliceSSZ() *compositeSliceSSZ {
@@ -37,29 +35,17 @@ func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 		}
 	}
 	roots := make([][]byte, numItems)
-	//hashKey := make([]byte, 32*numItems)
-	//offset := 0
 	for i := 0; i < numItems; i++ {
 		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
 		roots[i] = r[:]
-		//copy(hashKey[offset:offset+32], r[:])
-		//offset += 32
 	}
 	chunks, err := pack(roots)
 	if err != nil {
 		return [32]byte{}, err
 	}
-	//if numItems > 0 && !isVariableSizeType(typ.Elem()) {
-	//	b.lock.Lock()
-	//	res := b.hashCache[string(hashKey)]
-	//	b.lock.Unlock()
-	//	if res != nil {
-	//		return res.([32]byte), nil
-	//	}
-	//}
 	buf := new(bytes.Buffer)
 	if err := binary.Write(buf, binary.LittleEndian, uint64(val.Len())); err != nil {
 		return [32]byte{}, err
@@ -73,13 +59,7 @@ func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	if err != nil {
 		return [32]byte{}, err
 	}
-	result := mixInLength(root, output)
-	//if numItems > 0 && !isVariableSizeType(typ.Elem()) {
-	//	b.lock.Lock()
-	//	b.hashCache[string(hashKey)] = result
-	//	b.lock.Unlock()
-	//}
-	return result, nil
+	return mixInLength(root, output), nil
 }
 
 func (b *compositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {

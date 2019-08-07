@@ -24,7 +24,6 @@ func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	}
 	numItems := val.Len()
 	roots := make([][]byte, numItems)
-	//hashKey := make([]byte, 32*numItems)
 	elemSize := uint64(0)
 	if isBasicType(typ.Elem().Kind()) {
 		elemSize = determineFixedSize(val, typ.Elem())
@@ -32,24 +31,13 @@ func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 		elemSize = 32
 	}
 	limit := (uint64(val.Len())*elemSize + 31) / 32
-	//offset := 0
 	for i := 0; i < val.Len(); i++ {
 		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
 		roots[i] = r[:]
-		//copy(hashKey[offset:offset+32], r[:])
-		//offset += 32
 	}
-	//if val.Len() > 0 && !isVariableSizeType(typ.Elem()) {
-	//	b.lock.Lock()
-	//	res := b.hashCache[string(hashKey)]
-	//	b.lock.Unlock()
-	//	if res != nil {
-	//		return res.([32]byte), nil
-	//	}
-	//}
 	chunks, err := pack(roots)
 	if err != nil {
 		return [32]byte{}, err
@@ -61,11 +49,6 @@ func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	if err != nil {
 		return [32]byte{}, err
 	}
-	//if val.Len() > 0 && !isVariableSizeType(typ.Elem()) {
-	//	b.lock.Lock()
-	//	b.hashCache[string(hashKey)] = root
-	//	b.lock.Unlock()
-	//}
 	return root, nil
 }
 

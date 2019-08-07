@@ -28,6 +28,7 @@ func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 			return [32]byte{}, err
 		}
 	}
+
 	if isBasicType(typ.Elem().Kind()) {
 		elemSize = determineFixedSize(val, typ.Elem())
 	} else {
