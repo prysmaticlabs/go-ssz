@@ -244,7 +244,7 @@ func bitlistRoot(val reflect.Value, maxCapacity uint64) ([32]byte, error) {
 	limit := (maxCapacity + 255) / 256
 	if val.IsNil() {
 		length := make([]byte, 32)
-		root, err := bitwiseMerkleize([][]byte{}, 1, limit)
+		root, err := bitwiseMerkleize([][]byte{}, 0, limit)
 		if err != nil {
 			return [32]byte{}, err
 		}

@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"errors"
 	"reflect"
 
 	"github.com/minio/sha256-simd"
@@ -30,6 +31,9 @@ func init() {
 // Note that merkleize on a single chunk is simply that chunk, i.e. the identity
 // when the number of chunks is one.
 func bitwiseMerkleize(chunks [][]byte, count uint64, limit uint64) ([32]byte, error) {
+	if count > limit {
+		return [32]byte{}, errors.New("merkleizing list that is too large, over limit")
+	}
 	hasher := htr.HashFn(hash)
 	leafIndexer := func(i uint64) []byte {
 		return chunks[i]
