@@ -136,7 +136,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 //  accountBalances := []uint64{1, 2, 3, 4}
 //  root, err := HashTreeRootWithCapacity(accountBalances, 100) // Max 100 accounts.
 //  if err != nil {
-//      return fmt.Errorf("failed to compute root: %v", err)
+//      return errors.Wrap(err, "failed to compute root")
 //  }
 func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, error) {
 	if val == nil {
