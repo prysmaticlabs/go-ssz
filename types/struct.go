@@ -163,7 +163,6 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 	}
 
 	fixedSizes := make([]uint64, numFields)
-
 	for i := 0; i < len(fixedSizes); i++ {
 		// We skip protobuf related metadata fields.
 		if strings.Contains(typ.Field(i).Name, "XXX_") {
