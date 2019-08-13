@@ -3,6 +3,7 @@ package ssz
 import (
 	"bytes"
 	"encoding/hex"
+	"reflect"
 	"sync"
 	"testing"
 )
@@ -17,6 +18,47 @@ type truncateSignatureCase struct {
 	Slot              uint64
 	PreviousBlockRoot []byte
 	Signature         []byte
+}
+
+type simpleNonProtoMessage struct {
+	Foo []byte
+	Bar uint64
+}
+
+func TestProtobufSSZFieldsIgnored(t *testing.T) {
+	withProto := &simpleProtoMessage{
+		Foo: []byte("foo"),
+		Bar: 9001,
+	}
+	noProto := &simpleNonProtoMessage{
+		Foo: []byte("foo"),
+		Bar: 9001,
+	}
+	enc, err := Marshal(withProto)
+	if err != nil {
+		t.Fatal(err)
+	}
+	enc2, err := Marshal(noProto)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(enc, enc2) {
+		t.Errorf("Wanted %v, received %v", enc, enc2)
+	}
+	withProtoDecoded := &simpleProtoMessage{}
+	if err := Unmarshal(enc, withProtoDecoded); err != nil {
+		t.Fatal(err)
+	}
+	noProtoDecoded := &simpleNonProtoMessage{}
+	if err := Unmarshal(enc2, noProtoDecoded); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(noProto, noProtoDecoded) {
+		t.Errorf("Wanted %v, received %v", noProto, noProtoDecoded)
+	}
+	if !reflect.DeepEqual(withProto, withProtoDecoded) {
+		t.Errorf("Wanted %v, received %v", withProto, withProtoDecoded)
+	}
 }
 
 func TestNilPointerHashTreeRoot(t *testing.T) {

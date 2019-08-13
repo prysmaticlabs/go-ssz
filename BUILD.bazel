@@ -54,6 +54,7 @@ go_library(
     srcs = [
         "deep_equal.go",
         "doc.go",
+        "proto.pb.go",
         "ssz.go",
     ],
     importpath = "github.com/prysmaticlabs/go-ssz",

@@ -152,8 +152,17 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 	endOffset := uint64(len(input))
 	currentIndex := startOffset
 	nextIndex := currentIndex
-	fixedSizes := make([]uint64, typ.NumField())
+	numFields := 0
 
+	for i := 0; i < typ.NumField(); i++ {
+		// We skip protobuf related metadata fields.
+		if strings.Contains(typ.Field(i).Name, "XXX_") {
+			continue
+		}
+		numFields++
+	}
+
+	fixedSizes := make([]uint64, numFields)
 	for i := 0; i < len(fixedSizes); i++ {
 		// We skip protobuf related metadata fields.
 		if strings.Contains(typ.Field(i).Name, "XXX_") {
