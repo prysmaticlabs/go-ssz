@@ -20,14 +20,6 @@ type truncateSignatureCase struct {
 	Signature         []byte
 }
 
-type simpleProtoMessage struct {
-	Foo                  []byte   `protobuf:"bytes,1,opt,name=foo,proto3" json:"foo,omitempty"`
-	Bar                  uint64   `protobuf:"varint,2,opt,name=bar,proto3" json:"bar,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
 type simpleNonProtoMessage struct {
 	Foo []byte
 	Bar uint64
