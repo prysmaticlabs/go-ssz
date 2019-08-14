@@ -198,6 +198,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 			fixedSizes[i] = 0
 		}
 	}
+
 	offsets := make([]uint64, 0)
 	offsetIndexCounter := startOffset
 	for _, item := range fixedSizes {
