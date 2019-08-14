@@ -25,6 +25,24 @@ type simpleNonProtoMessage struct {
 	Bar uint64
 }
 
+func TestPartialDataMarshalUnmarshal(t *testing.T) {
+	type block struct {
+		Slot uint64
+		Body *simpleNonProtoMessage
+	}
+	b := &block{
+		Slot: 55,
+	}
+	enc, err := Marshal(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := &block{}
+	if err := Unmarshal(enc, dec); err != nil {
+		t.Fatal(err) // fails here
+	}
+}
+
 func TestProtobufSSZFieldsIgnored(t *testing.T) {
 	withProto := &simpleProtoMessage{
 		Foo: []byte("foo"),
