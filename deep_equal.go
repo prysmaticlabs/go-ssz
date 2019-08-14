@@ -118,6 +118,8 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 		return v1.Interface().(uint64) == v2.Interface().(uint64)
 	case reflect.Uint32:
 		return v1.Interface().(uint32) == v2.Interface().(uint32)
+	case reflect.Int32:
+		return v1.Interface().(int32) == v2.Interface().(int32)
 	case reflect.Uint16:
 		return v1.Interface().(uint16) == v2.Interface().(uint16)
 	case reflect.Uint8:

@@ -22,6 +22,7 @@ func DetermineSize(val reflect.Value) uint64 {
 
 func isBasicType(kind reflect.Kind) bool {
 	return kind == reflect.Bool ||
+		kind == reflect.Int32 ||
 		kind == reflect.Uint8 ||
 		kind == reflect.Uint16 ||
 		kind == reflect.Uint32 ||
@@ -70,7 +71,7 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 		return 1
 	case kind == reflect.Uint16:
 		return 2
-	case kind == reflect.Uint32:
+	case kind == reflect.Uint32 || kind == reflect.Int32:
 		return 4
 	case kind == reflect.Uint64:
 		return 8

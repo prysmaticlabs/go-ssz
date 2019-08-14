@@ -27,6 +27,8 @@ func (b *basicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, star
 		return marshalUint8(val, buf, startOffset)
 	case kind == reflect.Uint16:
 		return marshalUint16(val, buf, startOffset)
+	case kind == reflect.Int32:
+		return marshalInt32(val, buf, startOffset)
 	case kind == reflect.Uint32:
 		return marshalUint32(val, buf, startOffset)
 	case kind == reflect.Uint64:
@@ -49,6 +51,8 @@ func (b *basicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, st
 		return unmarshalUint8(val, typ, buf, startOffset)
 	case kind == reflect.Uint16:
 		return unmarshalUint16(val, typ, buf, startOffset)
+	case kind == reflect.Int32:
+		return unmarshalInt32(val, typ, buf, startOffset)
 	case kind == reflect.Uint32:
 		return unmarshalUint32(val, typ, buf, startOffset)
 	case kind == reflect.Uint64:
@@ -165,6 +169,19 @@ func unmarshalUint16(val reflect.Value, typ reflect.Type, input []byte, startOff
 	buf := make([]byte, 2)
 	copy(buf, input[startOffset:offset])
 	val.SetUint(uint64(binary.LittleEndian.Uint16(buf)))
+	return offset, nil
+}
+
+func marshalInt32(val reflect.Value, buf []byte, startOffset uint64) (uint64, error) {
+	binary.LittleEndian.PutUint32(buf[startOffset:], uint32(val.Interface().(int32)))
+	return startOffset + 4, nil
+}
+
+func unmarshalInt32(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
+	offset := startOffset + 4
+	buf := make([]byte, 4)
+	copy(buf, input[startOffset:offset])
+	val.SetInt(int64(binary.LittleEndian.Uint32(buf)))
 	return offset, nil
 }
 
