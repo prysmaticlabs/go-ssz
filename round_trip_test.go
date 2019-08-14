@@ -67,6 +67,9 @@ func TestMarshalUnmarshal(t *testing.T) {
 		// Uint16 test cases.
 		{input: uint16(100), ptr: new(uint16)},
 		{input: uint16(232), ptr: new(uint16)},
+		// Int32 test cases.
+		{input: int32(1), ptr: new(int32)},
+		{input: int32(1029391), ptr: new(int32)},
 		// Uint32 test cases.
 		{input: uint32(1), ptr: new(uint32)},
 		{input: uint32(1029391), ptr: new(uint32)},
