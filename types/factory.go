@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -55,6 +56,6 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 	case kind == reflect.Ptr:
 		return SSZFactory(val.Elem(), typ.Elem())
 	default:
-		return nil, nil
+		return nil, fmt.Errorf("unsupported kind: %v", kind)
 	}
 }

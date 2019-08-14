@@ -75,6 +75,13 @@ func TestNilPointerHashTreeRoot(t *testing.T) {
 	}
 }
 
+func TestEmptyDataUnmarshal(t *testing.T) {
+	msg := &simpleProtoMessage{}
+	if err := Unmarshal([]byte{}, msg); err == nil {
+		t.Error("Expected unmarshal to fail when attempting to unmarshal from an empty byte slice")
+	}
+}
+
 func TestHashTreeRoot(t *testing.T) {
 	var currentVersion [4]byte
 	var previousVersion [4]byte
