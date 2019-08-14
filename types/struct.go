@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -197,6 +198,18 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		} else {
 			fixedSizes[i] = 0
 		}
+	}
+
+	totalSize := uint64(0)
+	for _, s := range fixedSizes {
+		totalSize += s
+	}
+	if totalSize > uint64(len(input)) {
+		return 0, fmt.Errorf(
+			"data being unmarshaled is too small in length, wanted %d, received %d",
+			totalSize,
+			len(input),
+		)
 	}
 
 	offsets := make([]uint64, 0)

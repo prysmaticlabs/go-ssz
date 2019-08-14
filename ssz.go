@@ -83,6 +83,9 @@ func Unmarshal(input []byte, val interface{}) error {
 	if val == nil {
 		return errors.New("cannot unmarshal into untyped, nil value")
 	}
+	if len(input) == 0 {
+		return errors.New("no data to unmarshal from, input is an empty byte slice []byte{}")
+	}
 	rval := reflect.ValueOf(val)
 	rtyp := rval.Type()
 	// val must be a pointer, otherwise we refuse to unmarshal
