@@ -98,9 +98,6 @@ func TestEmptyDataUnmarshal(t *testing.T) {
 	if err := Unmarshal([]byte{}, msg); err == nil {
 		t.Error("Expected unmarshal to fail when attempting to unmarshal from an empty byte slice")
 	}
-	if err := Unmarshal([]byte{1, 2, 3, 4, 5}, msg); err == nil {
-		t.Error("Expected unmarshal to fail when attempting to unmarshal from an empty byte slice")
-	}
 }
 
 func TestHashTreeRoot(t *testing.T) {

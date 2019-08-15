@@ -238,7 +238,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		} else {
 			firstOff := offsets[offsetIndex]
 			nextOff := offsets[offsetIndex+1]
-			if firstOff == nextOff {
+			if firstOff == uint64(len(input)) {
 				continue
 			}
 			if _, err := factory.Unmarshal(val.Field(i), fType, input[firstOff:nextOff], 0); err != nil {
