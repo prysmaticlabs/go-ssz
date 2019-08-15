@@ -13,6 +13,7 @@ var basicFactory = newBasicSSZ()
 var basicArrayFactory = newBasicArraySSZ()
 var compositeArrayFactory = newCompositeArraySSZ()
 var basicSliceFactory = newBasicSliceSSZ()
+var stringFactory = newStringSSZ()
 var compositeSliceFactory = newCompositeSliceSSZ()
 
 // SSZAble defines a type which can marshal/unmarshal and compute its
@@ -33,6 +34,8 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 	switch {
 	case isBasicType(kind) || isBasicTypeArray(typ, typ.Kind()):
 		return basicFactory, nil
+	case kind == reflect.String:
+		return stringFactory, nil
 	case kind == reflect.Slice:
 		switch {
 		case isBasicType(typ.Elem().Kind()):

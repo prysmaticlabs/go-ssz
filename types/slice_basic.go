@@ -36,7 +36,11 @@ func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	}
 	limit = (maxCapacity*elemSize + 31) / 32
 	if limit == 0 {
-		limit = 1
+		if numItems == 0 {
+			limit = 1
+		} else {
+			limit = uint64(numItems)
+		}
 	}
 	leaves := make([][]byte, numItems)
 	for i := 0; i < numItems; i++ {

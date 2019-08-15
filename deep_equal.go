@@ -68,6 +68,8 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 	}
 
 	switch v1.Kind() {
+	case reflect.String:
+		return v1.String() == v2.String()
 	case reflect.Array:
 		for i := 0; i < v1.Len(); i++ {
 			if !deepValueEqual(v1.Index(i), v2.Index(i), visited, depth+1) {
