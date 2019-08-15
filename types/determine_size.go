@@ -40,6 +40,8 @@ func isVariableSizeType(typ reflect.Type) bool {
 		return false
 	case isBasicTypeArray(typ, kind):
 		return false
+	case kind == reflect.Slice:
+		return true
 	case kind == reflect.String:
 		return true
 	case kind == reflect.Array:

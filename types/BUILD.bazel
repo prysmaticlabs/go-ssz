@@ -11,6 +11,7 @@ go_library(
         "helpers.go",
         "slice_basic.go",
         "slice_composite.go",
+        "string.go",
         "struct.go",
     ],
     importpath = "github.com/prysmaticlabs/go-ssz/types",
