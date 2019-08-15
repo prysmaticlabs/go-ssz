@@ -93,7 +93,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 		//// String test cases.
 		{input: "hello world", ptr: new(string)},
 		// Struct decoding test cases.
-		//{input: forkExample, ptr: new(fork)},
+		{input: forkExample, ptr: new(fork)},
 		//{input: nestedItemExample, ptr: new(nestedItem)},
 		//{input: nestedVarItemExample, ptr: new(nestedVarItem)},
 		//{input: varItemExample, ptr: new(varItem)},
