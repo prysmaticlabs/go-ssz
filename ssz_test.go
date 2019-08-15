@@ -39,7 +39,7 @@ func TestPartialDataMarshalUnmarshal(t *testing.T) {
 	}
 	dec := &block{}
 	if err := Unmarshal(enc, dec); err != nil {
-		t.Fatal(err) // fails here
+		t.Fatal(err)
 	}
 }
 
