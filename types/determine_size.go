@@ -42,6 +42,8 @@ func isVariableSizeType(typ reflect.Type) bool {
 		return false
 	case kind == reflect.Slice:
 		return true
+	case kind == reflect.String:
+		return true
 	case kind == reflect.Array:
 		return isVariableSizeType(typ.Elem())
 	case kind == reflect.Struct:
@@ -113,6 +115,8 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	kind := typ.Kind()
 	switch {
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
+		return uint64(val.Len())
+	case kind == reflect.String:
 		return uint64(val.Len())
 	case kind == reflect.Slice || kind == reflect.Array:
 		totalSize := uint64(0)
