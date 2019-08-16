@@ -246,8 +246,6 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 				currentIndex += BytesPerLengthOffset
 				continue
 			}
-			fName := typ.Field(i).Name
-			_ = fName
 			if _, err := factory.Unmarshal(val.Field(i), fType, input[firstOff:nextOff], 0); err != nil {
 				return 0, err
 			}
