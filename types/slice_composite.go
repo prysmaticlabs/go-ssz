@@ -129,6 +129,9 @@ func (b *compositeSliceSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input
 			nextOffsetVal := input[nextIndex : nextIndex+BytesPerLengthOffset]
 			nextOffset = startOffset + uint64(binary.LittleEndian.Uint32(nextOffsetVal))
 		}
+		if nextOffset < currentOffset {
+			break
+		}
 		// We grow the slice's size to accommodate a new element being unmarshaled.
 		growConcreteSliceType(val, typ, i+1)
 		factory, err := SSZFactory(val.Index(i), typ.Elem())

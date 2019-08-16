@@ -205,6 +205,10 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		if item > 0 {
 			offsetIndexCounter += item
 		} else {
+			if offsetIndexCounter+BytesPerLengthOffset > uint64(len(input)) {
+				offsetIndexCounter += BytesPerLengthOffset
+				continue
+			}
 			offsetVal := input[offsetIndexCounter : offsetIndexCounter+BytesPerLengthOffset]
 			offsets = append(offsets, startOffset+uint64(binary.LittleEndian.Uint32(offsetVal)))
 			offsetIndexCounter += BytesPerLengthOffset
@@ -242,6 +246,8 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 				currentIndex += BytesPerLengthOffset
 				continue
 			}
+			fName := typ.Field(i).Name
+			_ = fName
 			if _, err := factory.Unmarshal(val.Field(i), fType, input[firstOff:nextOff], 0); err != nil {
 				return 0, err
 			}

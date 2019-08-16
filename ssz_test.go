@@ -27,11 +27,11 @@ type simpleNonProtoMessage struct {
 
 func TestPartialDataMarshalUnmarshal(t *testing.T) {
 	type block struct {
-		Slot uint64
-		Body *simpleNonProtoMessage
+		Slot      uint64
+		Transfers []*simpleProtoMessage
 	}
 	b := &block{
-		Slot: 55,
+		Slot: 5,
 	}
 	enc, err := Marshal(b)
 	if err != nil {
