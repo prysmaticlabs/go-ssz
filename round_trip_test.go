@@ -1,10 +1,11 @@
 package ssz_test
 
 import (
+	"math/rand"
 	"reflect"
 	"testing"
 
-	"github.com/prysmaticlabs/go-ssz"
+	ssz "github.com/prysmaticlabs/go-ssz"
 )
 
 type fork struct {
@@ -134,6 +135,81 @@ func TestMarshalUnmarshal(t *testing.T) {
 			if !ssz.DeepEqual(want, got) {
 				t.Errorf("Did not unmarshal properly: wanted %v, received %v", tt.input, output.Elem().Interface())
 			}
+		}
+	}
+}
+
+type UInt64InStruct struct {
+	UInt64 uint64
+}
+
+type allTypes struct {
+	Bool      bool
+	UInt8     uint8
+	UInt16    uint16
+	UInt32    uint32
+	UInt64    uint64
+	Slice     []byte
+	Array     [100]byte
+	SubStruct UInt64InStruct
+	Pointer   *UInt64InStruct
+}
+
+func randBytes(count int) []byte {
+	buf := make([]byte, count)
+	rand.Read(buf)
+	return buf
+}
+
+func generateData(count int) []allTypes {
+	data := make([]allTypes, count)
+	for i := 0; i < count; i++ {
+		data[i] = allTypes{
+			Bool:      rand.Intn(2) == 1,
+			UInt8:     uint8(rand.Intn(256)),
+			UInt16:    uint16(rand.Intn(256 * 256)),
+			UInt32:    rand.Uint32(),
+			UInt64:    rand.Uint64(),
+			Slice:     randBytes(rand.Intn(256)),
+			SubStruct: UInt64InStruct{UInt64: rand.Uint64()},
+			Pointer:   &UInt64InStruct{UInt64: rand.Uint64()},
+		}
+		copy(data[i].Array[:], randBytes(len(data[i].Array)))
+	}
+	return data
+}
+
+func BenchmarkMarshal(b *testing.B) {
+	data := generateData(b.N)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ssz.Marshal(data[i])
+	}
+}
+
+func BenchmarkUnmarshal(b *testing.B) {
+	data := generateData(b.N)
+	ser := make([][]byte, b.N)
+	for i, item := range data {
+		ser[i], _ = ssz.Marshal(item)
+	}
+	result := make([]allTypes, b.N)
+	b.ResetTimer()
+	for i, item := range ser {
+		ssz.Unmarshal(item, &result[i])
+	}
+	b.StopTimer()
+	// check Marshal/Unmarshal
+	for i := 0; i < b.N; i++ {
+		if data[i].Bool != result[i].Bool ||
+			data[i].UInt8 != result[i].UInt8 ||
+			data[i].UInt16 != result[i].UInt16 ||
+			data[i].UInt32 != result[i].UInt32 ||
+			data[i].UInt64 != result[i].UInt64 ||
+			(!reflect.DeepEqual(data[i].Slice, result[i].Slice) && !(len(data[i].Slice) == 0 && len(result[i].Slice) == 0)) ||
+			data[i].SubStruct.UInt64 != result[i].SubStruct.UInt64 ||
+			data[i].Pointer.UInt64 != result[i].Pointer.UInt64 {
+			b.Fatalf("incorrect marshal/unmarshal for\n%v\nser data:\n%v\nresult:\n%v\n(%v;%v)", data[i], ser[i], result[i], data[i].Slice, result[i].Slice)
 		}
 	}
 }
