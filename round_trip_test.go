@@ -92,9 +92,6 @@ func TestMarshalUnmarshal(t *testing.T) {
 		{input: []uint32{92939, 232, 222}, ptr: new([]uint32)},
 		// String test cases.
 		{input: "hello world", ptr: new(string)},
-		// Struct decoding test cases.
-		{input: forkExample, ptr: new(fork)},
-		{input: nestedItemExample, ptr: new(nestedItem)},
 		{input: nestedVarItemExample, ptr: new(nestedVarItem)},
 		{input: varItemExample, ptr: new(varItem)},
 		{input: varItemAmbiguous, ptr: new(varItem)},

@@ -25,6 +25,24 @@ type simpleNonProtoMessage struct {
 	Bar uint64
 }
 
+func TestPartialDataMarshalUnmarshal(t *testing.T) {
+	type block struct {
+		Slot uint64
+		Body *simpleNonProtoMessage
+	}
+	b := &block{
+		Slot: 55,
+	}
+	enc, err := Marshal(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := &block{}
+	if err := Unmarshal(enc, dec); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestProtobufSSZFieldsIgnored(t *testing.T) {
 	withProto := &simpleProtoMessage{
 		Foo: []byte("foo"),
@@ -78,9 +96,6 @@ func TestNilPointerHashTreeRoot(t *testing.T) {
 func TestEmptyDataUnmarshal(t *testing.T) {
 	msg := &simpleProtoMessage{}
 	if err := Unmarshal([]byte{}, msg); err == nil {
-		t.Error("Expected unmarshal to fail when attempting to unmarshal from an empty byte slice")
-	}
-	if err := Unmarshal([]byte{1, 2, 3, 4, 5}, msg); err == nil {
 		t.Error("Expected unmarshal to fail when attempting to unmarshal from an empty byte slice")
 	}
 }

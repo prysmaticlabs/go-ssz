@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -200,18 +199,6 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		}
 	}
 
-	totalSize := uint64(0)
-	for _, s := range fixedSizes {
-		totalSize += s
-	}
-	if totalSize > uint64(len(input)) {
-		return 0, fmt.Errorf(
-			"data being unmarshaled is too small in length, wanted %d, received %d",
-			totalSize,
-			len(input),
-		)
-	}
-
 	offsets := make([]uint64, 0)
 	offsetIndexCounter := startOffset
 	for _, item := range fixedSizes {
@@ -248,10 +235,13 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 				return 0, err
 			}
 			currentIndex = nextIndex
-
 		} else {
 			firstOff := offsets[offsetIndex]
 			nextOff := offsets[offsetIndex+1]
+			if firstOff == uint64(len(input)) {
+				currentIndex += BytesPerLengthOffset
+				continue
+			}
 			if _, err := factory.Unmarshal(val.Field(i), fType, input[firstOff:nextOff], 0); err != nil {
 				return 0, err
 			}
