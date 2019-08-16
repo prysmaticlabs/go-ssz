@@ -127,7 +127,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	rval := reflect.ValueOf(val)
 	factory, err := types.SSZFactory(rval, rval.Type())
 	if err != nil {
-		return [32]byte{}, errors.Wrapf(err, "could generate tree hasher for type: %v", rval.Type())
+		return [32]byte{}, errors.Wrapf(err, "could not generate tree hasher for type: %v", rval.Type())
 	}
 	return factory.Root(rval, rval.Type(), 0)
 }
@@ -151,7 +151,7 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 	}
 	factory, err := types.SSZFactory(rval, rval.Type())
 	if err != nil {
-		return [32]byte{}, errors.Wrapf(err, "could generate tree hasher for type: %v", rval.Type())
+		return [32]byte{}, errors.Wrapf(err, "could not generate tree hasher for type: %v", rval.Type())
 	}
 	return factory.Root(rval, rval.Type(), maxCapacity)
 }
@@ -160,6 +160,9 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 // and returns its tree hash. This is done because the last property
 // usually contains the signature that which this data is the root for.
 func SigningRoot(val interface{}) ([32]byte, error) {
+	if val == nil {
+		return [32]byte{}, errors.New("value cannot be nil")
+	}
 	valObj := reflect.ValueOf(val)
 	if valObj.Type().Kind() == reflect.Ptr {
 		if valObj.IsNil() {
