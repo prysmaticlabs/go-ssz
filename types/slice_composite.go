@@ -71,7 +71,7 @@ func (b *compositeSliceSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []b
 	if err != nil {
 		return 0, err
 	}
-	if !isVariableSizeType(typ.Elem()) {
+	if !isVariableSizeType(val.Index(0), typ.Elem()) {
 		for i := 0; i < val.Len(); i++ {
 			// If each element is not variable size, we simply encode sequentially and write
 			// into the buffer at the last index we wrote at.

@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -82,8 +81,6 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
-			fmt.Println("Nil")
-			fmt.Println(buf)
 			return startOffset, nil
 		}
 		return b.Marshal(val.Elem(), typ.Elem(), buf, startOffset)
@@ -91,8 +88,6 @@ func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 	emptyInstance := reflect.New(typ).Elem()
 	// If empty, do not marshal.
 	if reflect.DeepEqual(emptyInstance.Interface(), val.Interface()) {
-		fmt.Println("Treated as nil")
-		fmt.Println(buf)
 		return startOffset, nil
 	}
 	fixedIndex := startOffset
@@ -108,7 +103,7 @@ func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 		if err != nil {
 			return 0, err
 		}
-		if isVariableSizeType(fType) {
+		if isVariableSizeType(val.Field(i), fType) {
 			fixedLength += BytesPerLengthOffset
 		} else {
 			fixedLength += determineFixedSize(val.Field(i), fType)
@@ -129,7 +124,7 @@ func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 		if err != nil {
 			return 0, err
 		}
-		if !isVariableSizeType(fType) {
+		if !isVariableSizeType(val.Field(i), fType) {
 			fixedIndex, err = factory.Marshal(val.Field(i), fType, buf, fixedIndex)
 			if err != nil {
 				return 0, err
@@ -173,17 +168,13 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		numFields++
 	}
 
-	fixedSizes := make([]uint64, numFields)
-	for i := 0; i < len(fixedSizes); i++ {
-		// We skip protobuf related metadata fields.
-		if strings.Contains(typ.Field(i).Name, "XXX_") {
-			continue
-		}
+	fixedSizes := make(map[int]uint64)
+	for i := 0; i < numFields; i++ {
 		fType, err := determineFieldType(typ.Field(i))
 		if err != nil {
 			return 0, err
 		}
-		if !isVariableSizeType(fType) {
+		if !isVariableSizeType(val.Field(i), fType) {
 			if val.Field(i).Kind() == reflect.Ptr {
 				instantiateConcreteTypeForElement(val.Field(i), fType.Elem())
 			}
@@ -202,9 +193,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 				}
 			}
 			fixedSz := determineFixedSize(concreteVal, fType)
-			if fixedSz > 0 {
-				fixedSizes[i] = fixedSz
-			}
+			fixedSizes[i] = fixedSz
 		} else {
 			fixedSizes[i] = 0
 		}
@@ -212,8 +201,8 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 
 	offsets := make([]uint64, 0)
 	offsetIndexCounter := startOffset
-	for _, item := range fixedSizes {
-		if item > 0 {
+	for i := 0; i < numFields; i++ {
+		if item, ok := fixedSizes[i]; ok {
 			offsetIndexCounter += item
 		} else {
 			if offsetIndexCounter+BytesPerLengthOffset > uint64(len(input)) {
@@ -227,12 +216,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 	}
 	offsets = append(offsets, endOffset)
 	offsetIndex := uint64(0)
-	for i := 0; i < typ.NumField(); i++ {
-		// We skip protobuf related metadata fields.
-		if strings.Contains(typ.Field(i).Name, "XXX_") {
-			continue
-		}
-		fieldSize := fixedSizes[i]
+	for i := 0; i < numFields; i++ {
 		fType, err := determineFieldType(typ.Field(i))
 		if err != nil {
 			return 0, err
@@ -244,8 +228,11 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		if err != nil {
 			return 0, err
 		}
-		if fieldSize > 0 {
-			nextIndex = currentIndex + fieldSize
+		if item, ok := fixedSizes[i]; ok {
+			if item == 0 {
+				continue
+			}
+			nextIndex = currentIndex + item
 			if _, err := factory.Unmarshal(val.Field(i), fType, input[currentIndex:nextIndex], 0); err != nil {
 				return 0, err
 			}
