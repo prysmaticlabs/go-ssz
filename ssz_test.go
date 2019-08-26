@@ -334,26 +334,16 @@ func TestEmptyValueTreatedAsNil(t *testing.T) {
 	if err := Unmarshal(enc, dec); err != nil {
 		t.Fatal(err)
 	}
-	//if !DeepEqual(item, dec) {
-	//	t.Error("Items not equal")
-	//}
-	//item2 := &example{
-	//	Field1: 3,
-	//}
-	//enc2, err := Marshal(item2)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//if !bytes.Equal(enc, enc2) {
-	//	t.Errorf("Expected marshalings to match, received %v == %v", enc, enc2)
-	//}
-	//dec2 := &example{}
-	//if err := Unmarshal(enc2, dec2); err != nil {
-	//	t.Fatal(err)
-	//}
-	//if !DeepEqual(item2, dec2) {
-	//	t.Error("Items not equal")
-	//}
+	item2 := &example{
+		Field1: 3,
+	}
+	enc2, err := Marshal(item2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(enc, enc2) {
+		t.Errorf("Expected marshalings to match, received %v == %v", enc, enc2)
+	}
 }
 
 func TestEmptyDataUnmarshal(t *testing.T) {

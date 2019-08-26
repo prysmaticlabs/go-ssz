@@ -103,7 +103,7 @@ func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 		if err != nil {
 			return 0, err
 		}
-		if isVariableSizeType(val.Field(i), fType) {
+		if isVariableSizeType(fType) {
 			fixedLength += BytesPerLengthOffset
 		} else {
 			fixedLength += determineFixedSize(val.Field(i), fType)
@@ -124,7 +124,7 @@ func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 		if err != nil {
 			return 0, err
 		}
-		if !isVariableSizeType(val.Field(i), fType) {
+		if !isVariableSizeType(fType) {
 			fixedIndex, err = factory.Marshal(val.Field(i), fType, buf, fixedIndex)
 			if err != nil {
 				return 0, err
@@ -174,7 +174,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		if err != nil {
 			return 0, err
 		}
-		if !isVariableSizeType(val.Field(i), fType) {
+		if !isVariableSizeType(fType) {
 			if val.Field(i).Kind() == reflect.Ptr {
 				instantiateConcreteTypeForElement(val.Field(i), fType.Elem())
 			}
