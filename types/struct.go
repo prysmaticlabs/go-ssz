@@ -81,7 +81,8 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
-			return startOffset, nil
+			newVal := reflect.New(typ.Elem()).Elem()
+			return b.Marshal(newVal, newVal.Type(), buf, startOffset)
 		}
 		return b.Marshal(val.Elem(), typ.Elem(), buf, startOffset)
 	}

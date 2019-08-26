@@ -232,7 +232,7 @@ func TestHashTreeRootWithCapacity(t *testing.T) {
 		},
 		{
 			name: "Valid",
-			input: []fork{fork{
+			input: []fork{{
 				PreviousVersion: [4]byte{0x9f, 0x41, 0xbd, 0x5b},
 				CurrentVersion:  [4]byte{0xcb, 0xb0, 0xf1, 0xd7},
 				Epoch:           11971467576204192310,
@@ -311,6 +311,39 @@ func TestNilPointerHashTreeRoot(t *testing.T) {
 	}
 	if _, err := HashTreeRoot(i); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestNilInstantiationMarshalEquality(t *testing.T) {
+	type exampleBody struct {
+		Epoch bool
+	}
+	type example struct {
+		Slot bool
+		Root []byte
+		Body *exampleBody
+	}
+	root := [32]byte{1, 2, 3, 4}
+	item := &example{
+		Slot: true,
+		Root: root[:],
+		Body: nil,
+	}
+	item2 := &example{
+		Slot: true,
+		Root: root[:],
+		Body: &exampleBody{},
+	}
+	enc, err := Marshal(item)
+	if err != nil {
+		t.Fatal(err)
+	}
+	enc2, err := Marshal(item2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(enc, enc2) {
+		t.Errorf("Unequal marshalings %v != %v", enc, enc2)
 	}
 }
 
