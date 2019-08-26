@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -174,29 +175,28 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		if err != nil {
 			return 0, err
 		}
-		if !isVariableSizeType(fType) {
-			if val.Field(i).Kind() == reflect.Ptr {
-				instantiateConcreteTypeForElement(val.Field(i), fType.Elem())
-			}
-			concreteVal := val.Field(i)
-			sszSizeTags, hasTags, err := parseSSZFieldTags(typ.Field(i))
-			if err != nil {
-				return 0, err
-			}
-			if hasTags {
-				concreteType := inferFieldTypeFromSizeTags(typ.Field(i), sszSizeTags)
-				concreteVal = reflect.New(concreteType).Elem()
-				// If the item is a slice, we grow it accordingly based on the size tags.
-				if val.Field(i).Kind() == reflect.Slice {
-					result := growSliceFromSizeTags(val.Field(i), sszSizeTags)
-					val.Field(i).Set(result)
-				}
-			}
-			fixedSz := determineFixedSize(concreteVal, fType)
-			fixedSizes[i] = fixedSz
-		} else {
-			fixedSizes[i] = 0
+		if isVariableSizeType(fType) {
+			continue
 		}
+		if val.Field(i).Kind() == reflect.Ptr {
+			instantiateConcreteTypeForElement(val.Field(i), fType.Elem())
+		}
+		concreteVal := val.Field(i)
+		sszSizeTags, hasTags, err := parseSSZFieldTags(typ.Field(i))
+		if err != nil {
+			return 0, err
+		}
+		if hasTags {
+			concreteType := inferFieldTypeFromSizeTags(typ.Field(i), sszSizeTags)
+			concreteVal = reflect.New(concreteType).Elem()
+			// If the item is a slice, we grow it accordingly based on the size tags.
+			if val.Field(i).Kind() == reflect.Slice {
+				result := growSliceFromSizeTags(val.Field(i), sszSizeTags)
+				val.Field(i).Set(result)
+			}
+		}
+		fixedSz := determineFixedSize(concreteVal, fType)
+		fixedSizes[i] = fixedSz
 	}
 
 	offsets := make([]uint64, 0)
@@ -217,6 +217,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 	offsets = append(offsets, endOffset)
 	offsetIndex := uint64(0)
 	for i := 0; i < numFields; i++ {
+		fmt.Printf("Unmarshal %s\n", typ.Field(i).Name)
 		fType, err := determineFieldType(typ.Field(i))
 		if err != nil {
 			return 0, err
