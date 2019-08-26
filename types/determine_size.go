@@ -10,7 +10,7 @@ import (
 func DetermineSize(val reflect.Value) uint64 {
 	if val.Kind() == reflect.Ptr {
 		if val.IsNil() {
-			return 0
+			return DetermineSize(reflect.New(val.Type()).Elem())
 		}
 		return DetermineSize(val.Elem())
 	}
@@ -103,7 +103,8 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 		return totalSize
 	case kind == reflect.Ptr:
 		if val.IsNil() {
-			return 0
+			newElem := reflect.New(typ.Elem()).Elem()
+			return determineVariableSize(newElem, newElem.Type())
 		}
 		return determineFixedSize(val.Elem(), typ.Elem())
 	default:
@@ -151,7 +152,8 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 		return totalSize
 	case kind == reflect.Ptr:
 		if val.IsNil() {
-			return 0
+			newElem := reflect.New(typ.Elem()).Elem()
+			return determineVariableSize(newElem, newElem.Type())
 		}
 		return determineVariableSize(val.Elem(), val.Elem().Type())
 	default:

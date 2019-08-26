@@ -72,4 +72,5 @@ go_test(
         "ssz_test.go",
     ],
     embed = [":go_default_library"],
+    deps = ["@com_github_pkg_errors//:go_default_library"],
 )
