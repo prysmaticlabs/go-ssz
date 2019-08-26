@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -13,6 +14,14 @@ func DetermineSize(val reflect.Value) uint64 {
 			return 0
 		}
 		return DetermineSize(val.Elem())
+	}
+	if val.Type().Kind() == reflect.Struct {
+		fmt.Println("is empty")
+		// If empty, count as 0.
+		emptyInstance := reflect.New(val.Type()).Elem()
+		if reflect.DeepEqual(emptyInstance.Interface(), val.Interface()) {
+			return 0
+		}
 	}
 	if isVariableSizeType(val.Type()) {
 		return determineVariableSize(val, val.Type())
@@ -88,6 +97,10 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 		}
 		return num
 	case kind == reflect.Struct:
+		emptyInstance := reflect.New(val.Type()).Elem()
+		if reflect.DeepEqual(emptyInstance.Interface(), val.Interface()) {
+			return 0
+		}
 		totalSize := uint64(0)
 		for i := 0; i < typ.NumField(); i++ {
 			if strings.Contains(typ.Field(i).Name, "XXX_") {
@@ -130,6 +143,10 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 		}
 		return totalSize
 	case kind == reflect.Struct:
+		emptyInstance := reflect.New(val.Type()).Elem()
+		if reflect.DeepEqual(emptyInstance.Interface(), val.Interface()) {
+			return 0
+		}
 		totalSize := uint64(0)
 		for i := 0; i < typ.NumField(); i++ {
 			if strings.Contains(typ.Field(i).Name, "XXX_") {

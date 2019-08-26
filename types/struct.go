@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -81,9 +82,18 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
+			fmt.Println("Nil")
+			fmt.Println(buf)
 			return startOffset, nil
 		}
 		return b.Marshal(val.Elem(), typ.Elem(), buf, startOffset)
+	}
+	emptyInstance := reflect.New(typ).Elem()
+	// If empty, do not marshal.
+	if reflect.DeepEqual(emptyInstance.Interface(), val.Interface()) {
+		fmt.Println("Treated as nil")
+		fmt.Println(buf)
+		return startOffset, nil
 	}
 	fixedIndex := startOffset
 	fixedLength := uint64(0)
@@ -149,6 +159,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		}
 		return b.Unmarshal(val.Elem(), typ.Elem(), input, startOffset)
 	}
+
 	endOffset := uint64(len(input))
 	currentIndex := startOffset
 	nextIndex := currentIndex
