@@ -316,22 +316,22 @@ func TestNilPointerHashTreeRoot(t *testing.T) {
 
 func TestNilInstantiationMarshalEquality(t *testing.T) {
 	type exampleBody struct {
-		Epoch bool
+		Epoch uint64
 	}
 	type example struct {
-		Slot bool
-		Root []byte
+		Slot uint64
+		Root [32]byte
 		Body *exampleBody
 	}
 	root := [32]byte{1, 2, 3, 4}
 	item := &example{
-		Slot: true,
-		Root: root[:],
+		Slot: 5,
+		Root: root,
 		Body: nil,
 	}
 	item2 := &example{
-		Slot: true,
-		Root: root[:],
+		Slot: 5,
+		Root: root,
 		Body: &exampleBody{},
 	}
 	enc, err := Marshal(item)
@@ -340,6 +340,14 @@ func TestNilInstantiationMarshalEquality(t *testing.T) {
 	}
 	enc2, err := Marshal(item2)
 	if err != nil {
+		t.Fatal(err)
+	}
+	dec := &example{}
+	if err := Unmarshal(enc, dec); err != nil {
+		t.Fatal(err)
+	}
+	dec2 := &example{}
+	if err := Unmarshal(enc2, dec2); err != nil {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(enc, enc2) {
