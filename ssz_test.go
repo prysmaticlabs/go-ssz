@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	ethpb "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
 )
 
 type fork struct {
@@ -316,46 +315,44 @@ func TestNilPointerHashTreeRoot(t *testing.T) {
 }
 
 func TestNilInstantiationMarshalEquality(t *testing.T) {
-	//type exampleBody struct {
-	//	Epoch bool
-	//}
-	//type example struct {
-	//	Slot bool
-	//	Root []byte
-	//	Body *exampleBody
-	//}
-	root := [32]byte{1, 2, 3, 4}
-	item := &ethpb.BeaconBlock{
-		Slot:       5,
-		ParentRoot: root[:],
-		StateRoot:  root[:],
-		Body:       nil,
+	type exampleBody struct {
+		Epoch uint64
 	}
-	//item2 := &ethpb.BeaconBlock{
-	//	Slot:       5,
-	//	ParentRoot: root[:],
-	//	StateRoot:  root[:],
-	//	Body:       &ethpb.BeaconBlockBody{},
-	//}
+	type example struct {
+		Slot uint64
+		Root [32]byte
+		Body *exampleBody
+	}
+	root := [32]byte{1, 2, 3, 4}
+	item := &example{
+		Slot: 5,
+		Root: root,
+		Body: nil,
+	}
+	item2 := &example{
+		Slot: 5,
+		Root: root,
+		Body: &exampleBody{},
+	}
 	enc, err := Marshal(item)
 	if err != nil {
 		t.Fatal(err)
 	}
-	dec := &ethpb.BeaconBlock{}
+	enc2, err := Marshal(item2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := &example{}
 	if err := Unmarshal(enc, dec); err != nil {
 		t.Fatal(err)
 	}
-	//enc2, err := Marshal(item2)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//dec2 := &ethpb.BeaconBlock{}
-	//if err := Unmarshal(enc2, dec2); err != nil {
-	//	t.Fatal(err)
-	//}
-	//if !bytes.Equal(enc, enc2) {
-	//	t.Errorf("Unequal marshalings %v != %v", enc, enc2)
-	//}
+	dec2 := &example{}
+	if err := Unmarshal(enc2, dec2); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(enc, enc2) {
+		t.Errorf("Unequal marshalings %v != %v", enc, enc2)
+	}
 }
 
 func TestEmptyDataUnmarshal(t *testing.T) {

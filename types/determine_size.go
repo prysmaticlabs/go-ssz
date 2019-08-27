@@ -48,6 +48,9 @@ func isVariableSizeType(typ reflect.Type) bool {
 		return isVariableSizeType(typ.Elem())
 	case kind == reflect.Struct:
 		for i := 0; i < typ.NumField(); i++ {
+			if strings.Contains(typ.Field(i).Name, "XXX_") {
+				continue
+			}
 			f := typ.Field(i)
 			fType, err := determineFieldType(f)
 			if err != nil {
