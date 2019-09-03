@@ -8,6 +8,9 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/prysmaticlabs/go-bitfield"
+
+	ethpb "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
 )
 
 type fork struct {
@@ -25,6 +28,78 @@ type truncateSignatureCase struct {
 type simpleNonProtoMessage struct {
 	Foo []byte
 	Bar uint64
+}
+
+func TestBlockFailure(t *testing.T) {
+	someRoot := [32]byte{1, 2, 3, 4, 5}
+	somePubKey := [48]byte{1, 2, 3, 4, 5}
+	randao := [96]byte{6, 7, 8, 9}
+	someSig := [96]byte{10, 11, 12, 13}
+	b := &ethpb.BeaconBlock{
+		Slot:       56,
+		ParentRoot: someRoot[:],
+		StateRoot:  someRoot[:],
+		Body: &ethpb.BeaconBlockBody{
+			RandaoReveal: randao[:],
+			Eth1Data: &ethpb.Eth1Data{
+				DepositRoot:  someRoot[:],
+				DepositCount: 65,
+				BlockHash:    someRoot[:],
+			},
+			Graffiti: make([]byte, 32),
+			Attestations: []*ethpb.Attestation{
+				{
+					AggregationBits: bitfield.Bitlist{1, 2, 3},
+					Data: &ethpb.AttestationData{
+						BeaconBlockRoot: someRoot[:],
+						Source: &ethpb.Checkpoint{
+							Epoch: 5,
+							Root:  someRoot[:],
+						},
+						Target: &ethpb.Checkpoint{
+							Epoch: 5,
+							Root:  someRoot[:],
+						},
+						Crosslink: &ethpb.Crosslink{
+							Shard:      1,
+							ParentRoot: someRoot[:],
+							StartEpoch: 5,
+							EndEpoch:   6,
+							DataRoot:   make([]byte, 32),
+						},
+					},
+					CustodyBits: bitfield.Bitlist{},
+					Signature:   someSig[:],
+				},
+			},
+			Deposits: []*ethpb.Deposit{
+				{
+					Data: &ethpb.Deposit_Data{
+						PublicKey:             somePubKey[:],
+						WithdrawalCredentials: someRoot[:],
+						Amount:                3200000000,
+						Signature:             someSig[:],
+					},
+				},
+			},
+		},
+		Signature: someSig[:],
+	}
+	enc, err := Marshal(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dec := &ethpb.BeaconBlock{}
+	if err := Unmarshal(enc, dec); err != nil {
+		t.Fatal(err)
+	}
+	enc2, err := Marshal(dec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(enc, enc2) {
+		t.Fatal("Failed subsequent marshaling")
+	}
 }
 
 func TestPartialDataMarshalUnmarshal(t *testing.T) {

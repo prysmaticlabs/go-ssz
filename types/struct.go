@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -227,6 +228,7 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 				continue
 			}
 			nextIndex = currentIndex + item
+			fmt.Printf("Unmarshaling: %s\n", typ.Field(i).Name)
 			if _, err := factory.Unmarshal(val.Field(i), fType, input[currentIndex:nextIndex], 0); err != nil {
 				return 0, err
 			}
