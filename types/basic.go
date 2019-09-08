@@ -70,7 +70,7 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	var chunks [][]byte
 	var err error
 	var hashKey string
-	if typ.Kind() == reflect.Array && val.IsNil() {
+	if val.Type().Kind() == reflect.Slice && val.IsNil() {
 		newVal := reflect.MakeSlice(val.Type(), typ.Len(), typ.Len())
 		val.Set(newVal)
 	}
