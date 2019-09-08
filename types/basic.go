@@ -116,14 +116,14 @@ func (b *basicSSZ) marshalBasicArray(val reflect.Value, typ reflect.Type, buf []
 }
 
 func marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
-	if typ.Kind() == reflect.Array {
-		for i := 0; i < typ.Len(); i++ {
+	if val.Kind() == reflect.Array {
+		for i := 0; i < val.Len(); i++ {
 			buf[int(startOffset)+i] = uint8(val.Index(i).Uint())
 		}
-		return startOffset + uint64(typ.Len()), nil
+		return startOffset + uint64(val.Len()), nil
 	}
 	copy(buf[startOffset:], val.Bytes())
-	return startOffset + uint64(typ.Len()), nil
+	return startOffset + uint64(val.Len()), nil
 }
 
 func unmarshalByteArray(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
