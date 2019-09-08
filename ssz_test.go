@@ -27,6 +27,42 @@ type simpleNonProtoMessage struct {
 	Bar uint64
 }
 
+// This test verifies if a nil pseudo-array is treated the same as an instantiated,
+// zero-valued array when running hash tree root computations.
+func TestEmptyArrayInstantiation(t *testing.T) {
+	type data struct {
+		DepositRoot  []byte `ssz-size:"32"`
+		DepositCount uint64
+		BlockHash    []byte `ssz-size:"32"`
+	}
+	type example struct {
+		Randao   []byte `ssz-size:"96"`
+		Data     *data
+		Graffiti []byte `ssz-size:"32"`
+	}
+	empty := &example{}
+	withInstantiatedArray := &example{
+		Randao: make([]byte, 96),
+		Data: &data{
+			DepositRoot:  make([]byte, 32),
+			DepositCount: 0,
+			BlockHash:    make([]byte, 32),
+		},
+		Graffiti: make([]byte, 32),
+	}
+	r1, err := HashTreeRoot(empty)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r2, err := HashTreeRoot(withInstantiatedArray)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r1 != r2 {
+		t.Errorf("Wanted nil_array_field = %#x, instiantiated_empty_array_field = %#x", r1, r2)
+	}
+}
+
 func TestPartialDataMarshalUnmarshal(t *testing.T) {
 	type block struct {
 		Slot      uint64
