@@ -30,7 +30,8 @@ func newStructSSZ() *structSSZ {
 func (b *structSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
-			return [32]byte{}, nil
+			instance := reflect.New(typ.Elem()).Elem()
+			return b.Root(instance, instance.Type(), maxCapacity)
 		}
 		return b.Root(val.Elem(), typ.Elem(), maxCapacity)
 	}

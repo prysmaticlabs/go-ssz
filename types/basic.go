@@ -70,6 +70,10 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	var chunks [][]byte
 	var err error
 	var hashKey string
+	if val.Type().Kind() == reflect.Slice && val.IsNil() {
+		newVal := reflect.MakeSlice(val.Type(), typ.Len(), typ.Len())
+		val.Set(newVal)
+	}
 	buf := make([]byte, DetermineSize(val))
 	if _, err := b.Marshal(val, typ, buf, 0); err != nil {
 		return [32]byte{}, err
@@ -112,14 +116,14 @@ func (b *basicSSZ) marshalBasicArray(val reflect.Value, typ reflect.Type, buf []
 }
 
 func marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
-	if val.Type().Kind() == reflect.Array {
-		for i := 0; i < val.Len(); i++ {
+	if typ.Kind() == reflect.Array {
+		for i := 0; i < typ.Len(); i++ {
 			buf[int(startOffset)+i] = uint8(val.Index(i).Uint())
 		}
-		return startOffset + uint64(val.Len()), nil
+		return startOffset + uint64(typ.Len()), nil
 	}
 	copy(buf[startOffset:], val.Bytes())
-	return startOffset + uint64(val.Len()), nil
+	return startOffset + uint64(typ.Len()), nil
 }
 
 func unmarshalByteArray(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
