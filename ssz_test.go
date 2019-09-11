@@ -587,3 +587,27 @@ func TestSigningRoot_ConcurrentAccess(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestBoolArrayMisssingByte(t *testing.T) {
+	objBytes, err := hex.DecodeString("010101010101010101010101010101")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var result [16]bool
+	if err := Unmarshal(objBytes, &result); err == nil {
+		t.Fatal("expected message with missing byte to fail marshalling")
+	}
+}
+
+func TestBoolArrayExtraByte(t *testing.T) {
+	objBytes, err := hex.DecodeString("01010101010101010101010101010101ff")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var result [16]bool
+	if err := Unmarshal(objBytes, &result); err == nil {
+		t.Fatal("expected message with extra byte to fail marshalling")
+	}
+}

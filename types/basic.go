@@ -43,6 +43,10 @@ func (b *basicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, star
 }
 
 func (b *basicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+	if startOffset >= uint64(len(buf)) {
+		return 0, fmt.Errorf("startOffset %d is greater than length of input %d", startOffset, len(buf))
+	}
+
 	kind := typ.Kind()
 	switch {
 	case kind == reflect.Bool:
