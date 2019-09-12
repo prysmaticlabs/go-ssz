@@ -133,9 +133,9 @@ func runSSZGenericTests(t *testing.T, testPath string, dataType string, validity
 
 func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, testName string, valid bool) {
 	testInfo := strings.Split(testName, "_")[1:]
-	if !valid && len(testInfo) > 4 && testInfo[5] == "more" {
-		t.Fatalf("%#x", objBytes)
-	}
+	// if !valid && len(testInfo) > 4 && testInfo[5] == "more" {
+	// 	t.Fatalf("%#x", objBytes)
+	// }
 	switch testInfo[0] {
 	case "bool":
 		switch testInfo[1] {

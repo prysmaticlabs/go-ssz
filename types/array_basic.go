@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"sync"
 )
@@ -92,9 +93,14 @@ func (b *basicArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 }
 
 func (b *basicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
-	i := 0
-	index := startOffset
 	size := val.Len()
+	index := startOffset
+
+	if len(input) >= size {
+		return 0, fmt.Errorf("startOffset %d is greater than length of input %d", startOffset, len(input))
+	}
+
+	i := 0
 	var err error
 	var factory SSZAble
 	for i < size {
