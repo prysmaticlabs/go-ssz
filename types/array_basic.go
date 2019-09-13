@@ -96,8 +96,20 @@ func (b *basicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 	size := val.Len()
 	index := startOffset
 
-	if len(input) >= size {
-		return 0, fmt.Errorf("startOffset %d is greater than length of input %d", startOffset, len(input))
+	if size > 0 {
+		fixedSize := DetermineSize(val.Index(0))
+		totalLength := uint64(len(input))
+		// fmt.Printf("input: %d\n", len(input))
+		// fmt.Printf("fixedSize: %d\n", fixedSize)
+		// fmt.Printf("size: %d\n", size)
+		// fmt.Printf("index: %d\n", index)
+		if totalLength != uint64(size)*fixedSize {
+			return 0, fmt.Errorf(
+				"Unexpected amount of data, expected: %d, received: %d",
+				totalLength,
+				uint64(size),
+			)
+		}
 	}
 
 	i := 0
@@ -116,11 +128,13 @@ func (b *basicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 				return 0, err
 			}
 		}
+
 		index, err = factory.Unmarshal(val.Index(i), typ.Elem(), input, index)
 		if err != nil {
 			return 0, err
 		}
 		i++
 	}
+
 	return index, nil
 }
