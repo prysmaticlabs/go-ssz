@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"sync"
 )
@@ -95,22 +94,6 @@ func (b *basicArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 func (b *basicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
 	size := val.Len()
 	index := startOffset
-
-	if size > 0 {
-		fixedSize := DetermineSize(val.Index(0))
-		totalLength := uint64(len(input))
-		// fmt.Printf("input: %d\n", len(input))
-		// fmt.Printf("fixedSize: %d\n", fixedSize)
-		// fmt.Printf("size: %d\n", size)
-		// fmt.Printf("index: %d\n", index)
-		if totalLength != uint64(size)*fixedSize {
-			return 0, fmt.Errorf(
-				"Unexpected amount of data, expected: %d, received: %d",
-				totalLength,
-				uint64(size),
-			)
-		}
-	}
 
 	i := 0
 	var err error

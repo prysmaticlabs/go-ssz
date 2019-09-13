@@ -1,8 +1,11 @@
 package types
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 // DetermineSize returns the required byte size of a buffer for
@@ -117,8 +120,12 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 
 func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	kind := typ.Kind()
+
 	switch {
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
+		if b, ok := val.Interface().(bitfield.Bitlist); ok {
+			fmt.Printf("b.len() = %d\n", b.Len())
+		}
 		return uint64(val.Len())
 	case kind == reflect.String:
 		return uint64(val.Len())

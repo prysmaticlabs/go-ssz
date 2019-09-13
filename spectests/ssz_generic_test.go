@@ -92,11 +92,7 @@ func runSSZGenericTests(t *testing.T, testPath string, dataType string, validity
 	for _, testFolder := range testFolders {
 		tFName := testFolder.Name()
 		// testLogName := fmt.Sprintf("%s/%s_%d", dataType, validityFolder, i)
-		seralizedPath, err := bazel.Runfile(path.Join(filepath, tFName, "serialized.ssz"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		serializedBytes, err := ioutil.ReadFile(seralizedPath)
+		serializedBytes, err := FileBytesOrDie(path.Join(filepath, tFName, "serialized.ssz"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -570,18 +566,15 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 }
 
 func runBitlistSSZTestCase(t *testing.T, objBytes []byte, size uint64, yamlPath string, valid bool) {
-	if !valid {
-		return
-	}
 	var result bitfield.Bitlist
 	if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 		t.Fatalf("Could not perform bitlist ssz test case: %v", err)
 	}
-	if true {
+	if !valid {
 		return
 	}
-	if err := PerformListRootCheck(result, size, yamlPath, valid); err != nil {
-		t.Fatalf("Could not perform bitvector root check: %v", err)
+	if err := PerformBitlistRootCheck(result, size, yamlPath, valid); err != nil {
+		t.Fatalf("Could not perform bitlist root check: %v", err)
 	}
 }
 
@@ -759,13 +752,9 @@ func PerformRootCheck(val interface{}, yamlPath string, valid bool) error {
 		return nil
 	}
 
-	yamlFile, err := bazel.Runfile(yamlPath)
+	yamlBytes, err := FileBytesOrDie(yamlPath)
 	if err != nil {
-		return fmt.Errorf("failed to marshal: %v", err)
-	}
-	yamlBytes, err := ioutil.ReadFile(yamlFile)
-	if err != nil {
-		return fmt.Errorf("failed to marshal: %v", err)
+		return err
 	}
 
 	var roots sszRoots
@@ -805,18 +794,41 @@ func PerformRootCheck(val interface{}, yamlPath string, valid bool) error {
 	return nil
 }
 
+func PerformBitlistRootCheck(bitlist bitfield.Bitlist, size uint64, yamlPath string, valid bool) error {
+	yamlBytes, err := FileBytesOrDie(yamlPath)
+	if err != nil {
+		return err
+	}
+
+	var roots sszRoots
+	if err := yaml.Unmarshal(yamlBytes, &roots); err != nil {
+		return fmt.Errorf("failed to unmarshal: %v", err)
+	}
+
+	correctRoot, err := hex.DecodeString(roots.Root[2:])
+	if err != nil {
+		return fmt.Errorf("failed to decode: %v", err)
+	}
+
+	root, err := ssz.HashTreeRootBitlist(bitlist, size)
+	if err != nil {
+		return fmt.Errorf("failed to get hashtreeroot: %v", err)
+	}
+
+	if !bytes.Equal(correctRoot, root[:]) {
+		return fmt.Errorf("failed hash tree root check, expected %#x, received %#x", correctRoot, root)
+	}
+	return nil
+}
+
 func PerformListRootCheck(val interface{}, size uint64, yamlPath string, valid bool) error {
 	if !valid {
 		return nil
 	}
 
-	yamlFile, err := bazel.Runfile(yamlPath)
+	yamlBytes, err := FileBytesOrDie(yamlPath)
 	if err != nil {
-		return fmt.Errorf("failed to marshal: %v", err)
-	}
-	yamlBytes, err := ioutil.ReadFile(yamlFile)
-	if err != nil {
-		return fmt.Errorf("failed to marshal: %v", err)
+		return err
 	}
 
 	var roots sszRoots
@@ -854,4 +866,16 @@ func PerformListRootCheck(val interface{}, size uint64, yamlPath string, valid b
 		}
 	}
 	return nil
+}
+
+func FileBytesOrDie(path string) ([]byte, error) {
+	file, err := bazel.Runfile(path)
+	if err != nil {
+		return []byte{}, fmt.Errorf("failed to marshal: %v", err)
+	}
+	bytes, err := ioutil.ReadFile(file)
+	if err != nil {
+		return []byte{}, fmt.Errorf("failed to marshal: %v", err)
+	}
+	return bytes, nil
 }

@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/minio/sha256-simd"
@@ -139,4 +140,17 @@ func growSliceFromSizeTags(val reflect.Value, sizes []uint64) reflect.Value {
 		finalValue.Index(i).Set(intermediate)
 	}
 	return finalValue
+}
+
+func checkInputSize(val reflect.Value, typ reflect.Type, input []byte, offset uint64) error {
+	fixedSize := uint64(DetermineSize(val))
+	totalLength := uint64(len(input))
+	if fixedSize != totalLength-offset {
+		return fmt.Errorf(
+			"Unexpected amount of data, expected: %d, received: %d",
+			totalLength,
+			fixedSize,
+		)
+	}
+	return nil
 }

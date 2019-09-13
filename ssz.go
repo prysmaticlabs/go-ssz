@@ -7,7 +7,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/go-bitfield"
-
 	"github.com/prysmaticlabs/go-ssz/types"
 )
 
@@ -90,10 +89,12 @@ func Unmarshal(input []byte, val interface{}) error {
 	}
 	rval := reflect.ValueOf(val)
 	rtyp := rval.Type()
+
 	// val must be a pointer, otherwise we refuse to unmarshal
 	if rtyp.Kind() != reflect.Ptr {
 		return errors.New("can only unmarshal into a pointer target")
 	}
+
 	if rval.IsNil() {
 		return errors.New("cannot output to pointer of nil value")
 	}
@@ -103,6 +104,18 @@ func Unmarshal(input []byte, val interface{}) error {
 	}
 	if _, err := factory.Unmarshal(rval.Elem(), rval.Elem().Type(), input, 0); err != nil {
 		return errors.Wrapf(err, "could not unmarshal input into type: %v", rval.Elem().Type())
+	}
+
+	fixedSize := types.DetermineSize(rval)
+	totalLength := uint64(len(input))
+	fmt.Printf("size %d\n", fixedSize)
+	fmt.Printf("length %d\n", totalLength)
+	if totalLength != fixedSize {
+		return fmt.Errorf(
+			"Unexpected amount of data, expected: %d, received: %d",
+			fixedSize,
+			totalLength,
+		)
 	}
 	return nil
 }
