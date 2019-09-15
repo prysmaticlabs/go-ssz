@@ -638,7 +638,6 @@ func TestSigningRoot_ConcurrentAccess(t *testing.T) {
 
 func TestBoolArrayMisssingByte(t *testing.T) {
 	objBytes := hexDecodeOrDie(t, "010101010101010101010101010101")
-
 	var result [16]bool
 	if err := Unmarshal(objBytes, &result); err == nil {
 		t.Fatal("expected message with missing byte to fail marshalling")
@@ -647,7 +646,6 @@ func TestBoolArrayMisssingByte(t *testing.T) {
 
 func TestBoolArrayExtraByte(t *testing.T) {
 	objBytes := hexDecodeOrDie(t, "01010101010101010101010101010101ff")
-
 	var result [16]bool
 	if err := Unmarshal(objBytes, &result); err == nil {
 		t.Fatal("expected message with extra byte to fail marshalling")
