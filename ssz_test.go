@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/prysmaticlabs/go-bitfield"
 )
 
 type fork struct {
@@ -228,6 +229,53 @@ func TestHashTreeRoot(t *testing.T) {
 				}
 				if test.err.Error() != err.Error() {
 					t.Errorf("incorrect error: expected %v; received %v", test.err, err)
+				}
+			}
+		})
+	}
+}
+
+func TestHashTreeRootBitlist(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       bitfield.Bitlist
+		maxCapacity uint64
+		output      []byte
+		err         error
+	}{
+		{
+			name:        "Nil",
+			input:       nil,
+			maxCapacity: 0,
+			// Hash([]byte{})
+			output: hexDecodeOrDie(t, "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"),
+			err:    nil,
+		},
+		{
+			name:        "SampleBitlist",
+			input:       bitfield.Bitlist{1, 2, 3},
+			maxCapacity: 4,
+			// Known output hash.
+			output: hexDecodeOrDie(t, "835e878350f244651619cbac69de3002251be60225ba0d6ac999b5becb469281"),
+			err:    nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			output, err := HashTreeRootBitlist(test.input, test.maxCapacity)
+			if test.err == nil {
+				if err != nil {
+					t.Fatalf("unexpected error %v", err)
+				}
+				if bytes.Compare(test.output[:], output[:]) != 0 {
+					t.Errorf("incorrect output: expected %#x; received %#x", test.output, output)
+				}
+			} else {
+				if err == nil {
+					t.Fatalf("missing expected error %v", test.err)
+				}
+				if test.err.Error() != err.Error() {
+					t.Errorf("incorrect error: expected %#x; received %#x", test.err, err)
 				}
 			}
 		})
@@ -586,4 +634,12 @@ func TestSigningRoot_ConcurrentAccess(t *testing.T) {
 		}(t, &wg)
 	}
 	wg.Wait()
+}
+
+func hexDecodeOrDie(t *testing.T, s string) []byte {
+	res, err := hex.DecodeString(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return res
 }

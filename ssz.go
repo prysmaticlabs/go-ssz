@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/prysmaticlabs/go-bitfield"
 	"github.com/prysmaticlabs/go-ssz/types"
 )
 
@@ -130,6 +131,11 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 		return [32]byte{}, errors.Wrapf(err, "could not generate tree hasher for type: %v", rval.Type())
 	}
 	return factory.Root(rval, rval.Type(), 0)
+}
+
+// HashTreeRootBitlist determines the root hash of a bitfield.Bitlist type using SSZ's Merkleization.
+func HashTreeRootBitlist(bfield bitfield.Bitlist, maxCapacity uint64) ([32]byte, error) {
+	return types.BitlistRoot(bfield, maxCapacity)
 }
 
 // HashTreeRootWithCapacity determines the root hash of a dynamic list
