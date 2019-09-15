@@ -117,7 +117,6 @@ func determineFixedSize(val reflect.Value, typ reflect.Type) uint64 {
 
 func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 	kind := typ.Kind()
-
 	switch {
 	case kind == reflect.Slice && typ.Elem().Kind() == reflect.Uint8:
 		return uint64(val.Len())

@@ -89,12 +89,10 @@ func Unmarshal(input []byte, val interface{}) error {
 	}
 	rval := reflect.ValueOf(val)
 	rtyp := rval.Type()
-
 	// val must be a pointer, otherwise we refuse to unmarshal
 	if rtyp.Kind() != reflect.Ptr {
 		return errors.New("can only unmarshal into a pointer target")
 	}
-
 	if rval.IsNil() {
 		return errors.New("cannot output to pointer of nil value")
 	}
