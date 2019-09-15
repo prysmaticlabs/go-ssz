@@ -108,7 +108,7 @@ func Unmarshal(input []byte, val interface{}) error {
 	totalLength := uint64(len(input))
 	if totalLength != fixedSize {
 		return fmt.Errorf(
-			"Unexpected amount of data, expected: %d, received: %d",
+			"unexpected amount of data, expected: %d, received: %d",
 			fixedSize,
 			totalLength,
 		)
