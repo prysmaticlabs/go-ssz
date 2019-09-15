@@ -108,8 +108,6 @@ func Unmarshal(input []byte, val interface{}) error {
 
 	fixedSize := types.DetermineSize(rval)
 	totalLength := uint64(len(input))
-	fmt.Printf("size %d\n", fixedSize)
-	fmt.Printf("length %d\n", totalLength)
 	if totalLength != fixedSize {
 		return fmt.Errorf(
 			"Unexpected amount of data, expected: %d, received: %d",

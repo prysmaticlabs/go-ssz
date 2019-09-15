@@ -92,10 +92,9 @@ func (b *basicArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 }
 
 func (b *basicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
-	size := val.Len()
-	index := startOffset
-
 	i := 0
+	index := startOffset
+	size := val.Len()
 	var err error
 	var factory SSZAble
 	for i < size {
@@ -111,13 +110,11 @@ func (b *basicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 				return 0, err
 			}
 		}
-
 		index, err = factory.Unmarshal(val.Index(i), typ.Elem(), input, index)
 		if err != nil {
 			return 0, err
 		}
 		i++
 	}
-
 	return index, nil
 }
