@@ -17,46 +17,46 @@ import (
 	"github.com/prysmaticlabs/go-ssz"
 )
 
-// func TestYamlStateRoundTrip(t *testing.T) {
-// 	s := &SszBenchmarkState{}
-// 	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
-// 	encoded, err := ssz.Marshal(s.Value)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if !bytes.Equal(encoded, s.Serialized) {
-// 		t.Fatal("Failed to encode")
-// 	}
-// 	var targetState MinimalBeaconState
-// 	if err := ssz.Unmarshal(encoded, &targetState); err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if !ssz.DeepEqual(targetState, s.Value) {
-// 		t.Error("Unmarshaled encoding did not match original value")
-// 	}
-// }
+func TestYamlStateRoundTrip(t *testing.T) {
+	s := &SszBenchmarkState{}
+	populateStructFromYaml(t, "./yaml/ssz_single_state.yaml", s)
+	encoded, err := ssz.Marshal(s.Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, s.Serialized) {
+		t.Fatal("Failed to encode")
+	}
+	var targetState MinimalBeaconState
+	if err := ssz.Unmarshal(encoded, &targetState); err != nil {
+		t.Fatal(err)
+	}
+	if !ssz.DeepEqual(targetState, s.Value) {
+		t.Error("Unmarshaled encoding did not match original value")
+	}
+}
 
-// func TestYamlBlockRoundTrip(t *testing.T) {
-// 	s := &SszBenchmarkBlock{}
-// 	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
-// 	encoded, err := ssz.Marshal(s.Value)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if !bytes.Equal(encoded, s.Serialized) {
-// 		t.Fatal("Failed to encode")
-// 	}
-// 	var targetBlock MinimalBlock
-// 	if err := ssz.Unmarshal(encoded, &targetBlock); err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if !ssz.DeepEqual(targetBlock, s.Value) {
-// 		t.Error("Unmarshaled encoding did not match original value")
-// 	}
-// 	if _, err := ssz.HashTreeRoot(s.Value); err != nil {
-// 		t.Fatal(err)
-// 	}
-// }
+func TestYamlBlockRoundTrip(t *testing.T) {
+	s := &SszBenchmarkBlock{}
+	populateStructFromYaml(t, "./yaml/ssz_single_block.yaml", s)
+	encoded, err := ssz.Marshal(s.Value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(encoded, s.Serialized) {
+		t.Fatal("Failed to encode")
+	}
+	var targetBlock MinimalBlock
+	if err := ssz.Unmarshal(encoded, &targetBlock); err != nil {
+		t.Fatal(err)
+	}
+	if !ssz.DeepEqual(targetBlock, s.Value) {
+		t.Error("Unmarshaled encoding did not match original value")
+	}
+	if _, err := ssz.HashTreeRoot(s.Value); err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestSSZGenericSpecTests(t *testing.T) {
 	fullPath := "eth2_spec_tests_general/tests/general/phase0/ssz_generic/"
@@ -639,14 +639,14 @@ func runBooleanSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, valid
 
 func runContainerSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, testName string, valid bool) {
 	switch testName {
-	case "BitsStruct":
-		var container bitsStruct
-		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
-			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
-		}
-		if err := PerformRootCheck(container, yamlPath, valid); err != nil {
-			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
-		}
+	// case "BitsStruct":
+	// 	var container bitsStruct
+	// 	if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
+	// 		t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
+	// 	}
+	// 	if err := PerformRootCheck(container, yamlPath, valid); err != nil {
+	// 		t.Fatalf("Could not perform root check for case %s: %v", testName, err)
+	// 	}
 	case "ComplexTestStruct":
 		var container complexTestStruct
 		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
