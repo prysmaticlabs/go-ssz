@@ -639,14 +639,6 @@ func runBooleanSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, valid
 
 func runContainerSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, testName string, valid bool) {
 	switch testName {
-	// case "BitsStruct":
-	// 	var container bitsStruct
-	// 	if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
-	// 		t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
-	// 	}
-	// 	if err := PerformRootCheck(container, yamlPath, valid); err != nil {
-	// 		t.Fatalf("Could not perform root check for case %s: %v", testName, err)
-	// 	}
 	case "ComplexTestStruct":
 		var container complexTestStruct
 		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
@@ -738,7 +730,7 @@ func runUintSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, testName
 				t.Fatal(err)
 			}
 			if !bytes.Equal(objBytes, encoded) {
-				t.Fatalf("Expected %v, received %v", objBytes, encoded)
+				t.Fatalf("expected %v, received %v", objBytes, encoded)
 			}
 		}
 
@@ -757,7 +749,7 @@ func runUintSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, testName
 				t.Fatal(err)
 			}
 			if !bytes.Equal(objBytes, encoded) {
-				t.Fatalf("Expected %v, received %v", objBytes, encoded)
+				t.Fatalf("expected %v, received %v", objBytes, encoded)
 			}
 		}
 
@@ -781,7 +773,7 @@ func PerformSSZCheck(objBytes []byte, val interface{}, yamlPath string, valid bo
 			return fmt.Errorf("incorrect encoding/decoding, expected %#x, received %#x", objBytes, encoded)
 		}
 	} else if err == nil {
-		return fmt.Errorf("Expected error, received nil: %v", val)
+		return fmt.Errorf("expected error, received nil: %v", val)
 	}
 	return nil
 }
