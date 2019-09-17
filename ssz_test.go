@@ -41,7 +41,14 @@ func TestEmptyArrayInstantiation(t *testing.T) {
 		Data     *data
 		Graffiti []byte `ssz-size:"32"`
 	}
-	empty := &example{}
+	empty := &example{
+		Randao: make([]byte, 96),
+		Data: &data{
+			DepositRoot:  make([]byte, 32),
+			DepositCount: 0,
+			BlockHash:    make([]byte, 32),
+		},
+	}
 	withInstantiatedArray := &example{
 		Randao: make([]byte, 96),
 		Data: &data{
@@ -61,6 +68,35 @@ func TestEmptyArrayInstantiation(t *testing.T) {
 	}
 	if r1 != r2 {
 		t.Errorf("Wanted nil_array_field = %#x, instiantiated_empty_array_field = %#x", r1, r2)
+	}
+}
+
+func TestMarshalNilArray(t *testing.T) {
+	type ex struct {
+		Slot         uint64
+		Graffiti     []byte `ssz-size:"32"`
+		DepositIndex uint64
+	}
+	b1 := &ex{
+		Slot:         5,
+		Graffiti:     nil,
+		DepositIndex: 64,
+	}
+	b2 := &ex{
+		Slot:         5,
+		Graffiti:     make([]byte, 32),
+		DepositIndex: 64,
+	}
+	enc1, err := Marshal(b1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	enc2, err := Marshal(b2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(enc1, enc2) {
+		t.Errorf("First item %v != second item %v", enc1, enc2)
 	}
 }
 
