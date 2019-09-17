@@ -155,6 +155,11 @@ func marshalByteArray(val reflect.Value, typ reflect.Type, buf []byte, startOffs
 		}
 		return startOffset + uint64(val.Len()), nil
 	}
+	if val.IsNil() {
+		item := make([]byte, typ.Len())
+		copy(buf[startOffset:], item)
+		return startOffset + uint64(typ.Len()), nil
+	}
 	copy(buf[startOffset:], val.Bytes())
 	return startOffset + uint64(val.Len()), nil
 }
