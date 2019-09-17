@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/go-bitfield"
+	ethpb "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
 )
 
 type fork struct {
@@ -31,31 +32,117 @@ type simpleNonProtoMessage struct {
 // This test verifies if a nil pseudo-array is treated the same as an instantiated,
 // zero-valued array when running hash tree root computations.
 func TestEmptyArrayInstantiation(t *testing.T) {
-	type data struct {
-		DepositRoot  []byte `ssz-size:"32"`
-		DepositCount uint64
-		BlockHash    []byte `ssz-size:"32"`
-	}
-	type example struct {
-		Randao   []byte `ssz-size:"96"`
-		Data     *data
-		Graffiti []byte `ssz-size:"32"`
-	}
-	empty := &example{}
-	withInstantiatedArray := &example{
-		Randao: make([]byte, 96),
-		Data: &data{
-			DepositRoot:  make([]byte, 32),
-			DepositCount: 0,
-			BlockHash:    make([]byte, 32),
+	//type data struct {
+	//	DepositRoot  []byte `ssz-size:"32"`
+	//	DepositCount uint64
+	//	BlockHash    []byte `ssz-size:"32"`
+	//}
+	//type example struct {
+	//	Randao   []byte `ssz-size:"96"`
+	//	Data     *data
+	//	Graffiti []byte `ssz-size:"32"`
+	//}
+	//empty := &example{
+	//	Randao: make([]byte, 96),
+	//	Data: &data{
+	//		DepositRoot:  make([]byte, 32),
+	//		DepositCount: 0,
+	//		BlockHash:    make([]byte, 32),
+	//	},
+	//}
+	//withInstantiatedArray := &example{
+	//	Randao: make([]byte, 96),
+	//	Data: &data{
+	//		DepositRoot:  make([]byte, 32),
+	//		DepositCount: 0,
+	//		BlockHash:    make([]byte, 32),
+	//	},
+	//	Graffiti: make([]byte, 32),
+	//}
+	some := [32]byte{1, 2, 3}
+	b1 := &ethpb.BeaconBlock{
+		Slot:       10,
+		ParentRoot: some[:],
+		StateRoot:  some[:],
+		Body: &ethpb.BeaconBlockBody{
+			RandaoReveal:      make([]byte, 96),
+			Eth1Data:          nil,
+			Graffiti:          nil,
+			ProposerSlashings: nil,
+			AttesterSlashings: nil,
+			Attestations: []*ethpb.Attestation{
+				{
+					AggregationBits: bitfield.NewBitlist(5),
+					Data: &ethpb.AttestationData{
+						BeaconBlockRoot: some[:],
+						Source: &ethpb.Checkpoint{
+							Epoch: 3,
+							Root:  some[:],
+						},
+						Target: &ethpb.Checkpoint{
+							Epoch: 3,
+							Root:  some[:],
+						},
+						Crosslink: &ethpb.Crosslink{
+							Shard:      4,
+							ParentRoot: some[:],
+							StartEpoch: 3,
+							EndEpoch:   4,
+							DataRoot:   some[:],
+						},
+					},
+					CustodyBits: bitfield.NewBitlist(5),
+				},
+			},
+			Deposits:       nil,
+			VoluntaryExits: nil,
+			Transfers:      nil,
 		},
-		Graffiti: make([]byte, 32),
 	}
-	r1, err := HashTreeRoot(empty)
+	b2 := &ethpb.BeaconBlock{
+		Slot:       10,
+		ParentRoot: some[:],
+		StateRoot:  some[:],
+		Body: &ethpb.BeaconBlockBody{
+			RandaoReveal:      make([]byte, 96),
+			Eth1Data:          nil,
+			Graffiti:          some[:],
+			ProposerSlashings: nil,
+			AttesterSlashings: nil,
+			Attestations: []*ethpb.Attestation{
+				{
+					AggregationBits: bitfield.NewBitlist(5),
+					Data: &ethpb.AttestationData{
+						BeaconBlockRoot: some[:],
+						Source: &ethpb.Checkpoint{
+							Epoch: 3,
+							Root:  some[:],
+						},
+						Target: &ethpb.Checkpoint{
+							Epoch: 3,
+							Root:  some[:],
+						},
+						Crosslink: &ethpb.Crosslink{
+							Shard:      4,
+							ParentRoot: some[:],
+							StartEpoch: 3,
+							EndEpoch:   4,
+							DataRoot:   some[:],
+						},
+					},
+					CustodyBits: bitfield.NewBitlist(5),
+				},
+			},
+			Deposits:       nil,
+			VoluntaryExits: nil,
+			Transfers:      nil,
+		},
+	}
+	r1, err := SigningRoot(b1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	r2, err := HashTreeRoot(withInstantiatedArray)
+	r2, err := SigningRoot(b2)
 	if err != nil {
 		t.Fatal(err)
 	}
