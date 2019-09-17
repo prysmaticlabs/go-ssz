@@ -106,7 +106,7 @@ func TestEmptyArrayInstantiation(t *testing.T) {
 		Body: &ethpb.BeaconBlockBody{
 			RandaoReveal:      make([]byte, 96),
 			Eth1Data:          nil,
-			Graffiti:          some[:],
+			Graffiti:          make([]byte, 32),
 			ProposerSlashings: nil,
 			AttesterSlashings: nil,
 			Attestations: []*ethpb.Attestation{
