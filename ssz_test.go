@@ -29,6 +29,18 @@ type simpleNonProtoMessage struct {
 	Bar uint64
 }
 
+func TestNilElementMarshal(t *testing.T) {
+	type ex struct{}
+	var item *ex
+	buf, err := Marshal(item)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(buf, []byte{}) {
+		t.Errorf("Wanted empty byte slice, got %v", buf)
+	}
+}
+
 func TestNilElementDetermineSize(t *testing.T) {
 	type ex struct{}
 	var item *ex
