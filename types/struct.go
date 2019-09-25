@@ -102,7 +102,12 @@ func (b *structSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, sta
 		if isVariableSizeType(fType) {
 			fixedLength += BytesPerLengthOffset
 		} else {
-			fixedLength += determineFixedSize(val.Field(i), fType)
+			if fType.Kind() == reflect.Ptr && val.IsNil() {
+				elem := reflect.New(fType.Elem()).Elem()
+				fixedLength += determineFixedSize(elem, fType)
+			} else {
+				fixedLength += determineFixedSize(val.Field(i), fType)
+			}
 		}
 	}
 	currentOffsetIndex := startOffset + fixedLength
