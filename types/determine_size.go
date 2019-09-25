@@ -10,7 +10,7 @@ import (
 func DetermineSize(val reflect.Value) uint64 {
 	if val.Kind() == reflect.Ptr {
 		if val.IsNil() {
-			return DetermineSize(reflect.New(val.Type()).Elem())
+			return DetermineSize(reflect.New(val.Type().Elem()).Elem())
 		}
 		return DetermineSize(val.Elem())
 	}
