@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/go-bitfield"
+	"github.com/prysmaticlabs/go-ssz/types"
 )
 
 type fork struct {
@@ -26,6 +27,15 @@ type truncateSignatureCase struct {
 type simpleNonProtoMessage struct {
 	Foo []byte
 	Bar uint64
+}
+
+func TestNilElementDetermineSize(t *testing.T) {
+	type ex struct{}
+	var item *ex
+	size := types.DetermineSize(reflect.ValueOf(item))
+	if size != 0 {
+		t.Errorf("Wanted size 0, received %d", size)
+	}
 }
 
 // This test verifies if a nil pseudo-array is treated the same as an instantiated,
