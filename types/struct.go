@@ -16,14 +16,10 @@ import (
 // is chosen as the default value given its simplicity to represent unbounded size.
 var UnboundedSSZFieldSizeMarker = "?"
 
-type structSSZ struct {
-	hashCache map[string]interface{}
-}
+type structSSZ struct{}
 
 func newStructSSZ() *structSSZ {
-	return &structSSZ{
-		hashCache: make(map[string]interface{}),
-	}
+	return &structSSZ{}
 }
 
 func (b *structSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
