@@ -119,7 +119,6 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	hashKey = string(buf)
 	b.lock.Lock()
 	res := b.hashCache.Get(string(hashKey))
-	res.Value()
 	b.lock.Unlock()
 	if res != nil && res.Value() != nil {
 		return res.Value().([32]byte), nil
