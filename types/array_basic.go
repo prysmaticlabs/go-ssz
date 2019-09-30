@@ -4,16 +4,22 @@ import (
 	"bytes"
 	"reflect"
 	"sync"
+	"time"
+
+	"github.com/karlseguin/ccache"
 )
 
+// BasicArraySizeCache for HashTreeRoot.
+const BasicArraySizeCache = 100000
+
 type basicArraySSZ struct {
-	hashCache map[string]interface{}
+	hashCache *ccache.Cache
 	lock      sync.Mutex
 }
 
 func newBasicArraySSZ() *basicArraySSZ {
 	return &basicArraySSZ{
-		hashCache: make(map[string]interface{}),
+		hashCache: ccache.New(ccache.Configure().MaxSize(BasicArraySizeCache)),
 	}
 }
 
@@ -50,10 +56,10 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	}
 	if !bytes.Equal(hashKey, make([]byte, BytesPerChunk*numItems)) {
 		b.lock.Lock()
-		res := b.hashCache[string(hashKey)]
+		res := b.hashCache.Get(string(hashKey))
 		b.lock.Unlock()
-		if res != nil {
-			return res.([32]byte), nil
+		if res != nil && res.Value() != nil {
+			return res.Value().([32]byte), nil
 		}
 	}
 	chunks, err := pack(leaves)
@@ -66,7 +72,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	}
 	if !bytes.Equal(hashKey, make([]byte, BytesPerChunk*numItems)) {
 		b.lock.Lock()
-		b.hashCache[string(hashKey)] = root
+		b.hashCache.Set(string(hashKey), root, time.Hour)
 		b.lock.Unlock()
 	}
 	return root, nil

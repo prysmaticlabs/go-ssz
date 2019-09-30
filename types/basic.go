@@ -6,18 +6,23 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"time"
 
+	"github.com/karlseguin/ccache"
 	"github.com/prysmaticlabs/go-bitfield"
 )
 
+// BasicTypeCacheSize for HashTreeRoot.
+const BasicTypeCacheSize = 100000
+
 type basicSSZ struct {
-	hashCache map[string]interface{}
+	hashCache *ccache.Cache
 	lock      sync.Mutex
 }
 
 func newBasicSSZ() *basicSSZ {
 	return &basicSSZ{
-		hashCache: make(map[string]interface{}),
+		hashCache: ccache.New(ccache.Configure().MaxSize(BasicTypeCacheSize)),
 	}
 }
 
@@ -113,10 +118,10 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 	}
 	hashKey = string(buf)
 	b.lock.Lock()
-	res := b.hashCache[hashKey]
+	res := b.hashCache.Get(string(hashKey))
 	b.lock.Unlock()
-	if res != nil {
-		return res.([32]byte), nil
+	if res != nil && res.Value() != nil {
+		return res.Value().([32]byte), nil
 	}
 
 	// In order to find the root of a basic type, we simply marshal it,
@@ -131,7 +136,7 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64)
 		return [32]byte{}, err
 	}
 	b.lock.Lock()
-	b.hashCache[hashKey] = root
+	b.hashCache.Set(string(hashKey), root, time.Hour)
 	b.lock.Unlock()
 	return root, nil
 }

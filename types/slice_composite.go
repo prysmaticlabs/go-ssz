@@ -6,14 +6,10 @@ import (
 	"reflect"
 )
 
-type compositeSliceSSZ struct {
-	hashCache map[string]interface{}
-}
+type compositeSliceSSZ struct{}
 
 func newCompositeSliceSSZ() *compositeSliceSSZ {
-	return &compositeSliceSSZ{
-		hashCache: make(map[string]interface{}),
-	}
+	return &compositeSliceSSZ{}
 }
 
 func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {

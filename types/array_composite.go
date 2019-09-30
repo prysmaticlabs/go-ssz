@@ -3,18 +3,12 @@ package types
 import (
 	"encoding/binary"
 	"reflect"
-	"sync"
 )
 
-type compositeArraySSZ struct {
-	hashCache map[string]interface{}
-	lock      sync.Mutex
-}
+type compositeArraySSZ struct{}
 
 func newCompositeArraySSZ() *compositeArraySSZ {
-	return &compositeArraySSZ{
-		hashCache: make(map[string]interface{}),
-	}
+	return &compositeArraySSZ{}
 }
 
 func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {

@@ -6,14 +6,10 @@ import (
 	"reflect"
 )
 
-type basicSliceSSZ struct {
-	hashCache map[string]interface{}
-}
+type basicSliceSSZ struct{}
 
 func newBasicSliceSSZ() *basicSliceSSZ {
-	return &basicSliceSSZ{
-		hashCache: make(map[string]interface{}),
-	}
+	return &basicSliceSSZ{}
 }
 
 func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
