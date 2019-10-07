@@ -69,7 +69,6 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
-        "max_size_test.go",
         "round_trip_test.go",
         "ssz_test.go",
     ],
