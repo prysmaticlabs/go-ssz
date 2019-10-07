@@ -140,3 +140,9 @@ func growSliceFromSizeTags(val reflect.Value, sizes []uint64) reflect.Value {
 	}
 	return finalValue
 }
+
+func toBytes32(x []byte) [32]byte {
+	var y [32]byte
+	copy(y[:], x)
+	return y
+}
