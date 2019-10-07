@@ -1,16 +1,18 @@
 package types
 
 import (
-	"bytes"
 	"reflect"
 	"sync"
 	"time"
 
 	"github.com/karlseguin/ccache"
+	"github.com/minio/highwayhash"
 )
 
 // BasicArraySizeCache for HashTreeRoot.
 const BasicArraySizeCache = 100000
+
+var fastSumHashKey = toBytes32([]byte("hash_fast_sum64_key"))
 
 type basicArraySSZ struct {
 	hashCache *ccache.Cache
@@ -25,7 +27,8 @@ func newBasicArraySSZ() *basicArraySSZ {
 
 func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
 	numItems := val.Len()
-	hashKey := make([]byte, BytesPerChunk*numItems)
+	hashKeyElements := make([]byte, BytesPerChunk*numItems)
+	emptyKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
 	leaves := make([][]byte, numItems)
 	elemKind := typ.Elem().Kind()
 	offset := 0
@@ -42,7 +45,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		// simply return it as an identity root.
 		if elemKind == reflect.Array && typ.Elem().Elem().Kind() == reflect.Uint8 && val.Index(i).Len() == 32 {
 			leaves[i] = val.Index(i).Bytes()
-			copy(hashKey[offset:offset+32], leaves[i])
+			copy(hashKeyElements[offset:offset+32], leaves[i])
 			offset += 32
 			continue
 		}
@@ -51,12 +54,13 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 			return [32]byte{}, err
 		}
 		leaves[i] = r[:]
-		copy(hashKey[offset:offset+32], r[:])
+		copy(hashKeyElements[offset:offset+32], r[:])
 		offset += 32
 	}
-	if !bytes.Equal(hashKey, make([]byte, BytesPerChunk*numItems)) {
+	hashKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
+	if hashKey != emptyKey {
 		b.lock.Lock()
-		res := b.hashCache.Get(string(hashKey))
+		res := b.hashCache.Get(string(hashKey[:]))
 		b.lock.Unlock()
 		if res != nil && res.Value() != nil {
 			return res.Value().([32]byte), nil
@@ -70,9 +74,9 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	if err != nil {
 		return [32]byte{}, err
 	}
-	if !bytes.Equal(hashKey, make([]byte, BytesPerChunk*numItems)) {
+	if hashKey != emptyKey {
 		b.lock.Lock()
-		b.hashCache.Set(string(hashKey), root, time.Hour)
+		b.hashCache.Set(string(hashKey[:]), root, time.Hour)
 		b.lock.Unlock()
 	}
 	return root, nil
