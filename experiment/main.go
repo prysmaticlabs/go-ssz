@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/karlseguin/ccache"
-	"github.com/minio/highwayhash"
 	"github.com/minio/sha256-simd"
+
+	"github.com/prysmaticlabs/go-ssz"
 	pb "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
 )
 
@@ -59,22 +60,25 @@ func main() {
 		layers: make([][][]byte, 17),
 		hashCache: ccache.New(ccache.Configure().MaxSize(10000)),
 	}
+	log.Println("---Starting regular HTR...")
 	start := time.Now()
-	res, err := hasher.fastHashTreeRoot(bs)
+	enc, err := ssz.HashTreeRoot(bs)
 	if err != nil {
 		panic(err)
 	}
 	end := time.Now()
-	log.Printf("%#x in %v", res, end.Sub(start))
+	log.Printf("%#x in %v", enc, end.Sub(start))
+	log.Println("---Ended regular HTR")
 	start = time.Now()
-	res, err = hasher.fastHashTreeRoot(bs)
+	res, err := hasher.fastHashTreeRoot(bs)
 	if err != nil {
 		panic(err)
 	}
 	end = time.Now()
 	log.Printf("%#x in %v", res, end.Sub(start))
-	// Change 1 element.
+	// Change 2 elements.
 	bs.BlockRoots[len(bs.BlockRoots)-1] = [32]byte{4, 5, 6}
+	bs.BlockRoots[1] = [32]byte{7, 8, 9}
 	start = time.Now()
 	res, err = hasher.fastHashTreeRoot(bs)
 	if err != nil {
@@ -82,6 +86,15 @@ func main() {
 	}
 	end = time.Now()
 	log.Printf("%#x in %v", res, end.Sub(start))
+	log.Println("---Starting regular HTR...")
+	start = time.Now()
+	enc, err = ssz.HashTreeRoot(bs)
+	if err != nil {
+		panic(err)
+	}
+	end = time.Now()
+	log.Printf("%#x in %v", enc, end.Sub(start))
+	log.Println("---Ended regular HTR")
 }
 
 func fastMarshal(check pb.Checkpoint) ([]byte, error) {
@@ -113,53 +126,48 @@ type structHasher struct {
 func (s *structHasher) fastHashTreeRoot(bs BeaconState) ([32]byte, error) {
 	numItems := len(bs.BlockRoots)
 	leaves := make([][]byte, numItems)
-	hashKeyElements := make([]byte, BytesPerChunk*numItems)
-	emptyKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
-	offset := 0
 	changedIndices := make([]int, 0)
 	for i := 0; i < numItems; i++ {
 		// If we are marshaling an byte array of length 32, we shortcut the computations and
 		// simply return it as an identity root.
 		leaves[i] = bs.BlockRoots[i][:]
-		copy(hashKeyElements[offset:offset+32], leaves[i])
-		offset += 32
 		if s.cachedLeaves != nil {
 			if !bytes.Equal(leaves[i], s.cachedLeaves[i]) {
 				changedIndices = append(changedIndices, i)
 			}
 		}
 	}
-	hashKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
-	if hashKey != emptyKey {
-		s.lock.Lock()
-		res := s.hashCache.Get(string(hashKey[:]))
-		s.lock.Unlock()
-		if res != nil && res.Value() != nil {
-			return res.Value().([32]byte), nil
-		}
-	}
 	chunks := leaves
 	if len(changedIndices) > 0 {
-		return s.recomputeBranch(changedIndices, chunks),  nil
+		log.Printf("%d items changed", len(changedIndices))
+		var rt [32]byte
+		for i := 0; i < len(changedIndices); i++ {
+			rt = s.recomputeRoot(changedIndices[i], chunks)
+		}
+		return rt, nil
 	}
 	root := s.merkleize(chunks)
 	s.cachedLeaves = leaves
-	if hashKey != emptyKey {
-		s.lock.Lock()
-		s.hashCache.Set(string(hashKey[:]), root, time.Hour)
-		s.lock.Unlock()
-	}
 	return root, nil
 }
 
-func (s *structHasher) recomputeBranch(changedIndices []int, chunks [][]byte) [32]byte {
-	left := s.layers[0][changedIndices[0]-1]
-	right := chunks[changedIndices[0]]
-	root := hash(append(left, right...))
-	for i := 1; i < len(s.layers)-1; i++ {
-		root = hash(append(s.layers[i][len(s.layers[i])-2], root[:]...))
+func (s *structHasher) recomputeRoot(idx int, chunks [][]byte) [32]byte {
+	root := chunks[idx]
+	for i := 0; i < len(s.layers)-1; i++ {
+		subIndex := (uint64(idx) / (1 << uint64(i))) ^ 1
+		isLeft := uint64(idx) / (1 << uint64(i))
+		parentIdx := uint64(idx) / (1 << uint64(i+1))
+		item := s.layers[i][subIndex]
+		if isLeft%2 != 0 {
+			parentHash := hash(append(item, root...))
+			root = parentHash[:]
+		} else {
+			parentHash := hash(append(root, item...))
+			root = parentHash[:]
+		}
+		s.layers[i+1][parentIdx] = root
 	}
-	return root
+	return toBytes32(root)
 }
 
 func (s *structHasher) merkleize(chunks [][]byte) [32]byte {
