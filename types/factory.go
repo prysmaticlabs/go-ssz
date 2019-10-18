@@ -11,6 +11,7 @@ import (
 var StructFactory = newStructSSZ()
 var basicFactory = newBasicSSZ()
 var basicArrayFactory = newBasicArraySSZ()
+var rootsArrayFactory = newRootsArraySSZ()
 var compositeArrayFactory = newCompositeArraySSZ()
 var basicSliceFactory = newBasicSliceSSZ()
 var stringFactory = newStringSSZ()
@@ -47,6 +48,8 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 		}
 	case kind == reflect.Array:
 		switch {
+		case isRootsArray(val, typ):
+			return rootsArrayFactory, nil
 		case isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
 			return basicArrayFactory, nil
 		case !isVariableSizeType(typ.Elem()):

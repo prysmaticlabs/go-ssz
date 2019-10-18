@@ -6,10 +6,8 @@ import (
 	"log"
 	"reflect"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/karlseguin/ccache"
 	"github.com/minio/sha256-simd"
 
 	"github.com/prysmaticlabs/go-ssz"
@@ -25,14 +23,14 @@ type BeaconState struct {
 }
 
 var (
-	typesMap = make(map[reflect.Type]marshaler)
+	typesMap       = make(map[reflect.Type]marshaler)
 	fastSumHashKey = toBytes32([]byte("hash_fast_sum64_key"))
 )
 
 func init() {
 	check := pb.Checkpoint{
 		Epoch: 1,
-		Root: make([]byte, 32),
+		Root:  make([]byte, 32),
 	}
 	copy(check.Root, "12345678910")
 	val := reflect.ValueOf(check)
@@ -58,7 +56,6 @@ func main() {
 	}
 	hasher := &structHasher{
 		layers: make([][][]byte, 17),
-		hashCache: ccache.New(ccache.Configure().MaxSize(10000)),
 	}
 	log.Println("---Starting regular HTR...")
 	start := time.Now()
@@ -117,10 +114,8 @@ func fastMarshal(check pb.Checkpoint) ([]byte, error) {
 }
 
 type structHasher struct {
-	lock sync.Mutex
-	hashCache *ccache.Cache
 	cachedLeaves [][]byte
-	layers [][][]byte
+	layers       [][][]byte
 }
 
 func (s *structHasher) fastHashTreeRoot(bs BeaconState) ([32]byte, error) {

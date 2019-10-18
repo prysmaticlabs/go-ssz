@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "array_basic.go",
         "array_composite.go",
+        "array_roots.go",
         "basic.go",
         "determine_size.go",
         "factory.go",
