@@ -30,7 +30,7 @@ func newRootsArraySSZ() *rootsArraySSZ {
 	}
 }
 
-func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	numItems := typ.Len()
 	depth := merkle.GetDepth(uint64(numItems))
 	if a.layers == nil {

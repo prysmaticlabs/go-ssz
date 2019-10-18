@@ -22,7 +22,7 @@ func newStructSSZ() *structSSZ {
 	return &structSSZ{}
 }
 
-func (b *structSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *structSSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	if typ.Kind() == reflect.Ptr {
 		if val.IsNil() {
 			instance := reflect.New(typ.Elem()).Elem()

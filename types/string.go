@@ -12,7 +12,7 @@ func newStringSSZ() *stringSSZ {
 	return &stringSSZ{}
 }
 
-func (b *stringSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *stringSSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	var err error
 	numItems := val.Len()
 	elemSize := uint64(1)

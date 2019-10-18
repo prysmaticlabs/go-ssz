@@ -103,7 +103,7 @@ func BitlistRoot(bfield bitfield.Bitlist, maxCapacity uint64) ([32]byte, error) 
 	return mixInLength(root, output), nil
 }
 
-func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	var chunks [][]byte
 	var err error
 	var hashKey string

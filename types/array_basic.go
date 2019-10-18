@@ -25,7 +25,7 @@ func newBasicArraySSZ() *basicArraySSZ {
 	}
 }
 
-func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	numItems := val.Len()
 	elemKind := typ.Elem().Kind()
 	hashKeyElements := make([]byte, BytesPerChunk*numItems)

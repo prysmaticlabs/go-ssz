@@ -12,7 +12,7 @@ func newBasicSliceSSZ() *basicSliceSSZ {
 	return &basicSliceSSZ{}
 }
 
-func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	var factory SSZAble
 	var limit uint64
 	var elemSize uint64

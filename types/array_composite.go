@@ -11,7 +11,7 @@ func newCompositeArraySSZ() *compositeArraySSZ {
 	return &compositeArraySSZ{}
 }
 
-func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	var factory SSZAble
 	var err error
 	numItems := val.Len()
