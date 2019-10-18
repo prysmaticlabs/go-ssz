@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"log"
 	"reflect"
 	"sync"
 	"time"
@@ -31,9 +32,12 @@ func newRootsArraySSZ() *rootsArraySSZ {
 
 func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	numItems := typ.Len()
-	if _, ok := a.layers[fieldName]; !ok {
-		depth := merkle.GetDepth(uint64(numItems))
-		a.layers[fieldName] = make([][][]byte, depth+1)
+	log.Println(fieldName)
+	if fieldName != "" {
+		if _, ok := a.layers[fieldName]; !ok {
+			depth := merkle.GetDepth(uint64(numItems))
+			a.layers[fieldName] = make([][][]byte, depth+1)
+		}
 	}
 	hashKeyElements := make([]byte, BytesPerChunk*numItems)
 	emptyKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
@@ -47,9 +51,11 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		leaves[i] = item[:]
 		copy(hashKeyElements[offset:offset+32], leaves[i])
 		offset += 32
-		if _, ok := a.cachedLeaves[fieldName]; ok {
-			if !bytes.Equal(leaves[i], a.cachedLeaves[fieldName][i]) {
-				changedIndices = append(changedIndices, i)
+		if fieldName != "" {
+			if _, ok := a.cachedLeaves[fieldName]; ok {
+				if !bytes.Equal(leaves[i], a.cachedLeaves[fieldName][i]) {
+					changedIndices = append(changedIndices, i)
+				}
 			}
 		}
 	}
@@ -71,7 +77,9 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		}
 	}
 	root := a.merkleize(chunks, fieldName)
-	a.cachedLeaves[fieldName] = leaves
+	if fieldName != "" {
+		a.cachedLeaves[fieldName] = leaves
+	}
 	if hashKey != emptyKey {
 		a.lock.Lock()
 		a.hashCache.Set(string(hashKey[:]), root, time.Hour)
@@ -118,7 +126,9 @@ func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string) [32]byte {
 		chunks = append(chunks, make([]byte, BytesPerChunk))
 	}
 	hashLayer := chunks
-	a.layers[fieldName][0] = hashLayer
+	if fieldName != "" {
+		a.layers[fieldName][0] = hashLayer
+	}
 	// We keep track of the hash layers of a Merkle trie until we reach
 	// the top layer of length 1, which contains the single root element.
 	//        [Root]      -> Top layer has length 1.
@@ -132,7 +142,9 @@ func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string) [32]byte {
 			layer = append(layer, hashedChunk[:])
 		}
 		hashLayer = layer
-		a.layers[fieldName][i] = hashLayer
+		if fieldName != "" {
+			a.layers[fieldName][i] = hashLayer
+		}
 		i++
 	}
 	var root [32]byte

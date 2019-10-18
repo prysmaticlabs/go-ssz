@@ -61,7 +61,7 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 		if err != nil {
 			return [32]byte{}, err
 		}
-		r, err := factory.Root(val.Field(i), fType, fType.Name(), fCapacity)
+		r, err := factory.Root(val.Field(i), fType, typ.Field(i).Name, fCapacity)
 		if err != nil {
 			return [32]byte{}, err
 		}
