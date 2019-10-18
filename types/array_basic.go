@@ -46,7 +46,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 			offset += 32
 			continue
 		}
-		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
+		r, err := factory.Root(val.Index(i), typ.Elem(), "", 0)
 		if err != nil {
 			return [32]byte{}, err
 		}

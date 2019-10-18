@@ -32,7 +32,7 @@ func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, fieldName 
 	}
 	roots := make([][]byte, numItems)
 	for i := 0; i < numItems; i++ {
-		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
+		r, err := factory.Root(val.Index(i), typ.Elem(), fieldName, 0)
 		if err != nil {
 			return [32]byte{}, err
 		}

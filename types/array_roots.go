@@ -15,18 +15,17 @@ import (
 const RootsArraySizeCache = 100000
 
 type rootsArraySSZ struct {
-	hashCache *ccache.Cache
-	lock      sync.Mutex
-	// TODO: Store these in a trie by reflect.Type to accommodate
-	// multiple array type items for production.
-	// TODO: Need a way to pass in a field name into the func.
-	cachedLeaves [][]byte
-	layers       [][][]byte
+	hashCache    *ccache.Cache
+	lock         sync.Mutex
+	cachedLeaves map[string][][]byte
+	layers       map[string][][][]byte
 }
 
 func newRootsArraySSZ() *rootsArraySSZ {
 	return &rootsArraySSZ{
-		hashCache: ccache.New(ccache.Configure().MaxSize(RootsArraySizeCache)),
+		hashCache:    ccache.New(ccache.Configure().MaxSize(RootsArraySizeCache)),
+		cachedLeaves: make(map[string][][]byte),
+		layers:       make(map[string][][][]byte),
 	}
 }
 

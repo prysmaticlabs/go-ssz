@@ -47,7 +47,7 @@ func (b *basicSliceSSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 			}
 			leaves[i] = innerBuf
 		} else {
-			r, err := factory.Root(val.Index(i), typ.Elem(), 0)
+			r, err := factory.Root(val.Index(i), typ.Elem(), fieldName, 0)
 			if err != nil {
 				return [32]byte{}, err
 			}

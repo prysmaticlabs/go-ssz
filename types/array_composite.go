@@ -30,7 +30,7 @@ func (b *compositeArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName 
 	}
 	limit := (uint64(val.Len())*elemSize + 31) / 32
 	for i := 0; i < val.Len(); i++ {
-		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
+		r, err := factory.Root(val.Index(i), typ.Elem(), "", 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
