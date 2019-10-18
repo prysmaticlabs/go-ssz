@@ -34,6 +34,15 @@ func newRootsArraySSZ() *rootsArraySSZ {
 func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	numItems := typ.Len()
 	log.Println(fieldName)
+	// We make sure to look into the cache only if a field name is provided, that is,
+	// if this function is called when calling HashTreeRoot on a struct type that has
+	// a field which is an array of roots. An example is:
+	//
+	// type BeaconState struct {
+	//   BlockRoots [2048][32]byte
+	// }
+	//
+	// which would allow us to look into the cache by the field "BlockRoots".
 	if fieldName != "" {
 		if _, ok := a.layers[fieldName]; !ok {
 			depth := merkle.GetDepth(uint64(numItems))
@@ -46,8 +55,6 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	leaves := make([][]byte, numItems)
 	changedIndices := make([]int, 0)
 	for i := 0; i < numItems; i++ {
-		// If we are marshaling an byte array of length 32, we shortcut the computations and
-		// simply return it as an identity root.
 		var item [32]byte
 		if res, ok := val.Index(i).Interface().([32]byte); ok {
 			item = res
@@ -68,6 +75,8 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		}
 	}
 	chunks := leaves
+	// Recompute the root from the modified branches from the previous call
+	// to this function.
 	if len(changedIndices) > 0 {
 		var rt [32]byte
 		for i := 0; i < len(changedIndices); i++ {
@@ -119,6 +128,7 @@ func (a *rootsArraySSZ) recomputeRoot(idx int, chunks [][]byte, fieldName string
 			parentHash := hash(append(root, item...))
 			root = parentHash[:]
 		}
+		// Update the cached layers at the parent index.
 		a.layers[fieldName][i+1][parentIdx] = root
 	}
 	return toBytes32(root)
@@ -141,7 +151,7 @@ func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string) [32]byte {
 	// the top layer of length 1, which contains the single root element.
 	//        [Root]      -> Top layer has length 1.
 	//    [E]       [F]   -> This layer has length 2.
-	// [A]  [B]  [C]  [D] -> The bottom layer has length 4 (needs to be a power of two.
+	// [A]  [B]  [C]  [D] -> The bottom layer has length 4 (needs to be a power of two).
 	i := 1
 	for len(hashLayer) > 1 {
 		layer := [][]byte{}
