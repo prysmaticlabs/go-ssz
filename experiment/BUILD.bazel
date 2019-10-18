@@ -7,7 +7,6 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//:go_default_library",
-        "@com_github_minio_sha256_simd//:go_default_library",
         "@com_github_prysmaticlabs_prysm//proto/eth/v1alpha1:go_default_library",
     ],
 )

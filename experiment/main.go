@@ -11,8 +11,6 @@ import (
 	pb "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
 )
 
-const BytesPerChunk = 32
-
 type marshaler func(val reflect.Value, buf []byte, startOffset uint64) (uint64, error)
 
 type BeaconState struct {
