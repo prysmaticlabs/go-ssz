@@ -1,28 +1,62 @@
 package types
 
 import (
+	"bytes"
 	"reflect"
 	"sync"
 
 	"github.com/karlseguin/ccache"
+	"github.com/protolambda/zssz/merkle"
 )
 
-// BasicArraySizeCache for HashTreeRoot.
+// RootsArraySizeCache for hash tree root.
 const RootsArraySizeCache = 100000
 
 type rootsArraySSZ struct {
 	hashCache *ccache.Cache
 	lock      sync.Mutex
+	// TODO: Store these in a trie by reflect.Type to accommodate
+	// multiple array type items for production.
+	cachedLeaves [][]byte
+	layers       [][][]byte
 }
 
 func newRootsArraySSZ() *rootsArraySSZ {
 	return &rootsArraySSZ{
-		hashCache: ccache.New(ccache.Configure().MaxSize(BasicArraySizeCache)),
+		hashCache: ccache.New(ccache.Configure().MaxSize(RootsArraySizeCache)),
 	}
 }
 
 func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
-	return [32]byte{}, nil
+	numItems := typ.Len()
+	depth := merkle.GetDepth(uint64(numItems))
+	if a.layers == nil {
+		a.layers = make([][][]byte, depth+1)
+	}
+	leaves := make([][]byte, numItems)
+	changedIndices := make([]int, 0)
+	for i := 0; i < numItems; i++ {
+		// If we are marshaling an byte array of length 32, we shortcut the computations and
+		// simply return it as an identity root.
+		item := val.Index(i).Interface().([32]byte)
+		leaves[i] = item[:]
+		if a.cachedLeaves != nil {
+			if !bytes.Equal(leaves[i], a.cachedLeaves[i]) {
+				changedIndices = append(changedIndices, i)
+			}
+		}
+	}
+	chunks := leaves
+	if len(changedIndices) > 0 {
+		var rt [32]byte
+		for i := 0; i < len(changedIndices); i++ {
+			rt = a.recomputeRoot(changedIndices[i], chunks)
+		}
+		return rt, nil
+	}
+	root := a.merkleize(chunks)
+	a.cachedLeaves = leaves
+	return root, nil
 }
 
 func (a *rootsArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
@@ -32,4 +66,59 @@ func (a *rootsArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 
 func (a *rootsArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
 	return 0, nil
+}
+
+func (a *rootsArraySSZ) recomputeRoot(idx int, chunks [][]byte) [32]byte {
+	root := chunks[idx]
+	for i := 0; i < len(a.layers)-1; i++ {
+		subIndex := (uint64(idx) / (1 << uint64(i))) ^ 1
+		isLeft := uint64(idx) / (1 << uint64(i))
+		parentIdx := uint64(idx) / (1 << uint64(i+1))
+		item := a.layers[i][subIndex]
+		if isLeft%2 != 0 {
+			parentHash := hash(append(item, root...))
+			root = parentHash[:]
+		} else {
+			parentHash := hash(append(root, item...))
+			root = parentHash[:]
+		}
+		a.layers[i+1][parentIdx] = root
+	}
+	return toBytes32(root)
+}
+
+func (a *rootsArraySSZ) merkleize(chunks [][]byte) [32]byte {
+	if len(chunks) == 1 {
+		var root [32]byte
+		copy(root[:], chunks[0])
+		return root
+	}
+	for !isPowerOf2(len(chunks)) {
+		chunks = append(chunks, make([]byte, BytesPerChunk))
+	}
+	hashLayer := chunks
+	a.layers[0] = hashLayer
+	// We keep track of the hash layers of a Merkle trie until we reach
+	// the top layer of length 1, which contains the single root element.
+	//        [Root]      -> Top layer has length 1.
+	//    [E]       [F]   -> This layer has length 2.
+	// [A]  [B]  [C]  [D] -> The bottom layer has length 4 (needs to be a power of two.
+	i := 1
+	for len(hashLayer) > 1 {
+		layer := [][]byte{}
+		for i := 0; i < len(hashLayer); i += 2 {
+			hashedChunk := hash(append(hashLayer[i], hashLayer[i+1]...))
+			layer = append(layer, hashedChunk[:])
+		}
+		hashLayer = layer
+		a.layers[i] = hashLayer
+		i++
+	}
+	var root [32]byte
+	copy(root[:], hashLayer[0])
+	return root
+}
+
+func isPowerOf2(n int) bool {
+	return n != 0 && (n&(n-1)) == 0
 }
