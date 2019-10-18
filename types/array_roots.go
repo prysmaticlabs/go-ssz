@@ -19,6 +19,7 @@ type rootsArraySSZ struct {
 	lock      sync.Mutex
 	// TODO: Store these in a trie by reflect.Type to accommodate
 	// multiple array type items for production.
+	// TODO: Need a way to pass in a field name into the func.
 	cachedLeaves [][]byte
 	layers       [][][]byte
 }
