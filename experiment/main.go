@@ -55,6 +55,13 @@ func main() {
 	}
 	end := time.Now()
 	log.Printf("%#x in %v", enc, end.Sub(start))
+	start = time.Now()
+	enc, err = ssz.HashTreeRoot(bs)
+	if err != nil {
+		panic(err)
+	}
+	end = time.Now()
+	log.Printf("%#x in %v", enc, end.Sub(start))
 	// Change 2 elements.
 	bs.BlockRoots[len(bs.BlockRoots)-1] = [32]byte{4, 5, 6}
 	bs.BlockRoots[1] = [32]byte{7, 8, 9}

@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/karlseguin/ccache"
+	"github.com/minio/highwayhash"
 	"github.com/protolambda/zssz/merkle"
 )
 
@@ -33,6 +35,9 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	if a.layers == nil {
 		a.layers = make([][][]byte, depth+1)
 	}
+	hashKeyElements := make([]byte, BytesPerChunk*numItems)
+	emptyKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
+	offset := 0
 	leaves := make([][]byte, numItems)
 	changedIndices := make([]int, 0)
 	for i := 0; i < numItems; i++ {
@@ -40,6 +45,8 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		// simply return it as an identity root.
 		item := val.Index(i).Interface().([32]byte)
 		leaves[i] = item[:]
+		copy(hashKeyElements[offset:offset+32], leaves[i])
+		offset += 32
 		if a.cachedLeaves != nil {
 			if !bytes.Equal(leaves[i], a.cachedLeaves[i]) {
 				changedIndices = append(changedIndices, i)
@@ -54,8 +61,22 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		}
 		return rt, nil
 	}
+	hashKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
+	if hashKey != emptyKey {
+		a.lock.Lock()
+		res := a.hashCache.Get(string(hashKey[:]))
+		a.lock.Unlock()
+		if res != nil && res.Value() != nil {
+			return res.Value().([32]byte), nil
+		}
+	}
 	root := a.merkleize(chunks)
 	a.cachedLeaves = leaves
+	if hashKey != emptyKey {
+		a.lock.Lock()
+		a.hashCache.Set(string(hashKey[:]), root, time.Hour)
+		a.lock.Unlock()
+	}
 	return root, nil
 }
 
