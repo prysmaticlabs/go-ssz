@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"reflect"
 	"sync"
@@ -47,7 +48,14 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	for i := 0; i < numItems; i++ {
 		// If we are marshaling an byte array of length 32, we shortcut the computations and
 		// simply return it as an identity root.
-		item := val.Index(i).Interface().([32]byte)
+		var item [32]byte
+		if res, ok := val.Index(i).Interface().([32]byte); ok {
+			item = res
+		} else if res, ok := val.Index(i).Interface().([]byte); ok {
+			item = toBytes32(res)
+		} else {
+			return [32]byte{}, fmt.Errorf("expected array or slice of len 32, received %v", val.Index(i))
+		}
 		leaves[i] = item[:]
 		copy(hashKeyElements[offset:offset+32], leaves[i])
 		offset += 32
