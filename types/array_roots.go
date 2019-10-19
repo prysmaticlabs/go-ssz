@@ -106,12 +106,25 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 }
 
 func (a *rootsArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
-	index := startOffset
-	return index, nil
+	if val.Kind() == reflect.Array {
+		for i := 0; i < val.Len(); i++ {
+			buf[int(startOffset)+i] = uint8(val.Index(i).Uint())
+		}
+		return startOffset + uint64(val.Len()), nil
+	}
+	if val.IsNil() {
+		item := make([]byte, typ.Len())
+		copy(buf[startOffset:], item)
+		return startOffset + uint64(typ.Len()), nil
+	}
+	copy(buf[startOffset:], val.Bytes())
+	return startOffset + uint64(val.Len()), nil
 }
 
 func (a *rootsArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
-	return 0, nil
+	offset := startOffset + uint64(len(input))
+	val.SetBytes(input[startOffset:offset])
+	return offset, nil
 }
 
 func (a *rootsArraySSZ) recomputeRoot(idx int, chunks [][]byte, fieldName string) [32]byte {

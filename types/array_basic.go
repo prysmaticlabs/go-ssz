@@ -37,15 +37,6 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		return [32]byte{}, err
 	}
 	for i := 0; i < numItems; i++ {
-		// If we are marshaling an byte array of length 32, we shortcut the computations and
-		// simply return it as an identity root.
-		if elemKind == reflect.Array && typ.Elem().Elem().Kind() == reflect.Uint8 && val.Index(i).Len() == 32 {
-			item := val.Index(i).Interface().([32]byte)
-			leaves[i] = item[:]
-			copy(hashKeyElements[offset:offset+32], leaves[i])
-			offset += 32
-			continue
-		}
 		r, err := factory.Root(val.Index(i), typ.Elem(), "", 0)
 		if err != nil {
 			return [32]byte{}, err
