@@ -27,7 +27,6 @@ func newBasicArraySSZ() *basicArraySSZ {
 
 func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	numItems := val.Len()
-	elemKind := typ.Elem().Kind()
 	hashKeyElements := make([]byte, BytesPerChunk*numItems)
 	emptyKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
 	leaves := make([][]byte, numItems)
