@@ -115,12 +115,12 @@ func (a *rootsArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 	}
 	for i := 0; i < val.Len(); i++ {
 		var item [32]byte
-		if res, ok := val.Index(0).Interface().([32]byte); ok {
+		if res, ok := val.Index(i).Interface().([32]byte); ok {
 			item = res
-		} else if res, ok := val.Index(0).Interface().([]byte); ok {
+		} else if res, ok := val.Index(i).Interface().([]byte); ok {
 			item = toBytes32(res)
 		} else {
-			return 0, fmt.Errorf("expected array or slice of len 32, received %v", val.Index(0))
+			return 0, fmt.Errorf("expected array or slice of len 32, received %v", val.Index(i))
 		}
 		copy(buf[startOffset:], item[:])
 		index += uint64(len(item))
