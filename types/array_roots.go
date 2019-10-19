@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"reflect"
 	"sync"
 	"time"
@@ -33,7 +32,6 @@ func newRootsArraySSZ() *rootsArraySSZ {
 
 func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	numItems := typ.Len()
-	log.Println(fieldName)
 	// We make sure to look into the cache only if a field name is provided, that is,
 	// if this function is called when calling HashTreeRoot on a struct type that has
 	// a field which is an array of roots. An example is:
@@ -106,25 +104,43 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 }
 
 func (a *rootsArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
-	if val.Kind() == reflect.Array {
-		for i := 0; i < val.Len(); i++ {
-			buf[int(startOffset)+i] = uint8(val.Index(i).Uint())
-		}
-		return startOffset + uint64(val.Len()), nil
-	}
 	if val.IsNil() {
 		item := make([]byte, typ.Len())
 		copy(buf[startOffset:], item)
 		return startOffset + uint64(typ.Len()), nil
 	}
-	copy(buf[startOffset:], val.Bytes())
-	return startOffset + uint64(val.Len()), nil
+	index := startOffset
+	if val.Len() == 0 {
+		return index, nil
+	}
+	for i := 0; i < val.Len(); i++ {
+		var item [32]byte
+		if res, ok := val.Index(0).Interface().([32]byte); ok {
+			item = res
+		} else if res, ok := val.Index(0).Interface().([]byte); ok {
+			item = toBytes32(res)
+		} else {
+			return 0, fmt.Errorf("expected array or slice of len 32, received %v", val.Index(0))
+		}
+		copy(buf[startOffset:], item[:])
+		index += uint64(len(item))
+	}
+	return index, nil
 }
 
 func (a *rootsArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
-	offset := startOffset + uint64(len(input))
-	val.SetBytes(input[startOffset:offset])
-	return offset, nil
+	i := 0
+	index := startOffset
+	size := val.Len()
+	for i < size {
+		if val.Index(i).Kind() == reflect.Ptr {
+			instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
+		}
+		val.Index(i).SetBytes(input[index : index+uint64(len(input))])
+		index += uint64(len(input))
+		i++
+	}
+	return index, nil
 }
 
 func (a *rootsArraySSZ) recomputeRoot(idx int, chunks [][]byte, fieldName string) [32]byte {
