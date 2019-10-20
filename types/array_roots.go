@@ -15,8 +15,6 @@ import (
 const (
 	// CachedRootsArraySize for hash tree root.
 	CachedRootsArraySize = 100000
-	// CachedRootsTrieSize --
-	CachedRootsTrieSize = 10
 )
 
 type rootsArraySSZ struct {
@@ -28,8 +26,7 @@ type rootsArraySSZ struct {
 
 func newRootsArraySSZ() *rootsArraySSZ {
 	return &rootsArraySSZ{
-		hashCache: ccache.New(ccache.Configure().MaxSize(CachedRootsArraySize)),
-		// TODO(raul): Use ccache here instead of raw maps.
+		hashCache:    ccache.New(ccache.Configure().MaxSize(CachedRootsArraySize)),
 		cachedLeaves: make(map[[32]byte][][]byte),
 		layers:       make(map[[32]byte][][][]byte),
 	}
@@ -58,9 +55,9 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	// Use the values and the fieldname as the hashkey.
 	hashKey := highwayhash.Sum(append(hashKeyElements, fieldName...), fastSumHashKey[:])
 	if fieldName != "" {
-		for i := 0; i < len(leaves); i++ {
-			if _, ok := a.cachedLeaves[hashKey]; ok {
-				if !bytes.Equal(leaves[i], a.cachedLeaves[hashKey][i]) {
+		if cachedLeaves, ok := a.cachedLeaves[hashKey]; ok {
+			for i := 0; i < len(cachedLeaves); i++ {
+				if !bytes.Equal(leaves[i], cachedLeaves[i]) {
 					changedIndices = append(changedIndices, i)
 				}
 			}
@@ -92,9 +89,7 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		return rt, nil
 	}
 	if hashKey != emptyKey {
-		a.lock.Lock()
 		res := a.hashCache.Get(string(hashKey[:]))
-		a.lock.Unlock()
 		if res != nil && res.Value() != nil {
 			return res.Value().([32]byte), nil
 		}
@@ -104,9 +99,7 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		a.cachedLeaves[hashKey] = leaves
 	}
 	if hashKey != emptyKey {
-		a.lock.Lock()
 		a.hashCache.Set(string(hashKey[:]), root, time.Hour)
-		a.lock.Unlock()
 	}
 	return root, nil
 }
