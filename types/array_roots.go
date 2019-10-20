@@ -117,7 +117,7 @@ func (a *rootsArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 		} else {
 			return 0, fmt.Errorf("expected array or slice of len 32, received %v", val.Index(i))
 		}
-		copy(buf[startOffset:], item[:])
+		copy(buf[index:index+uint64(len(item))], item[:])
 		index += uint64(len(item))
 	}
 	return index, nil
@@ -127,10 +127,8 @@ func (a *rootsArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 	i := 0
 	index := startOffset
 	for i < val.Len() {
-		instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
-		fmt.Println(val.Index(i))
-		val.Index(i).SetBytes(input[index : index+uint64(len(input))])
-		index += uint64(len(input))
+		val.Index(i).SetBytes(input[index : index+uint64(32)])
+		index += uint64(32)
 		i++
 	}
 	return index, nil
