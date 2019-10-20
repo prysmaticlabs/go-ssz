@@ -20,14 +20,14 @@ const (
 type rootsArraySSZ struct {
 	hashCache    *ccache.Cache
 	lock         sync.Mutex
-	cachedLeaves map[[32]byte][][]byte
+	cachedLeaves map[string][][]byte
 	layers       map[[32]byte][][][]byte
 }
 
 func newRootsArraySSZ() *rootsArraySSZ {
 	return &rootsArraySSZ{
 		hashCache:    ccache.New(ccache.Configure().MaxSize(CachedRootsArraySize)),
-		cachedLeaves: make(map[[32]byte][][]byte),
+		cachedLeaves: make(map[string][][]byte),
 		layers:       make(map[[32]byte][][][]byte),
 	}
 }
@@ -51,18 +51,16 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		leaves[i] = item[:]
 		copy(hashKeyElements[offset:offset+32], leaves[i])
 		offset += 32
-	}
-	// Use the values and the fieldname as the hashkey.
-	hashKey := highwayhash.Sum(append(hashKeyElements, fieldName...), fastSumHashKey[:])
-	if fieldName != "" {
-		if cachedLeaves, ok := a.cachedLeaves[hashKey]; ok {
-			for i := 0; i < len(cachedLeaves); i++ {
+		if fieldName != "" {
+			if cachedLeaves, ok := a.cachedLeaves[fieldName]; ok {
 				if !bytes.Equal(leaves[i], cachedLeaves[i]) {
 					changedIndices = append(changedIndices, i)
 				}
 			}
 		}
 	}
+	// Use the values and the fieldname as the hashkey.
+	hashKey := highwayhash.Sum(append(hashKeyElements, fieldName...), fastSumHashKey[:])
 	// We make sure to look into the cache only if a field name is provided, that is,
 	// if this function is called when calling HashTreeRoot on a struct type that has
 	// a field which is an array of roots. An example is:
@@ -96,7 +94,7 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	}
 	root := a.merkleize(chunks, fieldName, hashKey)
 	if fieldName != "" {
-		a.cachedLeaves[hashKey] = leaves
+		a.cachedLeaves[fieldName] = leaves
 	}
 	if hashKey != emptyKey {
 		a.hashCache.Set(string(hashKey[:]), root, time.Hour)
