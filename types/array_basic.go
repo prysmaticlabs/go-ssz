@@ -45,7 +45,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		offset += 32
 	}
 	hashKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
-	if hashKey != emptyKey {
+	if enableCache && hashKey != emptyKey {
 		b.lock.Lock()
 		res := b.hashCache.Get(string(hashKey[:]))
 		b.lock.Unlock()
@@ -61,7 +61,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	if err != nil {
 		return [32]byte{}, err
 	}
-	if hashKey != emptyKey {
+	if enableCache && hashKey != emptyKey {
 		b.lock.Lock()
 		b.hashCache.Set(string(hashKey[:]), root, time.Hour)
 		b.lock.Unlock()

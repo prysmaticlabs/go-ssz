@@ -41,7 +41,7 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	// }
 	//
 	// which would allow us to look into the cache by the field "BlockRoots".
-	if fieldName != "" {
+	if enableCache && fieldName != "" {
 		if _, ok := a.layers[fieldName]; !ok {
 			depth := merkle.GetDepth(uint64(numItems))
 			a.layers[fieldName] = make([][][]byte, depth+1)
@@ -64,7 +64,7 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		leaves[i] = item[:]
 		copy(hashKeyElements[offset:offset+32], leaves[i])
 		offset += 32
-		if fieldName != "" {
+		if enableCache && fieldName != "" {
 			if _, ok := a.cachedLeaves[fieldName]; ok {
 				if !bytes.Equal(leaves[i], a.cachedLeaves[fieldName][i]) {
 					changedIndices = append(changedIndices, i)
@@ -83,7 +83,7 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		return rt, nil
 	}
 	hashKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
-	if hashKey != emptyKey {
+	if enableCache && hashKey != emptyKey {
 		a.lock.Lock()
 		res := a.hashCache.Get(string(hashKey[:]))
 		a.lock.Unlock()
@@ -92,10 +92,10 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		}
 	}
 	root := a.merkleize(chunks, fieldName)
-	if fieldName != "" {
+	if enableCache && fieldName != "" {
 		a.cachedLeaves[fieldName] = leaves
 	}
-	if hashKey != emptyKey {
+	if enableCache && hashKey != emptyKey {
 		a.lock.Lock()
 		a.hashCache.Set(string(hashKey[:]), root, time.Hour)
 		a.lock.Unlock()
@@ -164,7 +164,7 @@ func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string) [32]byte {
 		chunks = append(chunks, make([]byte, BytesPerChunk))
 	}
 	hashLayer := chunks
-	if fieldName != "" {
+	if enableCache && fieldName != "" {
 		a.layers[fieldName][0] = hashLayer
 	}
 	// We keep track of the hash layers of a Merkle trie until we reach
@@ -180,7 +180,7 @@ func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string) [32]byte {
 			layer = append(layer, hashedChunk[:])
 		}
 		hashLayer = layer
-		if fieldName != "" {
+		if enableCache && fieldName != "" {
 			a.layers[fieldName][i] = hashLayer
 		}
 		i++
