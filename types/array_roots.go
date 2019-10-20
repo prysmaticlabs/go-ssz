@@ -24,7 +24,8 @@ type rootsArraySSZ struct {
 
 func newRootsArraySSZ() *rootsArraySSZ {
 	return &rootsArraySSZ{
-		hashCache:    ccache.New(ccache.Configure().MaxSize(RootsArraySizeCache)),
+		hashCache: ccache.New(ccache.Configure().MaxSize(RootsArraySizeCache)),
+		// TODO(raul): Use ccache here instead of raw maps.
 		cachedLeaves: make(map[string][][]byte),
 		layers:       make(map[string][][][]byte),
 	}
