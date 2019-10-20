@@ -12,8 +12,12 @@ import (
 	"github.com/protolambda/zssz/merkle"
 )
 
-// RootsArraySizeCache for hash tree root.
-const RootsArraySizeCache = 100000
+const (
+	// CachedRootsArraySize for hash tree root.
+	CachedRootsArraySize = 100000
+	// CachedRootsTrieSize --
+	CachedRootsTrieSize = 10
+)
 
 type rootsArraySSZ struct {
 	hashCache    *ccache.Cache
@@ -24,7 +28,7 @@ type rootsArraySSZ struct {
 
 func newRootsArraySSZ() *rootsArraySSZ {
 	return &rootsArraySSZ{
-		hashCache: ccache.New(ccache.Configure().MaxSize(RootsArraySizeCache)),
+		hashCache: ccache.New(ccache.Configure().MaxSize(CachedRootsArraySize)),
 		// TODO(raul): Use ccache here instead of raw maps.
 		cachedLeaves: make(map[[32]byte][][]byte),
 		layers:       make(map[[32]byte][][][]byte),
