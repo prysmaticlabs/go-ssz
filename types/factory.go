@@ -5,6 +5,12 @@ import (
 	"reflect"
 )
 
+var enableCache = true
+
+func ToggleCache(val bool) {
+	enableCache = val
+}
+
 // StructFactory exports an implementation of a interface
 // containing helpers for marshaling/unmarshaling, and determining
 // the hash tree root of struct values.

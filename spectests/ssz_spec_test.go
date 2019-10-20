@@ -12,7 +12,12 @@ import (
 	"github.com/bazelbuild/rules_go/go/tools/bazel"
 	"github.com/ghodss/yaml"
 	"github.com/prysmaticlabs/go-ssz"
+	"github.com/prysmaticlabs/go-ssz/types"
 )
+
+func init() {
+	types.ToggleCache(false)
+}
 
 // sszComparisonConfig is used to specify the value to marshal, unmarshal into,
 // as well as the expected results from the spec test YAML files.
