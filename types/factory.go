@@ -5,13 +5,6 @@ import (
 	"reflect"
 )
 
-var enableCache = true
-
-// ToggleCache for SSZ hash tree root.
-func ToggleCache(val bool) {
-	enableCache = val
-}
-
 // StructFactory exports an implementation of a interface
 // containing helpers for marshaling/unmarshaling, and determining
 // the hash tree root of struct values.

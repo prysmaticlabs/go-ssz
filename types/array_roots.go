@@ -18,36 +18,21 @@ const RootsArraySizeCache = 100000
 type rootsArraySSZ struct {
 	hashCache    *ccache.Cache
 	lock         sync.Mutex
-	cachedLeaves map[string][][]byte
-	layers       map[string][][][]byte
+	cachedLeaves map[[32]byte][][]byte
+	layers       map[[32]byte][][][]byte
 }
 
 func newRootsArraySSZ() *rootsArraySSZ {
 	return &rootsArraySSZ{
 		hashCache: ccache.New(ccache.Configure().MaxSize(RootsArraySizeCache)),
 		// TODO(raul): Use ccache here instead of raw maps.
-		cachedLeaves: make(map[string][][]byte),
-		layers:       make(map[string][][][]byte),
+		cachedLeaves: make(map[[32]byte][][]byte),
+		layers:       make(map[[32]byte][][][]byte),
 	}
 }
 
 func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	numItems := typ.Len()
-	// We make sure to look into the cache only if a field name is provided, that is,
-	// if this function is called when calling HashTreeRoot on a struct type that has
-	// a field which is an array of roots. An example is:
-	//
-	// type BeaconState struct {
-	//   BlockRoots [2048][32]byte
-	// }
-	//
-	// which would allow us to look into the cache by the field "BlockRoots".
-	if enableCache && fieldName != "" {
-		if _, ok := a.layers[fieldName]; !ok {
-			depth := merkle.GetDepth(uint64(numItems))
-			a.layers[fieldName] = make([][][]byte, depth+1)
-		}
-	}
 	hashKeyElements := make([]byte, BytesPerChunk*numItems)
 	emptyKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
 	offset := 0
@@ -65,12 +50,31 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		leaves[i] = item[:]
 		copy(hashKeyElements[offset:offset+32], leaves[i])
 		offset += 32
-		if enableCache && fieldName != "" {
-			if _, ok := a.cachedLeaves[fieldName]; ok {
-				if !bytes.Equal(leaves[i], a.cachedLeaves[fieldName][i]) {
+	}
+	// Use the values and the fieldname as the hashkey.
+	hashKey := highwayhash.Sum(append(hashKeyElements, fieldName...), fastSumHashKey[:])
+	if fieldName != "" {
+		for i := 0; i < len(leaves); i++ {
+			if _, ok := a.cachedLeaves[hashKey]; ok {
+				if !bytes.Equal(leaves[i], a.cachedLeaves[hashKey][i]) {
 					changedIndices = append(changedIndices, i)
 				}
 			}
+		}
+	}
+	// We make sure to look into the cache only if a field name is provided, that is,
+	// if this function is called when calling HashTreeRoot on a struct type that has
+	// a field which is an array of roots. An example is:
+	//
+	// type BeaconState struct {
+	//   BlockRoots [2048][32]byte
+	// }
+	//
+	// which would allow us to look into the cache by the field "BlockRoots".
+	if fieldName != "" {
+		if _, ok := a.layers[hashKey]; !ok {
+			depth := merkle.GetDepth(uint64(numItems))
+			a.layers[hashKey] = make([][][]byte, depth+1)
 		}
 	}
 	chunks := leaves
@@ -79,12 +83,11 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	if len(changedIndices) > 0 {
 		var rt [32]byte
 		for i := 0; i < len(changedIndices); i++ {
-			rt = a.recomputeRoot(changedIndices[i], chunks, fieldName)
+			rt = a.recomputeRoot(changedIndices[i], chunks, hashKey)
 		}
 		return rt, nil
 	}
-	hashKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
-	if enableCache && hashKey != emptyKey {
+	if hashKey != emptyKey {
 		a.lock.Lock()
 		res := a.hashCache.Get(string(hashKey[:]))
 		a.lock.Unlock()
@@ -92,11 +95,11 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 			return res.Value().([32]byte), nil
 		}
 	}
-	root := a.merkleize(chunks, fieldName)
-	if enableCache && fieldName != "" {
-		a.cachedLeaves[fieldName] = leaves
+	root := a.merkleize(chunks, fieldName, hashKey)
+	if fieldName != "" {
+		a.cachedLeaves[hashKey] = leaves
 	}
-	if enableCache && hashKey != emptyKey {
+	if hashKey != emptyKey {
 		a.lock.Lock()
 		a.hashCache.Set(string(hashKey[:]), root, time.Hour)
 		a.lock.Unlock()
@@ -135,13 +138,13 @@ func (a *rootsArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 	return index, nil
 }
 
-func (a *rootsArraySSZ) recomputeRoot(idx int, chunks [][]byte, fieldName string) [32]byte {
+func (a *rootsArraySSZ) recomputeRoot(idx int, chunks [][]byte, hashKey [32]byte) [32]byte {
 	root := chunks[idx]
-	for i := 0; i < len(a.layers[fieldName])-1; i++ {
+	for i := 0; i < len(a.layers[hashKey])-1; i++ {
 		subIndex := (uint64(idx) / (1 << uint64(i))) ^ 1
 		isLeft := uint64(idx) / (1 << uint64(i))
 		parentIdx := uint64(idx) / (1 << uint64(i+1))
-		item := a.layers[fieldName][i][subIndex]
+		item := a.layers[hashKey][i][subIndex]
 		if isLeft%2 != 0 {
 			parentHash := hash(append(item, root...))
 			root = parentHash[:]
@@ -150,12 +153,12 @@ func (a *rootsArraySSZ) recomputeRoot(idx int, chunks [][]byte, fieldName string
 			root = parentHash[:]
 		}
 		// Update the cached layers at the parent index.
-		a.layers[fieldName][i+1][parentIdx] = root
+		a.layers[hashKey][i+1][parentIdx] = root
 	}
 	return toBytes32(root)
 }
 
-func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string) [32]byte {
+func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string, hashKey [32]byte) [32]byte {
 	if len(chunks) == 1 {
 		var root [32]byte
 		copy(root[:], chunks[0])
@@ -165,8 +168,8 @@ func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string) [32]byte {
 		chunks = append(chunks, make([]byte, BytesPerChunk))
 	}
 	hashLayer := chunks
-	if enableCache && fieldName != "" {
-		a.layers[fieldName][0] = hashLayer
+	if fieldName != "" {
+		a.layers[hashKey][0] = hashLayer
 	}
 	// We keep track of the hash layers of a Merkle trie until we reach
 	// the top layer of length 1, which contains the single root element.
@@ -181,8 +184,8 @@ func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string) [32]byte {
 			layer = append(layer, hashedChunk[:])
 		}
 		hashLayer = layer
-		if enableCache && fieldName != "" {
-			a.layers[fieldName][i] = hashLayer
+		if fieldName != "" {
+			a.layers[hashKey][i] = hashLayer
 		}
 		i++
 	}
