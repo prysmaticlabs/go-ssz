@@ -104,11 +104,6 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 }
 
 func (a *rootsArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
-	if val.IsNil() {
-		item := make([]byte, typ.Len())
-		copy(buf[startOffset:], item)
-		return startOffset + uint64(typ.Len()), nil
-	}
 	index := startOffset
 	if val.Len() == 0 {
 		return index, nil
@@ -131,11 +126,9 @@ func (a *rootsArraySSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte,
 func (a *rootsArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte, startOffset uint64) (uint64, error) {
 	i := 0
 	index := startOffset
-	size := val.Len()
-	for i < size {
-		if val.Index(i).Kind() == reflect.Ptr {
-			instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
-		}
+	for i < val.Len() {
+		instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())
+		fmt.Println(val.Index(i))
 		val.Index(i).SetBytes(input[index : index+uint64(len(input))])
 		index += uint64(len(input))
 		i++
