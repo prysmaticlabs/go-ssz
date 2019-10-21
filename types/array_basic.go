@@ -25,31 +25,18 @@ func newBasicArraySSZ() *basicArraySSZ {
 	}
 }
 
-func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	numItems := val.Len()
 	hashKeyElements := make([]byte, BytesPerChunk*numItems)
 	emptyKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
 	leaves := make([][]byte, numItems)
-	elemKind := typ.Elem().Kind()
 	offset := 0
-	var factory SSZAble
-	var err error
-	if numItems > 0 {
-		factory, err = SSZFactory(val.Index(0), typ.Elem())
-		if err != nil {
-			return [32]byte{}, err
-		}
+	factory, err := SSZFactory(val.Index(0), typ.Elem())
+	if err != nil {
+		return [32]byte{}, err
 	}
 	for i := 0; i < numItems; i++ {
-		// If we are marshaling an byte array of length 32, we shortcut the computations and
-		// simply return it as an identity root.
-		if elemKind == reflect.Array && typ.Elem().Elem().Kind() == reflect.Uint8 && val.Index(i).Len() == 32 {
-			leaves[i] = val.Index(i).Bytes()
-			copy(hashKeyElements[offset:offset+32], leaves[i])
-			offset += 32
-			continue
-		}
-		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
+		r, err := factory.Root(val.Index(i), typ.Elem(), "", 0)
 		if err != nil {
 			return [32]byte{}, err
 		}
@@ -58,7 +45,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 		offset += 32
 	}
 	hashKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
-	if hashKey != emptyKey {
+	if enableCache && hashKey != emptyKey {
 		b.lock.Lock()
 		res := b.hashCache.Get(string(hashKey[:]))
 		b.lock.Unlock()
@@ -74,7 +61,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity ui
 	if err != nil {
 		return [32]byte{}, err
 	}
-	if hashKey != emptyKey {
+	if enableCache && hashKey != emptyKey {
 		b.lock.Lock()
 		b.hashCache.Set(string(hashKey[:]), root, time.Hour)
 		b.lock.Unlock()
