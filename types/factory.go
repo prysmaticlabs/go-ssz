@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-var enableCache = true
+var enableCache = false
 
 // ToggleCache enables caching of ssz hash tree root. It is disabled by default.
 func ToggleCache(val bool) {

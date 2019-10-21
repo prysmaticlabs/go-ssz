@@ -10,7 +10,6 @@ import (
 
 func BenchmarkSSZ_NoCache(b *testing.B) {
 	b.StopTimer()
-	types.ToggleCache(false)
 	bs := &beaconState{
 		BlockRoots: make([][]byte, 65536),
 	}
@@ -43,6 +42,7 @@ func BenchmarkSSZ_WithCache(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+	types.ToggleCache(false)
 }
 
 func BenchmarkSSZ_SingleElementChanged(b *testing.B) {
@@ -67,6 +67,7 @@ func BenchmarkSSZ_SingleElementChanged(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
+	types.ToggleCache(false)
 }
 
 func toBytes32(x []byte) [32]byte {
