@@ -180,25 +180,38 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 		elem := valObj.Elem()
 		elemType := valObj.Elem().Type()
 		totalFields := 0
+		hasSignature := false
 		for i := 0; i < elemType.NumField(); i++ {
+			fieldName := elemType.Field(i).Name
 			// We skip protobuf related metadata fields.
-			if strings.Contains(elemType.Field(i).Name, "XXX_") {
+			if strings.Contains(fieldName, "XXX_") {
 				continue
+			}
+			if fieldName == "Signature" {
+				hasSignature = true
 			}
 			totalFields++
 		}
-		if elemType.Field(elemType.NumField()-1).Name != "Signature" {
-			return [32]byte{}, errors.New("last field has to be signature")
+		if !hasSignature {
+			return [32]byte{}, errors.New("expected to have signature field")
 		}
 		return types.StructFactory.FieldsHasher(elem, elemType, totalFields-1)
 	}
 	totalFields := 0
+	hasSignature := false
 	for i := 0; i < valObj.Type().NumField(); i++ {
 		// We skip protobuf related metadata fields.
-		if strings.Contains(valObj.Type().Field(i).Name, "XXX_") {
+		fieldName := valObj.Type().Field(i).Name
+		if strings.Contains(fieldName, "XXX_") {
 			continue
 		}
+		if fieldName == "Signature" {
+			hasSignature = true
+		}
 		totalFields++
+	}
+	if !hasSignature {
+		return [32]byte{}, errors.New("expected to have signature field")
 	}
 	return types.StructFactory.FieldsHasher(valObj, valObj.Type(), totalFields-1)
 }
