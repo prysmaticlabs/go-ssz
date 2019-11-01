@@ -651,37 +651,13 @@ func TestSigningRoot(t *testing.T) {
 			Val2: truncateSignatureCase{Signature: []byte("TESTING")},
 		},
 		{
-			Val1: truncateLastCase{
-				Slot:           5,
-				StateRoot:      []byte("MATTERS"),
-				TruncatedField: []byte("DOESNT MATTER"),
-			},
-			Val2: truncateLastCase{
-				Slot:           5,
-				StateRoot:      []byte("MATTERS"),
-				TruncatedField: []byte("SHOULDNT MATTER"),
-			},
-		},
-		{
-			Val1: truncateLastCase{
-				Slot:           550,
-				StateRoot:      []byte("SHOULD"),
-				TruncatedField: []byte("DOESNT"),
-			},
-			Val2: truncateLastCase{
-				Slot:           550,
-				StateRoot:      []byte("SHOULD"),
-				TruncatedField: []byte("SHOULDNT"),
-			},
-		},
-		{
 			Val1: nil,
 			Err:  errors.New("value cannot be nil"),
 			Val2: nil,
 		},
 		{
 			Val1: &truncateWithoutSignatureCase{Slot: 20},
-			Err:  errors.New("last field has to be signature"),
+			Err:  errors.New("expected to have signature field"),
 			Val2: &truncateWithoutSignatureCase{Slot: 20},
 		},
 	}
