@@ -133,7 +133,7 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, errors.Wrapf(err, "could not generate tree hasher for type: %v", rval.Type())
 	}
-	return factory.Root(rval, rval.Type(), 0)
+	return factory.Root(rval, rval.Type(), "", 0)
 }
 
 // HashTreeRootBitlist determines the root hash of a bitfield.Bitlist type using SSZ's Merkleization.
@@ -162,7 +162,7 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 	if err != nil {
 		return [32]byte{}, errors.Wrapf(err, "could not generate tree hasher for type: %v", rval.Type())
 	}
-	return factory.Root(rval, rval.Type(), maxCapacity)
+	return factory.Root(rval, rval.Type(), "", maxCapacity)
 }
 
 // SigningRoot truncates the last property of the struct passed in

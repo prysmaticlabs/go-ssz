@@ -5,12 +5,20 @@ import (
 	"reflect"
 )
 
+var enableCache = false
+
+// ToggleCache enables caching of ssz hash tree root. It is disabled by default.
+func ToggleCache(val bool) {
+	enableCache = val
+}
+
 // StructFactory exports an implementation of a interface
 // containing helpers for marshaling/unmarshaling, and determining
 // the hash tree root of struct values.
 var StructFactory = newStructSSZ()
 var basicFactory = newBasicSSZ()
 var basicArrayFactory = newBasicArraySSZ()
+var rootsArrayFactory = newRootsArraySSZ()
 var compositeArrayFactory = newCompositeArraySSZ()
 var basicSliceFactory = newBasicSliceSSZ()
 var stringFactory = newStringSSZ()
@@ -20,7 +28,7 @@ var compositeSliceFactory = newCompositeSliceSSZ()
 // hash tree root according to the Simple Serialize specification.
 // See: https://github.com/ethereum/eth2.0-specs/blob/v0.8.2/specs/simple-serialize.md.
 type SSZAble interface {
-	Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error)
+	Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error)
 	Marshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error)
 	Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error)
 }
@@ -47,6 +55,8 @@ func SSZFactory(val reflect.Value, typ reflect.Type) (SSZAble, error) {
 		}
 	case kind == reflect.Array:
 		switch {
+		case isRootsArray(val, typ):
+			return rootsArrayFactory, nil
 		case isBasicTypeArray(typ.Elem(), typ.Elem().Kind()):
 			return basicArrayFactory, nil
 		case !isVariableSizeType(typ.Elem()):

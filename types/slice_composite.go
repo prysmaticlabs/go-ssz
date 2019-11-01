@@ -12,7 +12,7 @@ func newCompositeSliceSSZ() *compositeSliceSSZ {
 	return &compositeSliceSSZ{}
 }
 
-func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacity uint64) ([32]byte, error) {
+func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
 	output := make([]byte, 32)
 	if val.Len() == 0 && maxCapacity == 0 {
 		root, err := bitwiseMerkleize([][]byte{}, 0, 0)
@@ -32,7 +32,7 @@ func (b *compositeSliceSSZ) Root(val reflect.Value, typ reflect.Type, maxCapacit
 	}
 	roots := make([][]byte, numItems)
 	for i := 0; i < numItems; i++ {
-		r, err := factory.Root(val.Index(i), typ.Elem(), 0)
+		r, err := factory.Root(val.Index(i), typ.Elem(), fieldName, 0)
 		if err != nil {
 			return [32]byte{}, err
 		}

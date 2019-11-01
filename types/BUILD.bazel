@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "array_basic.go",
         "array_composite.go",
+        "array_roots.go",
         "basic.go",
         "determine_size.go",
         "factory.go",
@@ -30,7 +31,7 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
-        "array_basic_test.go",
+        "array_roots_test.go",
         "helpers_test.go",
         "struct_test.go",
     ],
