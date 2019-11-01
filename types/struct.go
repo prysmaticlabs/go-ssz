@@ -38,6 +38,7 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 	roots := make([][]byte, numFields)
 	var err error
 	totalCountedFields := uint64(0)
+	structName := typ.Name()
 	for i := 0; i < numFields; i++ {
 		// We skip protobuf related metadata fields.
 		if strings.Contains(typ.Field(i).Name, "XXX_") {
@@ -61,7 +62,7 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 		if err != nil {
 			return [32]byte{}, err
 		}
-		r, err := factory.Root(val.Field(i), fType, typ.Field(i).Name, fCapacity)
+		r, err := factory.Root(val.Field(i), fType, structName+"."+typ.Field(i).Name, fCapacity)
 		if err != nil {
 			return [32]byte{}, err
 		}
