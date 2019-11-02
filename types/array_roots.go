@@ -52,7 +52,7 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	offset := 0
 	leaves := make([][]byte, numItems)
 	changedIndices := make([]int, 0)
-	if val.Len() > 0 {
+	if val.Len() > 0 && val.Len() == numItems {
 		for i := 0; i < numItems; i++ {
 			var item [32]byte
 			if res, ok := val.Index(i).Interface().([32]byte); ok {
