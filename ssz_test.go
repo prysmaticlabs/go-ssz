@@ -60,30 +60,6 @@ func TestNilElementDetermineSize(t *testing.T) {
 	}
 }
 
-func TestBasicArray_RoundTrip(t *testing.T) {
-	type state struct {
-		BlockRoots [][]byte `ssz-size:"2,32"`
-	}
-	item := &state{
-		BlockRoots: make([][]byte, 2),
-	}
-	for i := 0; i < len(item.BlockRoots); i++ {
-		r := [32]byte{1, 2, 3}
-		item.BlockRoots[i] = r[:]
-	}
-	enc, err := Marshal(item)
-	if err != nil {
-		t.Fatal(err)
-	}
-	res := &state{}
-	if err := Unmarshal(enc, res); err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(item, res) {
-		t.Errorf("Not equal, got %v, wanted %v", res, item)
-	}
-}
-
 // This test verifies if a nil pseudo-array is treated the same as an instantiated,
 // zero-valued array when running hash tree root computations.
 func TestEmptyArrayInstantiation(t *testing.T) {
