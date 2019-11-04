@@ -29,11 +29,6 @@ type truncateSignatureCase struct {
 	Signature         []byte
 }
 
-type truncateWithoutSignatureCase struct {
-	Slot              uint64
-	PreviousBlockRoot []byte
-}
-
 type simpleNonProtoMessage struct {
 	Foo []byte
 	Bar uint64
@@ -654,11 +649,6 @@ func TestSigningRoot(t *testing.T) {
 			Val1: nil,
 			Err:  errors.New("value cannot be nil"),
 			Val2: nil,
-		},
-		{
-			Val1: &truncateWithoutSignatureCase{Slot: 20},
-			Err:  errors.New("last field has to be signature"),
-			Val2: &truncateWithoutSignatureCase{Slot: 20},
 		},
 	}
 
