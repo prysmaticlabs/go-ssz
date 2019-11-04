@@ -53,14 +53,7 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	leaves := make([][]byte, numItems)
 	changedIndices := make([]int, 0)
 	for i := 0; i < numItems; i++ {
-		var item [32]byte
-		if res, ok := val.Index(i).Interface().([32]byte); ok {
-			item = res
-		} else if res, ok := val.Index(i).Interface().([]byte); ok {
-			item = toBytes32(res)
-		} else {
-			return [32]byte{}, fmt.Errorf("expected array or slice of len 32, received %v", val.Index(i))
-		}
+		item := toBytes32(val.Index(i).Bytes())
 		leaves[i] = item[:]
 		copy(hashKeyElements[offset:offset+32], leaves[i])
 		offset += 32
@@ -174,10 +167,12 @@ func (a *rootsArraySSZ) merkleize(chunks [][]byte, fieldName string) [32]byte {
 	// [A]  [B]  [C]  [D] -> The bottom layer has length 4 (needs to be a power of two).
 	i := 1
 	for len(hashLayer) > 1 {
-		layer := [][]byte{}
+		layer := make([][]byte, len(hashLayer)/2)
+		layerElemCount := 0
 		for i := 0; i < len(hashLayer); i += 2 {
 			hashedChunk := hash(append(hashLayer[i], hashLayer[i+1]...))
-			layer = append(layer, hashedChunk[:])
+			layer[layerElemCount] = hashedChunk[:]
+			layerElemCount++
 		}
 		hashLayer = layer
 		if enableCache && fieldName != "" {
