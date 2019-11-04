@@ -36,30 +36,6 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						t.Fatal(err)
 					}
 					switch folder.Name() {
-					case "AttestationData":
-						dec := &MinimalAttestationData{}
-						if err := ssz.Unmarshal(serialized, dec); err != nil {
-							t.Fatal(err)
-						}
-						enc, err := ssz.Marshal(dec)
-						if err != nil {
-							t.Fatal(err)
-						}
-						if !bytes.Equal(serialized, serialized) {
-							t.Errorf("Wanted %v, received %v", serialized, enc)
-						}
-					case "AttesterSlashing":
-						dec := &MinimalAttesterSlashing{}
-						if err := ssz.Unmarshal(serialized, dec); err != nil {
-							t.Fatal(err)
-						}
-						enc, err := ssz.Marshal(dec)
-						if err != nil {
-							t.Fatal(err)
-						}
-						if !bytes.Equal(serialized, serialized) {
-							t.Errorf("Wanted %v, received %v", serialized, enc)
-						}
 					case "BeaconBlockHeader":
 						dec := &MinimalBlockHeader{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -69,7 +45,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
-						if !bytes.Equal(serialized, serialized) {
+						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Checkpoint":
@@ -81,11 +57,11 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
-						if !bytes.Equal(serialized, serialized) {
+						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
-					case "Deposit":
-						dec := &MinimalCheckpoint{}
+					case "Eth1Data":
+						dec := &MinimalEth1Data{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -93,7 +69,19 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
-						if !bytes.Equal(serialized, serialized) {
+						if !bytes.Equal(serialized, enc) {
+							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+					case "Fork":
+						dec := &MinimalFork{}
+						if err := ssz.Unmarshal(serialized, dec); err != nil {
+							t.Fatal(err)
+						}
+						enc, err := ssz.Marshal(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					}
