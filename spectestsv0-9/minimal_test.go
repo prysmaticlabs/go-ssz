@@ -36,18 +36,6 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						t.Fatal(err)
 					}
 					switch folder.Name() {
-					case "BeaconBlockHeader":
-						dec := &MinimalBlockHeader{}
-						if err := ssz.Unmarshal(serialized, dec); err != nil {
-							t.Fatal(err)
-						}
-						enc, err := ssz.Marshal(dec)
-						if err != nil {
-							t.Fatal(err)
-						}
-						if !bytes.Equal(serialized, serialized) {
-							t.Errorf("Wanted %v, received %v", serialized, enc)
-						}
 					case "AttestationData":
 						dec := &MinimalAttestationData{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -62,6 +50,42 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 					case "AttesterSlashing":
 						dec := &MinimalAttesterSlashing{}
+						if err := ssz.Unmarshal(serialized, dec); err != nil {
+							t.Fatal(err)
+						}
+						enc, err := ssz.Marshal(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if !bytes.Equal(serialized, serialized) {
+							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+					case "BeaconBlockHeader":
+						dec := &MinimalBlockHeader{}
+						if err := ssz.Unmarshal(serialized, dec); err != nil {
+							t.Fatal(err)
+						}
+						enc, err := ssz.Marshal(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if !bytes.Equal(serialized, serialized) {
+							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+					case "Checkpoint":
+						dec := &MinimalCheckpoint{}
+						if err := ssz.Unmarshal(serialized, dec); err != nil {
+							t.Fatal(err)
+						}
+						enc, err := ssz.Marshal(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if !bytes.Equal(serialized, serialized) {
+							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+					case "Deposit":
+						dec := &MinimalCheckpoint{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
