@@ -187,9 +187,6 @@ func SigningRoot(val interface{}) ([32]byte, error) {
 			}
 			totalFields++
 		}
-		if elemType.Field(elemType.NumField()-1).Name != "Signature" {
-			return [32]byte{}, errors.New("last field has to be signature")
-		}
 		return types.StructFactory.FieldsHasher(elem, elemType, totalFields-1)
 	}
 	totalFields := 0
