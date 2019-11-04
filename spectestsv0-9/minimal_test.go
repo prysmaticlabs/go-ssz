@@ -10,6 +10,12 @@ import (
 )
 
 func TestSSZStatic_Minimal(t *testing.T) {
+	testsFolderPath := path.Join("tests", "minimal", "phase0", "ssz_static")
+	newPath, err := bazel.Runfile(testsFolderPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(newPath)
 	testFolders, testsFolderPath := testFolders(t, "minimal", "ssz_static")
 	for _, folder := range testFolders {
 		t.Run(folder.Name(), func(t *testing.T) {
