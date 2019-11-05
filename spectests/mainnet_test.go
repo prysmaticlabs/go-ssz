@@ -173,7 +173,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "BeaconBlockHeader":
-						dec := &mainnetBlockHeader{}
+						dec := &MainnetBlockHeader{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
