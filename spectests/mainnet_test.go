@@ -13,22 +13,23 @@ import (
 func TestSSZStatic_Mainnet(t *testing.T) {
 	testFolders, testsFolderPath := testFolders(t, "mainnet", "ssz_static")
 	for _, folder := range testFolders {
-		t.Run(folder.Name(), func(t *testing.T) {
-			folderPath, err := bazel.Runfile(path.Join(testsFolderPath, folder.Name()))
+		eth2TypeName := folder.Name()
+		t.Run(eth2TypeName, func(t *testing.T) {
+			sszCases, err := bazel.Runfile(path.Join(testsFolderPath, eth2TypeName))
 			if err != nil {
 				t.Fatalf("Failed to read file: %v", err)
 			}
-			innerSSZFolders, err := ioutil.ReadDir(folderPath)
+			innerSSZFolders, err := ioutil.ReadDir(sszCases)
 			if err != nil {
 				t.Fatalf("Failed to read file: %v", err)
 			}
 			for _, innerFolder := range innerSSZFolders {
-				innerPath := path.Join(folderPath, innerFolder.Name())
-				cases, err := ioutil.ReadDir(innerPath)
+				innerPath := path.Join(sszCases, innerFolder.Name())
+				testCases, err := ioutil.ReadDir(innerPath)
 				if err != nil {
 					t.Fatalf("Failed to read file: %v", err)
 				}
-				for _, cs := range cases {
+				for _, cs := range testCases {
 					serialized, err := bazelFileBytes(path.Join(innerPath, cs.Name(), "serialized.ssz"))
 					if err != nil {
 						t.Fatal(err)
