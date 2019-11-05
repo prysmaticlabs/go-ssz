@@ -284,7 +284,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 }
 
 func testFolders(t *testing.T, config string, folderPath string) ([]os.FileInfo, string) {
-	testsFolderPath := path.Join("eth2_spec_tests_minimal", "tests", config, "phase0", folderPath)
+	testsFolderPath := path.Join("eth2_spec_tests_"+config, "tests", config, "phase0", folderPath)
 	filepath, err := bazel.Runfile(testsFolderPath)
 	if err != nil {
 		t.Fatal(err)
