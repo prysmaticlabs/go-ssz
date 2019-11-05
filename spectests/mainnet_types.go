@@ -142,15 +142,15 @@ type mainnetBeaconState struct {
 	StateRoots        [][]byte           `json:"state_roots" ssz-size:"8192,32"`
 	HistoricalRoots   [][]byte           `json:"historical_roots" ssz-size:"?,32" ssz-max:"16777216"`
 	Eth1Data          mainnetEth1Data    `json:"eth1_data"`
-	Eth1DataVotes     []mainnetEth1Data  `json:"eth1_data_votes" ssz-max:"16"`
+	Eth1DataVotes     []mainnetEth1Data  `json:"eth1_data_votes" ssz-max:"1024"`
 	Eth1DepositIndex  uint64             `json:"eth1_deposit_index"`
 	Validators        []mainnetValidator `json:"validators" ssz-max:"1099511627776"`
 	Balances          []uint64           `json:"balances" ssz-max:"1099511627776"`
 	RandaoMixes       [][]byte           `json:"randao_mixes" ssz-size:"65536,32"`
 	Slashings         []uint64           `json:"slashings" ssz-size:"8192"`
 
-	PreviousEpochAttestations []mainnetPendingAttestation `json:"previous_epoch_attestations" ssz-max:"1024"`
-	CurrentEpochAttestations  []mainnetPendingAttestation `json:"current_epoch_attestations" ssz-max:"1024"`
+	PreviousEpochAttestations []mainnetPendingAttestation `json:"previous_epoch_attestations" ssz-max:"4096"`
+	CurrentEpochAttestations  []mainnetPendingAttestation `json:"current_epoch_attestations" ssz-max:"4096"`
 	JustificationBits         bitfield.Bitvector4         `json:"justification_bits" ssz-size:"1"`
 
 	PreviousJustifiedCheckpoint mainnetCheckpoint `json:"previous_justified_checkpoint"`
