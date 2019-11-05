@@ -14,7 +14,6 @@ go_test(
         "@eth2_spec_tests_mainnet//:test_data",
         "yaml/ssz_single_block.yaml",
         "yaml/ssz_single_state.yaml",
-        "@eth2_spec_tests_general//:test_data",
     ],
     embed = [":go_default_library"],
     deps = [

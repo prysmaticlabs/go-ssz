@@ -47,37 +47,41 @@ func runSSZGenericTests(t *testing.T, testPath string, dataType string, validity
 	}
 	for _, cs := range cases {
 		typeName := cs.Name()
-		serializedBytes, err := bazelFileBytes(path.Join(casesPath, typeName, "serialized.ssz"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		yamlPath := path.Join(casesPath, typeName, "meta.yaml")
-		switch dataType {
-		//case "basic_vector":
-		//	runBasicVectorSSZTestCase(t, serializedBytes, yamlPath, tFName, valid)
-		//case "bitlist":
-		//	sizeStr := strings.Split(tFName, "_")[1]
-		//	var size int
-		//	if sizeStr != "no" {
-		//		size, err = strconv.Atoi(sizeStr)
-		//		if err != nil {
-		//			t.Fatalf("could not get convert string to int: %v", err)
-		//		}
-		//	} else {
-		//		size = 0
-		//	}
-		//	runBitlistSSZTestCase(t, serializedBytes, uint64(size), yamlPath, valid)
-		//case "bitvector":
-		//	runBitvectorSSZTestCase(t, serializedBytes, yamlPath, tFName, valid)
-		//case "boolean":
-		//	runBooleanSSZTestCase(t, serializedBytes, yamlPath, valid)
-		//// case "containers":
-		//// 	truncatedName := tFName[:strings.Index(tFName, "_")]
-		//// 	runContainerSSZTestCase(t, serializedBytes, yamlPath, truncatedName, valid)
-		case "uints":
-			truncatedName := typeName[:strings.Index(typeName[4:], "_")]
-			runUintSSZTestCase(t, serializedBytes, yamlPath, truncatedName, isValid)
-		}
+		t.Run(typeName, func(t *testing.T) {
+			serializedBytes, err := bazelFileBytes(path.Join(casesPath, typeName, "serialized.ssz"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			yamlPath := path.Join(casesPath, typeName, "meta.yaml")
+			switch dataType {
+			//case "basic_vector":
+			//	runBasicVectorSSZTestCase(t, serializedBytes, yamlPath, tFName, valid)
+			//case "bitlist":
+			//	sizeStr := strings.Split(tFName, "_")[1]
+			//	var size int
+			//	if sizeStr != "no" {
+			//		size, err = strconv.Atoi(sizeStr)
+			//		if err != nil {
+			//			t.Fatalf("could not get convert string to int: %v", err)
+			//		}
+			//	} else {
+			//		size = 0
+			//	}
+			//	runBitlistSSZTestCase(t, serializedBytes, uint64(size), yamlPath, valid)
+			//case "bitvector":
+			//	runBitvectorSSZTestCase(t, serializedBytes, yamlPath, tFName, valid)
+			//case "boolean":
+			//	runBooleanSSZTestCase(t, serializedBytes, yamlPath, valid)
+			//// case "containers":
+			//// 	truncatedName := tFName[:strings.Index(tFName, "_")]
+			//// 	runContainerSSZTestCase(t, serializedBytes, yamlPath, truncatedName, valid)
+			case "uints":
+				truncatedName := typeName[:strings.Index(typeName[4:], "_")]
+				runUintSSZTestCase(t, serializedBytes, yamlPath, truncatedName, isValid)
+			default:
+				t.Log("Not covered")
+			}
+		})
 	}
 }
 
