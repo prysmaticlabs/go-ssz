@@ -36,6 +36,18 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						t.Fatal(err)
 					}
 					switch folder.Name() {
+					case "AggregateAndProof":
+						dec := &MinimalAggregateAndProof{}
+						if err := ssz.Unmarshal(serialized, dec); err != nil {
+							t.Fatal(err)
+						}
+						enc, err := ssz.Marshal(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if !bytes.Equal(serialized, enc) {
+							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
 					case "Attestation":
 						dec := &MinimalAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {

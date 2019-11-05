@@ -140,6 +140,12 @@ type MinimalBlock struct {
 	Signature  []byte           `json:"signature" ssz-size:"96"`
 }
 
+type MinimalAggregateAndProof struct {
+	Index          uint64
+	SelectionProof []byte `ssz-size:"96"`
+	Aggregate      MinimalAttestation
+}
+
 type MinimalBeaconState struct {
 	GenesisTime       uint64             `json:"genesis_time"`
 	Slot              uint64             `json:"slot"`
