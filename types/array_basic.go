@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -95,7 +94,6 @@ func (b *basicArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []b
 	size := val.Len()
 	var err error
 	var factory SSZAble
-	fmt.Println(size)
 	for i < size {
 		if val.Index(i).Kind() == reflect.Ptr {
 			instantiateConcreteTypeForElement(val.Index(i), typ.Elem().Elem())

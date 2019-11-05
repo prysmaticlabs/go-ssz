@@ -29,20 +29,65 @@ load("@com_github_prysmaticlabs_go_ssz//:deps.bzl", "go_ssz_dependencies")
 go_ssz_dependencies()
 
 http_archive(
+<<<<<<< HEAD
+=======
+    name = "eth2_spec_tests_minimal",
+    build_file_content = """
+filegroup(
+    name = "test_data",
+    srcs = glob([
+        "**/*.ssz",
+        "**/*.yaml",
+    ]),
+    visibility = ["//visibility:public"],
+)
+    """,
+    sha256 = "3b5f0168af4331d09da52bebc26609def9d11be3e6c784ce7c3df3596617808d",
+    url = "https://github.com/ethereum/eth2.0-spec-tests/releases/download/v0.9.0/minimal.tar.gz",
+)
+
+http_archive(
+>>>>>>> v0.9
     name = "eth2_spec_tests_general",
     build_file_content = """
 filegroup(
     name = "test_data",
     srcs = glob([
+<<<<<<< HEAD
         "**/*.yaml",
         "**/*.ssz",
+=======
+        "**/*.ssz",
+        "**/*.yaml",
     ]),
     visibility = ["//visibility:public"],
 )
     """,
+    sha256 = "5c5b65a961b5e7251435efc9548648b45142a07993ad3e100850c240cb76e9af",
+    url = "https://github.com/ethereum/eth2.0-spec-tests/releases/download/v0.9.0/general.tar.gz",
+)
+
+http_archive(
+    name = "eth2_spec_tests_mainnet",
+    build_file_content = """
+filegroup(
+    name = "test_data",
+    srcs = glob([
+        "**/*.ssz",
+        "**/*.yaml",
+>>>>>>> v0.9
+    ]),
+    visibility = ["//visibility:public"],
+)
+    """,
+<<<<<<< HEAD
     sha256 = "386335fc3b055fad37088bd821929ff684bc00bb1a74e044e4b377ebd6e88fce",
     # File names are normally too long, see: https://github.com/ethereum/eth2.0-spec-tests/issues/15
     url = "https://prysmaticlabs.com/uploads/v0.8.3_general_spectests.tar.gz",
+=======
+    sha256 = "f3ff68508dfe9696f23506daf0ca895cda955e30398741e00cffa33a01b0565c",
+    url = "https://github.com/ethereum/eth2.0-spec-tests/releases/download/v0.9.0/mainnet.tar.gz",
+>>>>>>> v0.9
 )
 
 http_archive(
