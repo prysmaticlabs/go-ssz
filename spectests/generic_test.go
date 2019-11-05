@@ -581,14 +581,15 @@ func runBooleanSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, valid
 
 func runContainerSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, testName string, valid bool) {
 	switch {
-	//case strings.Contains(testName, "ComplexTestStruct"):
-	//	var container complexTestStruct
-	//	if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
-	//		t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
-	//	}
-	//	if err := PerformRootCheck(container, yamlPath, valid); err != nil {
-	//		t.Fatalf("Could not perform root check for case %s: %v", testName, err)
-	//	}
+	case strings.Contains(testName, "ComplexTestStruct"):
+		fmt.Println(objBytes)
+		var container complexTestStruct
+		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
+			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
+		}
+		if err := PerformRootCheck(container, yamlPath, valid); err != nil {
+			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
+		}
 	case strings.Contains(testName, "BitsStruct"):
 		t.Log("Container has unsupported Bitvector5")
 	case strings.Contains(testName, "FixedTestStruct"):

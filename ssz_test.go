@@ -699,7 +699,6 @@ func TestSigningRoot_ConcurrentAccess(t *testing.T) {
 	wg.Wait()
 }
 
-<<<<<<< HEAD
 func BenchmarkSSZ_NoCache(b *testing.B) {
 	b.StopTimer()
 	bs := &beaconState{
@@ -766,7 +765,8 @@ func toBytes32(x []byte) [32]byte {
 	var y [32]byte
 	copy(y[:], x)
 	return y
-=======
+}
+
 func TestBoolArrayMisssingByte(t *testing.T) {
 	objBytes := hexDecodeOrDie(t, "010101010101010101010101010101")
 	var result [16]bool
@@ -781,7 +781,6 @@ func TestBoolArrayExtraByte(t *testing.T) {
 	if err := Unmarshal(objBytes, &result); err == nil {
 		t.Fatal("expected message with extra byte to fail marshalling")
 	}
->>>>>>> a904bd372fa88a2e815df335fabba25cbbf57b5a
 }
 
 func hexDecodeOrDie(t *testing.T, s string) []byte {
