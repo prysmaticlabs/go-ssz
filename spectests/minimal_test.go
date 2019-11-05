@@ -2,6 +2,7 @@ package spectests
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -11,6 +12,10 @@ import (
 
 	"github.com/prysmaticlabs/go-ssz"
 )
+
+type rootContainer struct {
+	Root string
+}
 
 func TestSSZStatic_Minimal(t *testing.T) {
 	testFolders, testsFolderPath := testFolders(t, "minimal", "ssz_static")
@@ -32,10 +37,14 @@ func TestSSZStatic_Minimal(t *testing.T) {
 					t.Fatalf("Failed to read file: %v", err)
 				}
 				for _, cs := range cases {
-					serialized, err := bazelFileBytes(path.Join(innerPath, cs.Name(), "serialized.ssz"))
+					serializedPath := path.Join(innerPath, cs.Name(), "serialized.ssz")
+					serialized, err := bazelFileBytes(serializedPath)
 					if err != nil {
 						t.Fatal(err)
 					}
+					rootPath := path.Join(innerPath, cs.Name(), "roots.yaml")
+					cont := &rootContainer{}
+					populateStructFromYaml(t, rootPath, cont)
 					switch folder.Name() {
 					case "AggregateAndProof":
 						dec := &minimalAggregateAndProof{}
@@ -49,6 +58,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "Attestation":
 						dec := &minimalAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -60,6 +76,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "AttestationData":
 						dec := &minimalAttestationData{}
@@ -73,6 +96,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "AttestationDataAndCustodyBit":
 						dec := &minimalAttestationAndCustodyBit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -84,6 +114,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "AttesterSlashing":
 						dec := &minimalAttesterSlashing{}
@@ -97,6 +134,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "BeaconBlock":
 						dec := &minimalBlock{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -108,6 +152,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "BeaconBlockBody":
 						dec := &minimalBlockBody{}
@@ -121,6 +172,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "BeaconBlockHeader":
 						dec := &minimalBlockHeader{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -132,6 +190,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "BeaconState":
 						dec := &minimalBeaconState{}
@@ -145,6 +210,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "Checkpoint":
 						dec := &minimalCheckpoint{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -156,6 +228,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "Deposit":
 						dec := &minimalDeposit{}
@@ -169,6 +248,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "DepositData":
 						dec := &minimalDepositData{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -180,6 +266,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "Eth1Data":
 						dec := &minimalEth1Data{}
@@ -193,6 +286,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "Fork":
 						dec := &minimalFork{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -204,6 +304,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "HistoricalBatch":
 						dec := &minimalHistoricalBatch{}
@@ -217,6 +324,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "IndexedAttestation":
 						dec := &minimalIndexedAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -228,6 +342,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "PendingAttestation":
 						dec := &minimalPendingAttestation{}
@@ -241,6 +362,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "ProposerSlashing":
 						dec := &minimalProposerSlashing{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -252,6 +380,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "Validator":
 						dec := &minimalValidator{}
@@ -265,6 +400,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "VoluntaryExit":
 						dec := &minimalVoluntaryExit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -276,6 +418,13 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					}
 				}

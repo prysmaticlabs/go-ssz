@@ -2,6 +2,7 @@ package spectests
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"path"
 	"testing"
@@ -34,6 +35,9 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
+					rootPath := path.Join(innerPath, cs.Name(), "roots.yaml")
+					cont := &rootContainer{}
+					populateStructFromYaml(t, rootPath, cont)
 					switch folder.Name() {
 					case "AggregateAndProof":
 						dec := &mainnetAggregateAndProof{}
@@ -47,6 +51,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "Attestation":
 						dec := &mainnetAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -58,6 +69,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "AttestationData":
 						dec := &mainnetAttestationData{}
@@ -71,6 +89,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "AttestationDataAndCustodyBit":
 						dec := &mainnetAttestationAndCustodyBit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -82,6 +107,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "AttesterSlashing":
 						dec := &mainnetAttesterSlashing{}
@@ -95,6 +127,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "BeaconBlock":
 						dec := &mainnetBlock{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -106,6 +145,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "BeaconBlockBody":
 						dec := &mainnetBlockBody{}
@@ -119,6 +165,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "BeaconBlockHeader":
 						dec := &mainnetBlockHeader{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -130,6 +183,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "BeaconState":
 						dec := &mainnetBeaconState{}
@@ -143,6 +203,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "Checkpoint":
 						dec := &mainnetCheckpoint{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -154,6 +221,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "Deposit":
 						dec := &mainnetDeposit{}
@@ -167,6 +241,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "DepositData":
 						dec := &mainnetDepositData{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -178,6 +259,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "Eth1Data":
 						dec := &mainnetEth1Data{}
@@ -191,6 +279,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "Fork":
 						dec := &mainnetFork{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -202,6 +297,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "HistoricalBatch":
 						dec := &mainnetHistoricalBatch{}
@@ -215,6 +317,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "IndexedAttestation":
 						dec := &mainnetIndexedAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -226,6 +335,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "PendingAttestation":
 						dec := &mainnetPendingAttestation{}
@@ -239,6 +355,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "ProposerSlashing":
 						dec := &mainnetProposerSlashing{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -250,6 +373,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "Validator":
 						dec := &mainnetValidator{}
@@ -263,6 +393,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+						}
 					case "VoluntaryExit":
 						dec := &mainnetVoluntaryExit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
@@ -274,6 +411,13 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						}
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
+						}
+						rt, err := ssz.HashTreeRoot(dec)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if fmt.Sprintf("%#x", rt) != cont.Root {
+							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					}
 				}
