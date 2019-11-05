@@ -1,6 +1,9 @@
 package ssz
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 type fixedTestStruct struct {
 	A uint8
@@ -15,40 +18,19 @@ type varTestStruct struct {
 }
 
 type complexTestStruct struct {
-	A uint16
-	B []uint16 `ssz-max:"128"`
-	C uint8
-	D []byte `ssz-size:"256"`
-	E varTestStruct
-	F []fixedTestStruct `ssz-size:"4"`
-	G []varTestStruct   `ssz-size:"2"`
+	A uint16            // size = 2
+	B []uint16          `ssz-max:"128"` // size = 2 + 4 = 6
+	C uint8             // size = 1
+	D []byte            `ssz-size:"256"` // size = 256
+	E varTestStruct     // size 2 + 6 + 1 = 9 + 4 = 13
+	F []fixedTestStruct `ssz-size:"4"` // size 13 * 4 = 52
+	G []varTestStruct   `ssz-size:"2"` // size 14 + 4 =  18
 }
 
 func TestItem(t *testing.T) {
-	someRoot := [256]byte{1, 2, 3, 4}
-	fixedItem := fixedTestStruct{
-		A: 1,
-		B: 6,
-		C: 7,
-	}
-	varItem := varTestStruct{
-		A: 5,
-		B: []uint16{6, 7, 8},
-		C: 1,
-	}
-	fItems := [4]fixedTestStruct{fixedItem, fixedItem, fixedItem, fixedItem}
-	varItems := [2]varTestStruct{varItem, varItem}
-	c := complexTestStruct{
-		A: 3,
-		B: []uint16{1, 2, 3},
-		C: 0,
-		D: someRoot[:],
-		E: varItem,
-		F: fItems[:],
-		G: varItems[:],
-	}
-	enc, _ := Marshal(c)
+	input := hexDecodeOrDie(t, "0fbf47000000df490000004a000000dffce2db220f0e14dc7f85b33deecebead2cc9d8007282d99b0cce0d500798db0e6c269c2f4f5815b13fa24b121086729a4c1fd253000000a224583e8b07000000c261b00800000011000000328a07000000e2958bf3f6070000006a9374")
+	fmt.Println(input)
 	var dec complexTestStruct
-	Unmarshal(enc, &dec)
+	Unmarshal(input, &dec)
 	t.Log(dec)
 }

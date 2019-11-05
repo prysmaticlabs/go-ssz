@@ -102,6 +102,10 @@ func (b *compositeArraySSZ) Unmarshal(val reflect.Value, typ reflect.Type, input
 	nextOffset := currentOffset
 	endOffset := uint64(len(input))
 	i := 0
+	if val.Kind() == reflect.Slice {
+		instantiatedArray := reflect.MakeSlice(val.Type(), typ.Len(), typ.Len())
+		val.Set(instantiatedArray)
+	}
 	factory, err := SSZFactory(val.Index(0), typ.Elem())
 	if err != nil {
 		return 0, err

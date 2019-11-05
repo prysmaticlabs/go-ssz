@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/binary"
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -225,7 +224,6 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 		if err != nil {
 			return 0, err
 		}
-		fmt.Printf("Attempting %v\n", typ.Field(i).Name)
 		if item, ok := fixedSizes[i]; ok {
 			if item == 0 {
 				continue
@@ -237,12 +235,11 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 			currentIndex = nextIndex
 		} else {
 			firstOff := offsets[offsetIndex]
-			nextOff := offsets[offsetIndex+1]
 			if firstOff == uint64(len(input)) {
 				currentIndex += BytesPerLengthOffset
 				continue
 			}
-			fmt.Printf("Input len %d, First %v, second %v\n", len(input), firstOff, nextOff)
+			nextOff := offsets[offsetIndex+1]
 			if _, err := factory.Unmarshal(val.Field(i), fType, input[firstOff:nextOff], 0); err != nil {
 				return 0, err
 			}

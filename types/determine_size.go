@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -142,6 +143,7 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 		return totalSize
 	case kind == reflect.Struct:
 		totalSize := uint64(0)
+		fmt.Printf("Computing %s\n", typ.Name())
 		for i := 0; i < typ.NumField(); i++ {
 			if strings.Contains(typ.Field(i).Name, "XXX_") {
 				continue
@@ -153,12 +155,15 @@ func determineVariableSize(val reflect.Value, typ reflect.Type) uint64 {
 			}
 			if isVariableSizeType(fType) {
 				varSize := determineVariableSize(val.Field(i), fType)
+				fmt.Printf("Field %s with size: %d\n", typ.Field(i).Name, varSize)
 				totalSize += varSize + BytesPerLengthOffset
 			} else {
 				varSize := determineFixedSize(val.Field(i), fType)
+				fmt.Printf("Field %s with size: %d\n", typ.Field(i).Name, varSize)
 				totalSize += varSize
 			}
 		}
+		fmt.Println(totalSize)
 		return totalSize
 	case kind == reflect.Ptr:
 		if val.IsNil() {

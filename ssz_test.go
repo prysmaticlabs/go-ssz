@@ -767,7 +767,7 @@ func toBytes32(x []byte) [32]byte {
 	return y
 }
 
-func TestBoolArrayMisssingByte(t *testing.T) {
+func TestBoolArrayMissingByte(t *testing.T) {
 	objBytes := hexDecodeOrDie(t, "010101010101010101010101010101")
 	var result [16]bool
 	if err := Unmarshal(objBytes, &result); err == nil {

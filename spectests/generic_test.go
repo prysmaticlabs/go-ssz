@@ -582,7 +582,7 @@ func runBooleanSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, valid
 func runContainerSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, testName string, valid bool) {
 	switch {
 	case strings.Contains(testName, "ComplexTestStruct"):
-		fmt.Println(objBytes)
+		t.Logf("Encoded %v\n", objBytes)
 		var container complexTestStruct
 		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
