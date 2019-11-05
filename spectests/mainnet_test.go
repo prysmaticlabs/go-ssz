@@ -1,4 +1,4 @@
-package spectestsv0_9
+package spectests
 
 import (
 	"bytes"

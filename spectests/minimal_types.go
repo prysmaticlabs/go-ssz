@@ -1,21 +1,21 @@
-package spectestsv0_9
+package spectests
 
 import (
 	"github.com/prysmaticlabs/go-bitfield"
 )
 
-type MainnetFork struct {
+type MinimalFork struct {
 	PreviousVersion []byte `json:"previous_version" ssz-size:"4"`
 	CurrentVersion  []byte `json:"current_version" ssz-size:"4"`
 	Epoch           uint64 `json:"epoch"`
 }
 
-type MainnetCheckpoint struct {
+type MinimalCheckpoint struct {
 	Epoch uint64 `json:"epoch"`
 	Root  []byte `json:"root" ssz-size:"32"`
 }
 
-type MainnetValidator struct {
+type MinimalValidator struct {
 	Pubkey                     []byte `json:"pubkey" ssz-size:"48"`
 	WithdrawalCredentials      []byte `json:"withdrawal_credentials" ssz-size:"32"`
 	EffectiveBalance           uint64 `json:"effective_balance"`
@@ -26,7 +26,7 @@ type MainnetValidator struct {
 	WithdrawableEpoch          uint64 `json:"withdrawable_epoch"`
 }
 
-type MainnetCrosslink struct {
+type MinimalCrosslink struct {
 	Shard      uint64 `json:"shard"`
 	ParentRoot []byte `json:"parent_root" ssz-size:"32"`
 	StartEpoch uint64 `json:"start_epoch"`
@@ -34,7 +34,7 @@ type MainnetCrosslink struct {
 	DataRoot   []byte `json:"data_root" ssz-size:"32"`
 }
 
-type MainnetAttestationData struct {
+type MinimalAttestationData struct {
 	Slot            uint64
 	Index           uint64
 	BeaconBlockRoot []byte            `json:"beacon_block_root" ssz-size:"32"`
@@ -42,49 +42,49 @@ type MainnetAttestationData struct {
 	Target          MinimalCheckpoint `json:"target"`
 }
 
-type MainnetAttestationAndCustodyBit struct {
+type MinimalAttestationAndCustodyBit struct {
 	Data       MinimalAttestationData `json:"data"`
 	CustodyBit bool                   `json:"custody_bit"`
 }
 
-type MainnetIndexedAttestation struct {
+type MinimalIndexedAttestation struct {
 	CustodyBit0Indices []uint64               `json:"custody_bit_0_indices" ssz-max:"2048"`
 	CustodyBit1Indices []uint64               `json:"custody_bit_1_indices" ssz-max:"2048"`
 	Data               MinimalAttestationData `json:"data"`
 	Signature          []byte                 `json:"signature" ssz-size:"96"`
 }
 
-type MainnetPendingAttestation struct {
+type MinimalPendingAttestation struct {
 	AggregationBits bitfield.Bitlist       `json:"aggregation_bits" ssz-max:"2048"`
 	Data            MinimalAttestationData `json:"data"`
 	InclusionDelay  uint64                 `json:"inclusion_delay"`
 	ProposerIndex   uint64                 `json:"proposer_index"`
 }
 
-type MainnetEth1Data struct {
+type MinimalEth1Data struct {
 	DepositRoot  []byte `json:"deposit_root" ssz-size:"32"`
 	DepositCount uint64 `json:"deposit_count"`
 	BlockHash    []byte `json:"block_hash" ssz-size:"32"`
 }
 
-type MainnetHistoricalBatch struct {
-	BlockRoots [][]byte `json:"block_roots" ssz-size:"8192,32"`
-	StateRoots [][]byte `json:"state_roots" ssz-size:"8192,32"`
+type MinimalHistoricalBatch struct {
+	BlockRoots [][]byte `json:"block_roots" ssz-size:"64,32"`
+	StateRoots [][]byte `json:"state_roots" ssz-size:"64,32"`
 }
 
-type MainnetDepositData struct {
+type MinimalDepositData struct {
 	Pubkey                []byte `json:"pubkey" ssz-size:"48"`
 	WithdrawalCredentials []byte `json:"withdrawal_credentials" ssz-size:"32"`
 	Amount                uint64 `json:"amount"`
 	Signature             []byte `json:"signature" ssz-size:"96"`
 }
 
-type MainnetCompactCommittee struct {
+type MinimalCompactCommittee struct {
 	Pubkeys           [][]byte `json:"pubkeys" ssz-size:"?,48" ssz-max:"4096"`
 	CompactValidators []uint64 `json:"compact_validators" ssz-max:"4096"`
 }
 
-type MainnetBlockHeader struct {
+type MinimalBlockHeader struct {
 	Slot       uint64 `json:"slot"`
 	ParentRoot []byte `json:"parent_root" ssz-size:"32"`
 	StateRoot  []byte `json:"state_root" ssz-size:"32"`
@@ -92,36 +92,36 @@ type MainnetBlockHeader struct {
 	Signature  []byte `json:"signature" ssz-size:"96"`
 }
 
-type MainnetProposerSlashing struct {
+type MinimalProposerSlashing struct {
 	ProposerIndex uint64             `json:"proposer_index"`
 	Header1       MinimalBlockHeader `json:"header_1"`
 	Header2       MinimalBlockHeader `json:"header_2"`
 }
 
-type MainnetAttesterSlashing struct {
+type MinimalAttesterSlashing struct {
 	Attestation1 MinimalIndexedAttestation `json:"attestation_1"`
 	Attestation2 MinimalIndexedAttestation `json:"attestation_2"`
 }
 
-type MainnetAttestation struct {
+type MinimalAttestation struct {
 	AggregationBits bitfield.Bitlist       `json:"aggregation_bits" ssz-max:"2048"`
 	Data            MinimalAttestationData `json:"data"`
 	CustodyBits     bitfield.Bitlist       `json:"custody_bits" ssz-max:"2048"`
 	Signature       []byte                 `json:"signature" ssz-size:"96"`
 }
 
-type MainnetDeposit struct {
+type MinimalDeposit struct {
 	Proof [][]byte           `json:"proof" ssz-size:"33,32"`
 	Data  MinimalDepositData `json:"data"`
 }
 
-type MainnetVoluntaryExit struct {
+type MinimalVoluntaryExit struct {
 	Epoch          uint64 `json:"epoch"`
 	ValidatorIndex uint64 `json:"validator_index"`
 	Signature      []byte `json:"signature" ssz-size:"96"`
 }
 
-type MainnetBlockBody struct {
+type MinimalBlockBody struct {
 	RandaoReveal      []byte                    `json:"randao_reveal" ssz-size:"96"`
 	Eth1Data          MinimalEth1Data           `json:"eth1_data"`
 	Graffiti          []byte                    `json:"graffiti" ssz-size:"32"`
@@ -132,7 +132,7 @@ type MainnetBlockBody struct {
 	VoluntaryExits    []MinimalVoluntaryExit    `json:"voluntary_exits" ssz-max:"16"`
 }
 
-type MainnetBlock struct {
+type MinimalBlock struct {
 	Slot       uint64           `json:"slot"`
 	ParentRoot []byte           `json:"parent_root" ssz-size:"32"`
 	StateRoot  []byte           `json:"state_root" ssz-size:"32"`
@@ -140,27 +140,27 @@ type MainnetBlock struct {
 	Signature  []byte           `json:"signature" ssz-size:"96"`
 }
 
-type MainnetAggregateAndProof struct {
+type MinimalAggregateAndProof struct {
 	Index          uint64
 	SelectionProof []byte `ssz-size:"96"`
 	Aggregate      MinimalAttestation
 }
 
-type MainnetBeaconState struct {
+type MinimalBeaconState struct {
 	GenesisTime       uint64             `json:"genesis_time"`
 	Slot              uint64             `json:"slot"`
 	Fork              MinimalFork        `json:"fork"`
 	LatestBlockHeader MinimalBlockHeader `json:"latest_block_header"`
-	BlockRoots        [][]byte           `json:"block_roots" ssz-size:"8192,32"`
-	StateRoots        [][]byte           `json:"state_roots" ssz-size:"8192,32"`
+	BlockRoots        [][]byte           `json:"block_roots" ssz-size:"64,32"`
+	StateRoots        [][]byte           `json:"state_roots" ssz-size:"64,32"`
 	HistoricalRoots   [][]byte           `json:"historical_roots" ssz-size:"?,32" ssz-max:"16777216"`
 	Eth1Data          MinimalEth1Data    `json:"eth1_data"`
 	Eth1DataVotes     []MinimalEth1Data  `json:"eth1_data_votes" ssz-max:"16"`
 	Eth1DepositIndex  uint64             `json:"eth1_deposit_index"`
 	Validators        []MinimalValidator `json:"validators" ssz-max:"1099511627776"`
 	Balances          []uint64           `json:"balances" ssz-max:"1099511627776"`
-	RandaoMixes       [][]byte           `json:"randao_mixes" ssz-size:"65536,32"`
-	Slashings         []uint64           `json:"slashings" ssz-size:"8192"`
+	RandaoMixes       [][]byte           `json:"randao_mixes" ssz-size:"64,32"`
+	Slashings         []uint64           `json:"slashings" ssz-size:"64"`
 
 	PreviousEpochAttestations []MinimalPendingAttestation `json:"previous_epoch_attestations" ssz-max:"1024"`
 	CurrentEpochAttestations  []MinimalPendingAttestation `json:"current_epoch_attestations" ssz-max:"1024"`
