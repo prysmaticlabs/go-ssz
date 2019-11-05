@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -62,25 +63,24 @@ func runSSZGenericTests(t *testing.T, testPath string, dataType string, validity
 			switch dataType {
 			case "basic_vector":
 				runBasicVectorSSZTestCase(t, serializedBytes, yamlPath, typeName, isValid)
-			//case "bitlist":
-			//	sizeStr := strings.Split(tFName, "_")[1]
-			//	var size int
-			//	if sizeStr != "no" {
-			//		size, err = strconv.Atoi(sizeStr)
-			//		if err != nil {
-			//			t.Fatalf("could not get convert string to int: %v", err)
-			//		}
-			//	} else {
-			//		size = 0
-			//	}
-			//	runBitlistSSZTestCase(t, serializedBytes, uint64(size), yamlPath, valid)
-			//case "bitvector":
-			//	runBitvectorSSZTestCase(t, serializedBytes, yamlPath, tFName, valid)
+			case "bitlist":
+				sizeStr := strings.Split(typeName, "_")[1]
+				var size int
+				if sizeStr != "no" {
+					size, err = strconv.Atoi(sizeStr)
+					if err != nil {
+						t.Fatalf("could not get convert string to int: %v", err)
+					}
+				} else {
+					size = 0
+				}
+				runBitlistSSZTestCase(t, serializedBytes, uint64(size), yamlPath, isValid)
+			case "bitvector":
+				runBitvectorSSZTestCase(t, serializedBytes, yamlPath, typeName, isValid)
 			case "boolean":
 				runBooleanSSZTestCase(t, serializedBytes, yamlPath, isValid)
-			//// case "containers":
-			//// 	truncatedName := tFName[:strings.Index(tFName, "_")]
-			//// 	runContainerSSZTestCase(t, serializedBytes, yamlPath, truncatedName, valid)
+			case "containers":
+				runContainerSSZTestCase(t, serializedBytes, yamlPath, typeName, isValid)
 			case "uints":
 				runUintSSZTestCase(t, serializedBytes, yamlPath, typeName, isValid)
 			default:
@@ -553,18 +553,19 @@ func runBitlistSSZTestCase(t *testing.T, objBytes []byte, size uint64, yamlPath 
 }
 
 func runBitvectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, testName string, valid bool) {
+	if !strings.Contains(testName, "bitvec_4") {
+		t.Log("Only bitvector4 supported")
+		return
+	}
 	if !valid {
 		return
 	}
-	testInfo := strings.Split(testName, "_")[1:]
-	if testInfo[0] == "4" {
-		var result bitfield.Bitvector4
-		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
-			t.Fatalf("Could not perform bitvector ssz test case: %v", err)
-		}
-		// if err := PerformRootCheck(result, yamlPath, valid); err != nil {
-		// 	t.Fatalf("Could not perform bitvector root check: %v", err)
-		// }
+	var result bitfield.Bitvector4
+	if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
+		t.Fatalf("Could not perform bitvector ssz test case: %v", err)
+	}
+	if err := PerformRootCheck(result, yamlPath, valid); err != nil {
+		t.Fatalf("Could not perform bool root check: %v", err)
 	}
 }
 
@@ -579,16 +580,16 @@ func runBooleanSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, valid
 }
 
 func runContainerSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, testName string, valid bool) {
-	switch testName {
-	case "ComplexTestStruct":
-		var container complexTestStruct
-		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
-			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
-		}
-		if err := PerformRootCheck(container, yamlPath, valid); err != nil {
-			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
-		}
-	case "FixedTestStruct":
+	switch {
+	//case strings.Contains(testName, "ComplexTestStruct"):
+	//	var container complexTestStruct
+	//	if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
+	//		t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
+	//	}
+	//	if err := PerformRootCheck(container, yamlPath, valid); err != nil {
+	//		t.Fatalf("Could not perform root check for case %s: %v", testName, err)
+	//	}
+	case strings.Contains(testName, "FixedTestStruct"):
 		var container fixedTestStruct
 		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -596,7 +597,7 @@ func runContainerSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, tes
 		if err := PerformRootCheck(container, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case "SingleFieldTestStruct":
+	case strings.Contains(testName, "SingleFieldTestStruct"):
 		var container singleFieldStruct
 		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -604,7 +605,7 @@ func runContainerSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, tes
 		if err := PerformRootCheck(container, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case "SmallTestStruct":
+	case strings.Contains(testName, "SmallTestStruct"):
 		var container smallTestStruct
 		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -612,7 +613,7 @@ func runContainerSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, tes
 		if err := PerformRootCheck(container, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case "VarTestStruct":
+	case strings.Contains(testName, "VarTestStruct"):
 		var container varTestStruct
 		if err := PerformSSZCheck(objBytes, &container, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -620,6 +621,8 @@ func runContainerSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, tes
 		if err := PerformRootCheck(container, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
+	default:
+		t.Error("Not covered")
 	}
 }
 
