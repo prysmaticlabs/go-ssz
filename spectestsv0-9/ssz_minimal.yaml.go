@@ -35,10 +35,11 @@ type MinimalCrosslink struct {
 }
 
 type MinimalAttestationData struct {
+	Slot            uint64
+	Index           uint64
 	BeaconBlockRoot []byte            `json:"beacon_block_root" ssz-size:"32"`
 	Source          MinimalCheckpoint `json:"source"`
 	Target          MinimalCheckpoint `json:"target"`
-	Crosslink       MinimalCrosslink  `json:"crosslink"`
 }
 
 type MinimalAttestationAndCustodyBit struct {
