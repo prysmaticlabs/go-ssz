@@ -26,14 +26,6 @@ type MainnetValidator struct {
 	WithdrawableEpoch          uint64 `json:"withdrawable_epoch"`
 }
 
-type MainnetCrosslink struct {
-	Shard      uint64 `json:"shard"`
-	ParentRoot []byte `json:"parent_root" ssz-size:"32"`
-	StartEpoch uint64 `json:"start_epoch"`
-	EndEpoch   uint64 `json:"end_epoch"`
-	DataRoot   []byte `json:"data_root" ssz-size:"32"`
-}
-
 type MainnetAttestationData struct {
 	Slot            uint64
 	Index           uint64
@@ -77,11 +69,6 @@ type MainnetDepositData struct {
 	WithdrawalCredentials []byte `json:"withdrawal_credentials" ssz-size:"32"`
 	Amount                uint64 `json:"amount"`
 	Signature             []byte `json:"signature" ssz-size:"96"`
-}
-
-type MainnetCompactCommittee struct {
-	Pubkeys           [][]byte `json:"pubkeys" ssz-size:"?,48" ssz-max:"4096"`
-	CompactValidators []uint64 `json:"compact_validators" ssz-max:"4096"`
 }
 
 type MainnetBlockHeader struct {
