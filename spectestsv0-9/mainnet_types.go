@@ -68,8 +68,8 @@ type MainnetEth1Data struct {
 }
 
 type MainnetHistoricalBatch struct {
-	BlockRoots [][]byte `json:"block_roots" ssz-size:"64,32"`
-	StateRoots [][]byte `json:"state_roots" ssz-size:"64,32"`
+	BlockRoots [][]byte `json:"block_roots" ssz-size:"8192,32"`
+	StateRoots [][]byte `json:"state_roots" ssz-size:"8192,32"`
 }
 
 type MainnetDepositData struct {
@@ -151,16 +151,16 @@ type MainnetBeaconState struct {
 	Slot              uint64             `json:"slot"`
 	Fork              MinimalFork        `json:"fork"`
 	LatestBlockHeader MinimalBlockHeader `json:"latest_block_header"`
-	BlockRoots        [][]byte           `json:"block_roots" ssz-size:"64,32"`
-	StateRoots        [][]byte           `json:"state_roots" ssz-size:"64,32"`
+	BlockRoots        [][]byte           `json:"block_roots" ssz-size:"8192,32"`
+	StateRoots        [][]byte           `json:"state_roots" ssz-size:"8192,32"`
 	HistoricalRoots   [][]byte           `json:"historical_roots" ssz-size:"?,32" ssz-max:"16777216"`
 	Eth1Data          MinimalEth1Data    `json:"eth1_data"`
 	Eth1DataVotes     []MinimalEth1Data  `json:"eth1_data_votes" ssz-max:"16"`
 	Eth1DepositIndex  uint64             `json:"eth1_deposit_index"`
 	Validators        []MinimalValidator `json:"validators" ssz-max:"1099511627776"`
 	Balances          []uint64           `json:"balances" ssz-max:"1099511627776"`
-	RandaoMixes       [][]byte           `json:"randao_mixes" ssz-size:"64,32"`
-	Slashings         []uint64           `json:"slashings" ssz-size:"64"`
+	RandaoMixes       [][]byte           `json:"randao_mixes" ssz-size:"65536,32"`
+	Slashings         []uint64           `json:"slashings" ssz-size:"8192"`
 
 	PreviousEpochAttestations []MinimalPendingAttestation `json:"previous_epoch_attestations" ssz-max:"1024"`
 	CurrentEpochAttestations  []MinimalPendingAttestation `json:"current_epoch_attestations" ssz-max:"1024"`
