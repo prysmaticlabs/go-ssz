@@ -6,8 +6,10 @@ go_test(
         "bench_test.go",
         "mainnet_test.go",
         "minimal_test.go",
+        "ssz_generic_test.go",
     ],
     data = glob(["*.yaml"]) + [
+        "@eth2_spec_tests_general//:test_data",
         "@eth2_spec_tests_minimal//:test_data",
         "@eth2_spec_tests_mainnet//:test_data",
         "yaml/ssz_single_block.yaml",
@@ -26,6 +28,7 @@ go_test(
 go_library(
     name = "go_default_library",
     srcs = [
+        "generic_types.go",
         "mainnet_types.go",
         "minimal_types.go",
     ],
