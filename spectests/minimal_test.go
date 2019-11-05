@@ -426,6 +426,8 @@ func TestSSZStatic_Minimal(t *testing.T) {
 						if fmt.Sprintf("%#x", rt) != cont.Root {
 							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
+					default:
+						t.Error("Case not covered")
 					}
 				}
 			}
