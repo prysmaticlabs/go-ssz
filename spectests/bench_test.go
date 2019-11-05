@@ -9,13 +9,13 @@ import (
 )
 
 type SszBenchmarkState struct {
-	Value      MinimalBeaconState `json:"value"`
+	Value      minimalBeaconState `json:"value"`
 	Serialized []byte             `json:"serialized"`
 	Root       []byte             `json:"root" ssz:"size=32"`
 }
 
 type SszBenchmarkBlock struct {
-	Value       MinimalBlock `json:"value"`
+	Value       minimalBlock `json:"value"`
 	Serialized  []byte       `json:"serialized"`
 	Root        []byte       `json:"root" ssz:"size=32"`
 	SigningRoot []byte       `json:"signing_root" ssz:"size=96"`
@@ -41,7 +41,7 @@ func BenchmarkBeaconBlock_Unmarshal(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	var target MinimalBlock
+	var target minimalBlock
 	b.StartTimer()
 	for n := 0; n < b.N; n++ {
 		if err := ssz.Unmarshal(encoded, &target); err != nil {
@@ -82,7 +82,7 @@ func BenchmarkBeaconState_Unmarshal(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	var target MinimalBeaconState
+	var target minimalBeaconState
 	b.StartTimer()
 	for n := 0; n < b.N; n++ {
 		if err := ssz.Unmarshal(encoded, &target); err != nil {

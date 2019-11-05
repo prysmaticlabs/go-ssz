@@ -38,7 +38,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 					}
 					switch folder.Name() {
 					case "AggregateAndProof":
-						dec := &MinimalAggregateAndProof{}
+						dec := &minimalAggregateAndProof{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -50,7 +50,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Attestation":
-						dec := &MinimalAttestation{}
+						dec := &minimalAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -62,7 +62,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "AttestationData":
-						dec := &MinimalAttestationData{}
+						dec := &minimalAttestationData{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -74,7 +74,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "AttestationDataAndCustodyBit":
-						dec := &MinimalAttestationAndCustodyBit{}
+						dec := &minimalAttestationAndCustodyBit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -86,7 +86,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "AttesterSlashing":
-						dec := &MinimalAttesterSlashing{}
+						dec := &minimalAttesterSlashing{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -98,7 +98,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "BeaconBlock":
-						dec := &MinimalBlock{}
+						dec := &minimalBlock{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -110,7 +110,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "BeaconBlockBody":
-						dec := &MinimalBlockBody{}
+						dec := &minimalBlockBody{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -122,7 +122,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "BeaconBlockHeader":
-						dec := &MinimalBlockHeader{}
+						dec := &minimalBlockHeader{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -134,7 +134,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "BeaconState":
-						dec := &MinimalBeaconState{}
+						dec := &minimalBeaconState{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -146,7 +146,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Checkpoint":
-						dec := &MinimalCheckpoint{}
+						dec := &minimalCheckpoint{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -158,7 +158,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Deposit":
-						dec := &MinimalDeposit{}
+						dec := &minimalDeposit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -170,7 +170,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "DepositData":
-						dec := &MinimalDepositData{}
+						dec := &minimalDepositData{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -182,7 +182,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Eth1Data":
-						dec := &MinimalEth1Data{}
+						dec := &minimalEth1Data{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -194,7 +194,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Fork":
-						dec := &MinimalFork{}
+						dec := &minimalFork{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -206,7 +206,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "HistoricalBatch":
-						dec := &MinimalHistoricalBatch{}
+						dec := &minimalHistoricalBatch{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -218,7 +218,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "IndexedAttestation":
-						dec := &MinimalIndexedAttestation{}
+						dec := &minimalIndexedAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -230,7 +230,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "PendingAttestation":
-						dec := &MinimalPendingAttestation{}
+						dec := &minimalPendingAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -242,7 +242,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "ProposerSlashing":
-						dec := &MinimalProposerSlashing{}
+						dec := &minimalProposerSlashing{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -254,7 +254,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Validator":
-						dec := &MinimalValidator{}
+						dec := &minimalValidator{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -266,7 +266,7 @@ func TestSSZStatic_Minimal(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "VoluntaryExit":
-						dec := &MinimalVoluntaryExit{}
+						dec := &minimalVoluntaryExit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
