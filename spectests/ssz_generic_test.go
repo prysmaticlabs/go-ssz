@@ -100,7 +100,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_1"):
+	case strings.Contains(testName, "bool_1_"):
 		var result [1]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -108,7 +108,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_2"):
+	case strings.Contains(testName, "bool_2_"):
 		var result [2]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -116,7 +116,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_3"):
+	case strings.Contains(testName, "bool_3_"):
 		var result [3]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -124,7 +124,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_4"):
+	case strings.Contains(testName, "bool_4_"):
 		var result [4]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -132,7 +132,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_5"):
+	case strings.Contains(testName, "bool_5_"):
 		var result [5]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -140,7 +140,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_8"):
+	case strings.Contains(testName, "bool_8_"):
 		var result [8]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -148,7 +148,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_16"):
+	case strings.Contains(testName, "bool_16_"):
 		var result [16]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -156,7 +156,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_31"):
+	case strings.Contains(testName, "bool_31_"):
 		var result [31]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -164,7 +164,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_512"):
+	case strings.Contains(testName, "bool_512_"):
 		var result [512]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -172,7 +172,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform bool array root check: %v", err)
 		}
-	case strings.Contains(testName, "bool_513"):
+	case strings.Contains(testName, "bool_513_"):
 		var result [513]bool
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform bool array ssz check for case %s: %v", testName, err)
@@ -188,7 +188,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_1"):
+	case strings.Contains(testName, "uint8_1_"):
 		var result [1]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -196,7 +196,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_2"):
+	case strings.Contains(testName, "uint8_2_"):
 		var result [2]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -204,7 +204,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_3"):
+	case strings.Contains(testName, "uint8_3_"):
 		var result [3]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -212,7 +212,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_4"):
+	case strings.Contains(testName, "uint8_4_"):
 		var result [4]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -220,7 +220,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_5"):
+	case strings.Contains(testName, "uint8_5_"):
 		var result [5]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -228,7 +228,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_8"):
+	case strings.Contains(testName, "uint8_8_"):
 		var result [8]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -236,7 +236,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_16"):
+	case strings.Contains(testName, "uint8_16_"):
 		var result [16]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -244,7 +244,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_31"):
+	case strings.Contains(testName, "uint8_31_"):
 		var result [31]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -252,7 +252,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_512"):
+	case strings.Contains(testName, "uint8_512_"):
 		var result [512]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -260,7 +260,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint8_513"):
+	case strings.Contains(testName, "uint8_513_"):
 		var result [513]uint8
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -276,7 +276,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_1"):
+	case strings.Contains(testName, "uint16_1_"):
 		var result [1]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -284,7 +284,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_2"):
+	case strings.Contains(testName, "uint16_2_"):
 		var result [2]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -292,7 +292,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_3"):
+	case strings.Contains(testName, "uint16_3_"):
 		var result [3]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -300,7 +300,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_4"):
+	case strings.Contains(testName, "uint16_4_"):
 		var result [4]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -308,7 +308,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_5"):
+	case strings.Contains(testName, "uint16_5_"):
 		var result [5]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -316,7 +316,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_8"):
+	case strings.Contains(testName, "uint16_8_"):
 		var result [8]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -324,7 +324,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_16"):
+	case strings.Contains(testName, "uint16_16_"):
 		var result [16]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -332,7 +332,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_31"):
+	case strings.Contains(testName, "uint16_31_"):
 		var result [31]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -340,7 +340,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_512"):
+	case strings.Contains(testName, "uint16_512_"):
 		var result [512]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -348,7 +348,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint16_513"):
+	case strings.Contains(testName, "uint16_513_"):
 		var result [513]uint16
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -364,7 +364,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_1"):
+	case strings.Contains(testName, "uint32_1_"):
 		var result [1]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -372,7 +372,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_2"):
+	case strings.Contains(testName, "uint32_2_"):
 		var result [2]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -380,7 +380,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_3"):
+	case strings.Contains(testName, "uint32_3_"):
 		var result [3]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -388,7 +388,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_4"):
+	case strings.Contains(testName, "uint32_4_"):
 		var result [4]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -396,7 +396,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_5"):
+	case strings.Contains(testName, "uint32_5_"):
 		var result [5]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -404,7 +404,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_8"):
+	case strings.Contains(testName, "uint32_8_"):
 		var result [8]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -412,7 +412,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_16"):
+	case strings.Contains(testName, "uint32_16_"):
 		var result [16]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -420,7 +420,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_31"):
+	case strings.Contains(testName, "uint32_31_"):
 		var result [31]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -428,7 +428,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_512"):
+	case strings.Contains(testName, "uint32_512_"):
 		var result [512]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -436,7 +436,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint32_513"):
+	case strings.Contains(testName, "uint32_513_"):
 		var result [513]uint32
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -452,7 +452,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_1"):
+	case strings.Contains(testName, "uint64_1_"):
 		var result [1]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -460,7 +460,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_2"):
+	case strings.Contains(testName, "uint64_2_"):
 		var result [2]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -468,7 +468,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_3"):
+	case strings.Contains(testName, "uint64_3_"):
 		var result [3]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -476,7 +476,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_4"):
+	case strings.Contains(testName, "uint64_4_"):
 		var result [4]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -484,7 +484,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_5"):
+	case strings.Contains(testName, "uint64_5_"):
 		var result [5]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -492,7 +492,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_8"):
+	case strings.Contains(testName, "uint64_8_"):
 		var result [8]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -500,7 +500,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_16"):
+	case strings.Contains(testName, "uint64_16_"):
 		var result [16]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -508,7 +508,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_31"):
+	case strings.Contains(testName, "uint64_31_"):
 		var result [31]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -516,7 +516,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_512"):
+	case strings.Contains(testName, "uint64_512_"):
 		var result [512]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
@@ -524,7 +524,7 @@ func runBasicVectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, t
 		if err := PerformRootCheck(result, yamlPath, valid); err != nil {
 			t.Fatalf("Could not perform root check for case %s: %v", testName, err)
 		}
-	case strings.Contains(testName, "uint64_513"):
+	case strings.Contains(testName, "uint64_513_"):
 		var result [513]uint64
 		if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 			t.Fatalf("could not perform ssz check for case %s: %v", testName, err)
