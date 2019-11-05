@@ -35,7 +35,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 					}
 					switch folder.Name() {
 					case "AggregateAndProof":
-						dec := &MinimalAggregateAndProof{}
+						dec := &MainnetAggregateAndProof{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -47,7 +47,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Attestation":
-						dec := &MinimalAttestation{}
+						dec := &MainnetAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -59,7 +59,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "AttestationData":
-						dec := &MinimalAttestationData{}
+						dec := &MainnetAttestationData{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -71,7 +71,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "AttestationDataAndCustodyBit":
-						dec := &MinimalAttestationAndCustodyBit{}
+						dec := &MainnetAttestationAndCustodyBit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -83,7 +83,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "AttesterSlashing":
-						dec := &MinimalAttesterSlashing{}
+						dec := &MainnetAttesterSlashing{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -95,7 +95,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "BeaconBlock":
-						dec := &MinimalBlock{}
+						dec := &MainnetBlock{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -107,7 +107,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "BeaconBlockBody":
-						dec := &MinimalBlockBody{}
+						dec := &MainnetBlockBody{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -119,7 +119,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "BeaconBlockHeader":
-						dec := &MinimalBlockHeader{}
+						dec := &MainnetBlockHeader{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -131,7 +131,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "BeaconState":
-						dec := &MinimalBeaconState{}
+						dec := &MainnetBeaconState{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -143,7 +143,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Checkpoint":
-						dec := &MinimalCheckpoint{}
+						dec := &MainnetCheckpoint{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -155,7 +155,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Deposit":
-						dec := &MinimalDeposit{}
+						dec := &MainnetDeposit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -167,7 +167,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "DepositData":
-						dec := &MinimalDepositData{}
+						dec := &MainnetDepositData{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -179,7 +179,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Eth1Data":
-						dec := &MinimalEth1Data{}
+						dec := &MainnetEth1Data{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -191,7 +191,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Fork":
-						dec := &MinimalFork{}
+						dec := &MainnetFork{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -203,7 +203,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "HistoricalBatch":
-						dec := &MinimalHistoricalBatch{}
+						dec := &MainnetHistoricalBatch{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -215,7 +215,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "IndexedAttestation":
-						dec := &MinimalIndexedAttestation{}
+						dec := &MainnetIndexedAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -227,7 +227,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "PendingAttestation":
-						dec := &MinimalPendingAttestation{}
+						dec := &MainnetPendingAttestation{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -239,7 +239,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "ProposerSlashing":
-						dec := &MinimalProposerSlashing{}
+						dec := &MainnetProposerSlashing{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -251,7 +251,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "Validator":
-						dec := &MinimalValidator{}
+						dec := &MainnetValidator{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -263,7 +263,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 					case "VoluntaryExit":
-						dec := &MinimalVoluntaryExit{}
+						dec := &MainnetVoluntaryExit{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
