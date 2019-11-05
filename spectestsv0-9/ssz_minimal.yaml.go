@@ -48,14 +48,14 @@ type MinimalAttestationAndCustodyBit struct {
 }
 
 type MinimalIndexedAttestation struct {
-	CustodyBit0Indices []uint64               `json:"custody_bit_0_indices" ssz-max:"4096"`
-	CustodyBit1Indices []uint64               `json:"custody_bit_1_indices" ssz-max:"4096"`
+	CustodyBit0Indices []uint64               `json:"custody_bit_0_indices" ssz-max:"2048"`
+	CustodyBit1Indices []uint64               `json:"custody_bit_1_indices" ssz-max:"2048"`
 	Data               MinimalAttestationData `json:"data"`
 	Signature          []byte                 `json:"signature" ssz-size:"96"`
 }
 
 type MinimalPendingAttestation struct {
-	AggregationBits bitfield.Bitlist       `json:"aggregation_bits" ssz-max:"4096"`
+	AggregationBits bitfield.Bitlist       `json:"aggregation_bits" ssz-max:"2048"`
 	Data            MinimalAttestationData `json:"data"`
 	InclusionDelay  uint64                 `json:"inclusion_delay"`
 	ProposerIndex   uint64                 `json:"proposer_index"`
@@ -104,9 +104,9 @@ type MinimalAttesterSlashing struct {
 }
 
 type MinimalAttestation struct {
-	AggregationBits bitfield.Bitlist       `json:"aggregation_bits" ssz-max:"4096"`
+	AggregationBits bitfield.Bitlist       `json:"aggregation_bits" ssz-max:"2048"`
 	Data            MinimalAttestationData `json:"data"`
-	CustodyBits     bitfield.Bitlist       `json:"custody_bits" ssz-max:"4096"`
+	CustodyBits     bitfield.Bitlist       `json:"custody_bits" ssz-max:"2048"`
 	Signature       []byte                 `json:"signature" ssz-size:"96"`
 }
 
@@ -121,16 +121,6 @@ type MinimalVoluntaryExit struct {
 	Signature      []byte `json:"signature" ssz-size:"96"`
 }
 
-type MinimalTransfer struct {
-	Sender    uint64 `json:"sender"`
-	Recipient uint64 `json:"recipient"`
-	Amount    uint64 `json:"amount"`
-	Fee       uint64 `json:"fee"`
-	Slot      uint64 `json:"slot"`
-	Pubkey    []byte `json:"pubkey" ssz-size:"48"`
-	Signature []byte `json:"signature" ssz-size:"96"`
-}
-
 type MinimalBlockBody struct {
 	RandaoReveal      []byte                    `json:"randao_reveal" ssz-size:"96"`
 	Eth1Data          MinimalEth1Data           `json:"eth1_data"`
@@ -140,7 +130,6 @@ type MinimalBlockBody struct {
 	Attestations      []MinimalAttestation      `json:"attestations" ssz-max:"128"`
 	Deposits          []MinimalDeposit          `json:"deposits" ssz-max:"16"`
 	VoluntaryExits    []MinimalVoluntaryExit    `json:"voluntary_exits" ssz-max:"16"`
-	Transfers         []MinimalTransfer         `json:"transfers" ssz-max:"0"`
 }
 
 type MinimalBlock struct {
@@ -152,28 +141,23 @@ type MinimalBlock struct {
 }
 
 type MinimalBeaconState struct {
-	GenesisTime            uint64             `json:"genesis_time"`
-	Slot                   uint64             `json:"slot"`
-	Fork                   MinimalFork        `json:"fork"`
-	LatestBlockHeader      MinimalBlockHeader `json:"latest_block_header"`
-	BlockRoots             [][]byte           `json:"block_roots" ssz-size:"64,32"`
-	StateRoots             [][]byte           `json:"state_roots" ssz-size:"64,32"`
-	HistoricalRoots        [][]byte           `json:"historical_roots" ssz-size:"?,32" ssz-max:"16777216"`
-	Eth1Data               MinimalEth1Data    `json:"eth1_data"`
-	Eth1DataVotes          []MinimalEth1Data  `json:"eth1_data_votes" ssz-max:"16"`
-	Eth1DepositIndex       uint64             `json:"eth1_deposit_index"`
-	Validators             []MinimalValidator `json:"validators" ssz-max:"1099511627776"`
-	Balances               []uint64           `json:"balances" ssz-max:"1099511627776"`
-	StartShard             uint64             `json:"start_shard"`
-	RandaoMixes            [][]byte           `json:"randao_mixes" ssz-size:"64,32"`
-	ActiveIndexRoots       [][]byte           `json:"active_index_roots" ssz-size:"64,32"`
-	CompactCommitteesRoots [][]byte           `json:"compact_committees_roots" ssz-size:"64,32"`
-	Slashings              []uint64           `json:"slashings" ssz-size:"64"`
+	GenesisTime       uint64             `json:"genesis_time"`
+	Slot              uint64             `json:"slot"`
+	Fork              MinimalFork        `json:"fork"`
+	LatestBlockHeader MinimalBlockHeader `json:"latest_block_header"`
+	BlockRoots        [][]byte           `json:"block_roots" ssz-size:"64,32"`
+	StateRoots        [][]byte           `json:"state_roots" ssz-size:"64,32"`
+	HistoricalRoots   [][]byte           `json:"historical_roots" ssz-size:"?,32" ssz-max:"16777216"`
+	Eth1Data          MinimalEth1Data    `json:"eth1_data"`
+	Eth1DataVotes     []MinimalEth1Data  `json:"eth1_data_votes" ssz-max:"16"`
+	Eth1DepositIndex  uint64             `json:"eth1_deposit_index"`
+	Validators        []MinimalValidator `json:"validators" ssz-max:"1099511627776"`
+	Balances          []uint64           `json:"balances" ssz-max:"1099511627776"`
+	RandaoMixes       [][]byte           `json:"randao_mixes" ssz-size:"64,32"`
+	Slashings         []uint64           `json:"slashings" ssz-size:"64"`
 
 	PreviousEpochAttestations []MinimalPendingAttestation `json:"previous_epoch_attestations" ssz-max:"1024"`
 	CurrentEpochAttestations  []MinimalPendingAttestation `json:"current_epoch_attestations" ssz-max:"1024"`
-	PreviousCrosslinks        []MinimalCrosslink          `json:"previous_crosslinks" ssz-size:"8"`
-	CurrentCrosslinks         []MinimalCrosslink          `json:"current_crosslinks" ssz-size:"8"`
 	JustificationBits         bitfield.Bitvector4         `json:"justification_bits" ssz-size:"1"`
 
 	PreviousJustifiedCheckpoint MinimalCheckpoint `json:"previous_justified_checkpoint"`
@@ -303,12 +287,6 @@ type SszMinimalTest struct {
 			Serialized []byte                  `json:"serialized"`
 			Root       []byte                  `json:"root" ssz:"size=32"`
 		} `json:"ProposerSlashing,omitempty"`
-		Transfer struct {
-			Value       MinimalTransfer `json:"value"`
-			Serialized  []byte          `json:"serialized"`
-			Root        []byte          `json:"root" ssz:"size=32"`
-			SigningRoot []byte          `json:"signing_root" ssz:"size=32"`
-		} `json:"Transfer,omitempty"`
 		Validator struct {
 			Value      MinimalValidator `json:"value"`
 			Serialized []byte           `json:"serialized"`
