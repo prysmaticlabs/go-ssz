@@ -71,7 +71,8 @@ type mainnetDepositData struct {
 	Signature             []byte `json:"signature" ssz-size:"96"`
 }
 
-type mainnetBlockHeader struct {
+// MainnetBlockHeader --
+type MainnetBlockHeader struct {
 	Slot       uint64 `json:"slot"`
 	ParentRoot []byte `json:"parent_root" ssz-size:"32"`
 	StateRoot  []byte `json:"state_root" ssz-size:"32"`
@@ -81,8 +82,8 @@ type mainnetBlockHeader struct {
 
 type mainnetProposerSlashing struct {
 	ProposerIndex uint64             `json:"proposer_index"`
-	Header1       mainnetBlockHeader `json:"header_1"`
-	Header2       mainnetBlockHeader `json:"header_2"`
+	Header1       MainnetBlockHeader `json:"header_1"`
+	Header2       MainnetBlockHeader `json:"header_2"`
 }
 
 type mainnetAttesterSlashing struct {
@@ -137,7 +138,7 @@ type mainnetBeaconState struct {
 	GenesisTime       uint64             `json:"genesis_time"`
 	Slot              uint64             `json:"slot"`
 	Fork              mainnetFork        `json:"fork"`
-	LatestBlockHeader mainnetBlockHeader `json:"latest_block_header"`
+	LatestBlockHeader MainnetBlockHeader `json:"latest_block_header"`
 	BlockRoots        [][]byte           `json:"block_roots" ssz-size:"8192,32"`
 	StateRoots        [][]byte           `json:"state_roots" ssz-size:"8192,32"`
 	HistoricalRoots   [][]byte           `json:"historical_roots" ssz-size:"?,32" ssz-max:"16777216"`
