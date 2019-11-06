@@ -107,15 +107,15 @@ func Unmarshal(input []byte, val interface{}) error {
 		return errors.Wrapf(err, "could not unmarshal input into type: %v", rval.Elem().Type())
 	}
 
-	//fixedSize := types.DetermineSize(rval)
-	//totalLength := uint64(len(input))
-	//if totalLength != fixedSize {
-	//	return fmt.Errorf(
-	//		"unexpected amount of data, expected: %d, received: %d",
-	//		fixedSize,
-	//		totalLength,
-	//	)
-	//}
+	fixedSize := types.DetermineSize(rval)
+	totalLength := uint64(len(input))
+	if totalLength != fixedSize {
+		return fmt.Errorf(
+			"unexpected amount of data, expected: %d, received: %d",
+			fixedSize,
+			totalLength,
+		)
+	}
 	return nil
 }
 

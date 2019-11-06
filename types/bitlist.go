@@ -11,7 +11,7 @@ import (
 // Simple Serialize official specification document.
 func BitlistRoot(bfield bitfield.Bitfield, maxCapacity uint64) ([32]byte, error) {
 	limit := (maxCapacity + 255) / 256
-	if bfield == nil {
+	if bfield == nil || bfield.Len() == 0 {
 		length := make([]byte, 32)
 		root, err := bitwiseMerkleize([][]byte{}, 0, limit)
 		if err != nil {
