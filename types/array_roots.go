@@ -54,10 +54,10 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	changedIndices := make([]int, 0)
 	for i := 0; i < numItems; i++ {
 		var item [32]byte
-		if res, ok := val.Index(i).Interface().([32]byte); ok {
-			item = res
-		} else if res, ok := val.Index(i).Interface().([]byte); ok {
+		if res, ok := val.Index(i).Interface().([]byte); ok {
 			item = toBytes32(res)
+		} else if res, ok := val.Index(i).Interface().([32]byte); ok {
+			item = res
 		} else {
 			return [32]byte{}, fmt.Errorf("expected array or slice of len 32, received %v", val.Index(i))
 		}
