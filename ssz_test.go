@@ -325,7 +325,7 @@ func TestHashTreeRootBitlist(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			output, err := HashTreeRootBitlist(test.input, test.maxCapacity)
+			output, err := HashTreeRootBitfield(test.input, test.maxCapacity)
 			if test.err == nil {
 				if err != nil {
 					t.Fatalf("unexpected error %v", err)

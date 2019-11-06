@@ -138,9 +138,6 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	if val == nil {
 		return [32]byte{}, errors.New("untyped nil is not supported")
 	}
-	if b, ok := val.(bitfield.Bitvector4); ok {
-		return types.Bitvector4Root(b, 4)
-	}
 	rval := reflect.ValueOf(val)
 	factory, err := types.SSZFactory(rval, rval.Type())
 	if err != nil {
@@ -149,8 +146,11 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	return factory.Root(rval, rval.Type(), "", 0)
 }
 
-// HashTreeRootBitlist determines the root hash of a bitfield.Bitlist type using SSZ's Merkleization.
-func HashTreeRootBitlist(bfield bitfield.Bitlist, maxCapacity uint64) ([32]byte, error) {
+// HashTreeRootBitfield determines the root hash of a bitfield type using SSZ's Merkleization.
+func HashTreeRootBitfield(bfield bitfield.Bitfield, maxCapacity uint64) ([32]byte, error) {
+	if b, ok := bfield.(bitfield.Bitvector4); ok {
+		return types.Bitvector4Root(b, 4)
+	}
 	return types.BitlistRoot(bfield, maxCapacity)
 }
 

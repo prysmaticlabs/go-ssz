@@ -547,7 +547,7 @@ func runBitlistSSZTestCase(t *testing.T, objBytes []byte, size uint64, yamlPath 
 	if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 		t.Fatalf("Could not perform bitlist ssz test case: %v", err)
 	}
-	if err := PerformBitlistRootCheck(result, size, yamlPath, valid); err != nil {
+	if err := PerformBitfieldRootCheck(result, size, yamlPath, valid); err != nil {
 		t.Fatalf("Could not perform bitlist root check: %v", err)
 	}
 }
@@ -564,7 +564,8 @@ func runBitvectorSSZTestCase(t *testing.T, objBytes []byte, yamlPath string, tes
 	if err := PerformSSZCheck(objBytes, &result, yamlPath, valid); err != nil {
 		t.Fatalf("Could not perform bitvector ssz test case: %v", err)
 	}
-	if err := PerformRootCheck(result, yamlPath, valid); err != nil {
+	size := uint64(4)
+	if err := PerformBitfieldRootCheck(result, size, yamlPath, valid); err != nil {
 		t.Fatalf("Could not perform bool root check: %v", err)
 	}
 }
@@ -731,7 +732,7 @@ func PerformRootCheck(val interface{}, yamlPath string, valid bool) error {
 	return nil
 }
 
-func PerformBitlistRootCheck(bitlist bitfield.Bitlist, size uint64, yamlPath string, valid bool) error {
+func PerformBitfieldRootCheck(bitlist bitfield.Bitfield, size uint64, yamlPath string, valid bool) error {
 	yamlBytes, err := FileBytesOrDie(yamlPath)
 	if err != nil {
 		return err
@@ -747,7 +748,7 @@ func PerformBitlistRootCheck(bitlist bitfield.Bitlist, size uint64, yamlPath str
 		return fmt.Errorf("failed to decode: %v", err)
 	}
 
-	root, err := ssz.HashTreeRootBitlist(bitlist, size)
+	root, err := ssz.HashTreeRootBitfield(bitlist, size)
 	if err != nil {
 		return fmt.Errorf("failed to get hashtreeroot: %v", err)
 	}
