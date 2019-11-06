@@ -27,11 +27,11 @@ type varTestStruct struct {
 }
 
 type complexTestStruct struct {
-	A uint16            // size = 2
-	B []uint16          `ssz-max:"128"` // size = 2 + 4 = 6
-	C uint8             // size = 1
-	D []byte            `ssz-size:"256"` // size = 256
-	E varTestStruct     // size 2 + 6 + 1 = 9 + 4 = 13
-	F []fixedTestStruct `ssz-size:"4"` // size 13 * 4 = 52
-	G []varTestStruct   `ssz-size:"2"` // size 14 + 4 =  18
+	A uint16
+	B []uint16 `ssz-max:"128"`
+	C uint8
+	D []byte `ssz-max:"256"`
+	E varTestStruct
+	F []fixedTestStruct `ssz-size:"4"`
+	G []varTestStruct   `ssz-size:"2"`
 }
