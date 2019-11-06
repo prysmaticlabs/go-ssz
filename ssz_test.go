@@ -767,19 +767,27 @@ func toBytes32(x []byte) [32]byte {
 	return y
 }
 
-func TestBoolArrayMissingByte(t *testing.T) {
+func TestBoolArray_MissingByte(t *testing.T) {
 	objBytes := hexDecodeOrDie(t, "010101010101010101010101010101")
 	var result [16]bool
 	if err := Unmarshal(objBytes, &result); err == nil {
-		t.Fatal("expected message with missing byte to fail marshalling")
+		t.Error("Expected message with missing byte to fail marshalling")
 	}
 }
 
-func TestBoolArrayExtraByte(t *testing.T) {
+func TestBoolArray_ExtraByte(t *testing.T) {
 	objBytes := hexDecodeOrDie(t, "01010101010101010101010101010101ff")
 	var result [16]bool
 	if err := Unmarshal(objBytes, &result); err == nil {
-		t.Fatal("expected message with extra byte to fail marshalling")
+		t.Error("Expected message with extra byte to fail marshalling")
+	}
+}
+
+func TestBoolArray_Correct(t *testing.T) {
+	objBytes := hexDecodeOrDie(t, "01010101010101010101010101010101")
+	var result [16]bool
+	if err := Unmarshal(objBytes, &result); err != nil {
+		t.Errorf("Unexpected error: %v", err)
 	}
 }
 
