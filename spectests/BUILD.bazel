@@ -1,35 +1,33 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
-go_library(
-    name = "go_default_library",
-    testonly = True,
-    srcs = [
-        "ssz_generic.yaml.go",
-        "ssz_mainnet.yaml.go",
-        "ssz_minimal.yaml.go",
-    ],
-    importpath = "github.com/prysmaticlabs/go-ssz/spectests",
-    visibility = ["//visibility:public"],
-    deps = ["@com_github_prysmaticlabs_go_bitfield//:go_default_library"],
-)
-
 go_test(
     name = "go_default_test",
     srcs = [
-        "ssz_spec_bench_test.go",
-        "ssz_spec_test.go",
+        "bench_test.go",
+        "mainnet_test.go",
+        "minimal_test.go",
     ],
-    data = [
-        "@eth2_spec_tests//:test_data",
+    data = glob(["*.yaml"]) + [
+        "@eth2_spec_tests_minimal//:test_data",
+        "@eth2_spec_tests_mainnet//:test_data",
         "yaml/ssz_single_block.yaml",
         "yaml/ssz_single_state.yaml",
     ],
     embed = [":go_default_library"],
-    tags = ["spectest"],
     deps = [
         "//:go_default_library",
-        "//types:go_default_library",
         "@com_github_ghodss_yaml//:go_default_library",
         "@io_bazel_rules_go//go/tools/bazel:go_default_library",
     ],
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "mainnet_types.go",
+        "minimal_types.go",
+    ],
+    importpath = "github.com/prysmaticlabs/go-ssz/spectests",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_prysmaticlabs_go_bitfield//:go_default_library"],
 )
