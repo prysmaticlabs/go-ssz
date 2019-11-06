@@ -106,6 +106,16 @@ func Unmarshal(input []byte, val interface{}) error {
 	if _, err := factory.Unmarshal(rval.Elem(), rval.Elem().Type(), input, 0); err != nil {
 		return errors.Wrapf(err, "could not unmarshal input into type: %v", rval.Elem().Type())
 	}
+
+	fixedSize := types.DetermineSize(rval)
+	totalLength := uint64(len(input))
+	if totalLength != fixedSize {
+		return fmt.Errorf(
+			"unexpected amount of data, expected: %d, received: %d",
+			fixedSize,
+			totalLength,
+		)
+	}
 	return nil
 }
 
@@ -136,8 +146,11 @@ func HashTreeRoot(val interface{}) ([32]byte, error) {
 	return factory.Root(rval, rval.Type(), "", 0)
 }
 
-// HashTreeRootBitlist determines the root hash of a bitfield.Bitlist type using SSZ's Merkleization.
-func HashTreeRootBitlist(bfield bitfield.Bitlist, maxCapacity uint64) ([32]byte, error) {
+// HashTreeRootBitfield determines the root hash of a bitfield type using SSZ's Merkleization.
+func HashTreeRootBitfield(bfield bitfield.Bitfield, maxCapacity uint64) ([32]byte, error) {
+	if b, ok := bfield.(bitfield.Bitvector4); ok {
+		return types.Bitvector4Root(b, 4)
+	}
 	return types.BitlistRoot(bfield, maxCapacity)
 }
 

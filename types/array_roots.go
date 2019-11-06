@@ -31,7 +31,7 @@ func newRootsArraySSZ() *rootsArraySSZ {
 }
 
 func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {
-	numItems := typ.Len()
+	numItems := val.Len()
 	// We make sure to look into the cache only if a field name is provided, that is,
 	// if this function is called when calling HashTreeRoot on a struct type that has
 	// a field which is an array of roots. An example is:
@@ -54,10 +54,10 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	changedIndices := make([]int, 0)
 	for i := 0; i < numItems; i++ {
 		var item [32]byte
-		if res, ok := val.Index(i).Interface().([32]byte); ok {
-			item = res
-		} else if res, ok := val.Index(i).Interface().([]byte); ok {
+		if res, ok := val.Index(i).Interface().([]byte); ok {
 			item = toBytes32(res)
+		} else if res, ok := val.Index(i).Interface().([32]byte); ok {
+			item = res
 		} else {
 			return [32]byte{}, fmt.Errorf("expected array or slice of len 32, received %v", val.Index(i))
 		}

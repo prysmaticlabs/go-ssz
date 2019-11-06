@@ -325,7 +325,7 @@ func TestHashTreeRootBitlist(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			output, err := HashTreeRootBitlist(test.input, test.maxCapacity)
+			output, err := HashTreeRootBitfield(test.input, test.maxCapacity)
 			if test.err == nil {
 				if err != nil {
 					t.Fatalf("unexpected error %v", err)
@@ -765,6 +765,30 @@ func toBytes32(x []byte) [32]byte {
 	var y [32]byte
 	copy(y[:], x)
 	return y
+}
+
+func TestBoolArray_MissingByte(t *testing.T) {
+	objBytes := hexDecodeOrDie(t, "010101010101010101010101010101")
+	var result [16]bool
+	if err := Unmarshal(objBytes, &result); err == nil {
+		t.Error("Expected message with missing byte to fail marshalling")
+	}
+}
+
+func TestBoolArray_ExtraByte(t *testing.T) {
+	objBytes := hexDecodeOrDie(t, "01010101010101010101010101010101ff")
+	var result [16]bool
+	if err := Unmarshal(objBytes, &result); err == nil {
+		t.Error("Expected message with extra byte to fail marshalling")
+	}
+}
+
+func TestBoolArray_Correct(t *testing.T) {
+	objBytes := hexDecodeOrDie(t, "01010101010101010101010101010101")
+	var result [16]bool
+	if err := Unmarshal(objBytes, &result); err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
 }
 
 func hexDecodeOrDie(t *testing.T, s string) []byte {

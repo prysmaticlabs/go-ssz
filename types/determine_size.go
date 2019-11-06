@@ -37,7 +37,7 @@ func isRootsArray(val reflect.Value, typ reflect.Type) bool {
 	elemTyp := typ.Elem()
 	elemKind := elemTyp.Kind()
 	isByteArray := elemKind == reflect.Array && elemTyp.Elem().Kind() == reflect.Uint8
-	return isByteArray && val.Index(0).Len() == 32
+	return isByteArray && elemTyp.Len() == 32
 }
 
 func isVariableSizeType(typ reflect.Type) bool {

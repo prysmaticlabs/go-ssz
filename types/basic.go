@@ -1,7 +1,6 @@
 package types
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"reflect"
@@ -9,7 +8,6 @@ import (
 	"time"
 
 	"github.com/karlseguin/ccache"
-	"github.com/prysmaticlabs/go-bitfield"
 )
 
 // BasicTypeCacheSize for HashTreeRoot.
@@ -51,6 +49,10 @@ func (b *basicSSZ) Marshal(val reflect.Value, typ reflect.Type, buf []byte, star
 }
 
 func (b *basicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, startOffset uint64) (uint64, error) {
+	if startOffset >= uint64(len(buf)) {
+		return 0, fmt.Errorf("startOffset %d is greater than length of input %d", startOffset, len(buf))
+	}
+
 	kind := typ.Kind()
 	switch {
 	case kind == reflect.Bool:
@@ -72,35 +74,6 @@ func (b *basicSSZ) Unmarshal(val reflect.Value, typ reflect.Type, buf []byte, st
 	default:
 		return 0, fmt.Errorf("type %v is not serializable", val.Type())
 	}
-}
-
-// BitlistRoot computes the hash tree root of a bitlist type as outlined in the
-// Simple Serialize official specification document.
-func BitlistRoot(bfield bitfield.Bitlist, maxCapacity uint64) ([32]byte, error) {
-	limit := (maxCapacity + 255) / 256
-	if bfield == nil {
-		length := make([]byte, 32)
-		root, err := bitwiseMerkleize([][]byte{}, 0, limit)
-		if err != nil {
-			return [32]byte{}, err
-		}
-		return mixInLength(root, length), nil
-	}
-	chunks, err := pack([][]byte{bfield.Bytes()})
-	if err != nil {
-		return [32]byte{}, err
-	}
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.LittleEndian, bfield.Len()); err != nil {
-		return [32]byte{}, err
-	}
-	output := make([]byte, 32)
-	copy(output, buf.Bytes())
-	root, err := bitwiseMerkleize(chunks, uint64(len(chunks)), limit)
-	if err != nil {
-		return [32]byte{}, err
-	}
-	return mixInLength(root, output), nil
 }
 
 func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, maxCapacity uint64) ([32]byte, error) {

@@ -31,9 +31,13 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	emptyKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
 	leaves := make([][]byte, numItems)
 	offset := 0
-	factory, err := SSZFactory(val.Index(0), typ.Elem())
-	if err != nil {
-		return [32]byte{}, err
+	var factory SSZAble
+	var err error
+	if numItems > 0 {
+		factory, err = SSZFactory(val.Index(0), typ.Elem())
+		if err != nil {
+			return [32]byte{}, err
+		}
 	}
 	for i := 0; i < numItems; i++ {
 		r, err := factory.Root(val.Index(i), typ.Elem(), "", 0)
