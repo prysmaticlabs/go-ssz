@@ -4,18 +4,12 @@ go_test(
     name = "go_default_test",
     srcs = [
         "bench_test.go",
-<<<<<<< HEAD
         "generic_test.go",
-=======
->>>>>>> master
         "mainnet_test.go",
         "minimal_test.go",
     ],
     data = glob(["*.yaml"]) + [
-<<<<<<< HEAD
         "@eth2_spec_tests_general//:test_data",
-=======
->>>>>>> master
         "@eth2_spec_tests_minimal//:test_data",
         "@eth2_spec_tests_mainnet//:test_data",
         "yaml/ssz_single_block.yaml",
@@ -33,10 +27,7 @@ go_test(
 go_library(
     name = "go_default_library",
     srcs = [
-<<<<<<< HEAD
         "generic_types.go",
-=======
->>>>>>> master
         "mainnet_types.go",
         "minimal_types.go",
     ],
