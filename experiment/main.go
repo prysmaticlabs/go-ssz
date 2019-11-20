@@ -200,17 +200,52 @@ func stateRoot(state *pb.BeaconState) {
 	fieldRoots[19] = checkpointRoot(state.FinalizedCheckpoint)
 }
 
+func attestationDataRoot(data *ethpb.AttestationData) [32]byte {
+	fieldRoots := make([][]byte, 5)
+
+	// Slot.
+	slotBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(slotBuf, data.Slot)
+	inter := bytesutil.ToBytes32(slotBuf)
+	fieldRoots[0] = inter[:]
+
+	// Index.
+	indexBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(indexBuf, data.Index)
+	inter = bytesutil.ToBytes32(indexBuf)
+	fieldRoots[1] = inter[:]
+
+	// Beacon block root.
+	fieldRoots[2] = data.BeaconBlockRoot
+
+	// Source
+	inter = checkpointRoot(data.Source)
+	fieldRoots[3] = inter[:]
+
+	// Target
+	inter = checkpointRoot(data.Target)
+	fieldRoots[4] = inter[:]
+
+	root, err := bitwiseMerkleize(fieldRoots, 5, 5)
+	if err != nil {
+		panic(err)
+	}
+	return root
+}
+
 func pendingAttestationRoot(att *pb.PendingAttestation) [32]byte {
 	fieldRoots := make([][]byte, 4)
 
 	// Bitfield.
 
 	// Attestation data.
+	inter := attestationDataRoot(att.Data)
+	fieldRoots[1] = inter[:]
 
 	// Inclusion delay.
 	inclusionBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(inclusionBuf, att.InclusionDelay)
-	inter := bytesutil.ToBytes32(inclusionBuf)
+	inter = bytesutil.ToBytes32(inclusionBuf)
 	fieldRoots[2] = inter[:]
 
 	// Proposer index.
