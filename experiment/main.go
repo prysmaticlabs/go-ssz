@@ -60,51 +60,19 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	fieldRoots[1] = slotBufRoot[:]
 
 	// Handle the fork data:
-	forkRoots := make([][]byte, 3)
-	inter := bytesutil.ToBytes32(state.Fork.PreviousVersion)
-	forkRoots[0] = inter[:]
-	inter = bytesutil.ToBytes32(state.Fork.CurrentVersion)
-	forkRoots[1] = inter[:]
-	forkEpochBuf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(forkEpochBuf, state.Fork.Epoch)
-	inter = bytesutil.ToBytes32(forkEpochBuf)
-	forkRoots[2] = inter[:]
-	forkRoot, err := bitwiseMerkleize(forkRoots, 3, 3)
-	if err != nil {
-		panic(err)
-	}
-	fieldRoots[2] = forkRoot[:]
+	forkHashTreeRoot := forkRoot(state.Fork)
+	fieldRoots[2] = forkHashTreeRoot[:]
 
 	// Handle the beacon block header:
-	blockHeaderRoots := make([][]byte, 5)
-	headerSlotBuf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(headerSlotBuf, state.LatestBlockHeader.Slot)
-	inter = bytesutil.ToBytes32(headerSlotBuf)
-	blockHeaderRoots[0] = inter[:]
-	blockHeaderRoots[1] = state.LatestBlockHeader.ParentRoot
-	blockHeaderRoots[2] = state.LatestBlockHeader.StateRoot
-	blockHeaderRoots[3] = state.LatestBlockHeader.BodyRoot
-	signatureChunks, err := pack([][]byte{state.LatestBlockHeader.Signature})
-	if err != nil {
-		panic(err)
-	}
-	sigRoot, err := bitwiseMerkleize(signatureChunks, uint64(len(signatureChunks)), uint64(len(signatureChunks)))
-	if err != nil {
-		panic(err)
-	}
-	blockHeaderRoots[4] = sigRoot[:]
-	headerRoot, err := bitwiseMerkleize(blockHeaderRoots, 5, 5)
-	if err != nil {
-		panic(err)
-	}
-	fieldRoots[3] = headerRoot[:]
+	headerHashTreeRoot := blockHeaderRoot(state.LatestBlockHeader)
+	fieldRoots[3] = headerHashTreeRoot[:]
 
 	// Handle the block roots:
-	inter = merkleize(state.BlockRoots)
-	fieldRoots[4] = inter[:]
+	blockRoots := merkleize(state.BlockRoots)
+	fieldRoots[4] = blockRoots[:]
 	// Handle the state roots:
-	inter = merkleize(state.StateRoots)
-	fieldRoots[5] = inter[:]
+	stateRoots := merkleize(state.StateRoots)
+	fieldRoots[5] = stateRoots[:]
 
 	// Handle the historical roots:
 	historicalRootsBuf := new(bytes.Buffer)
@@ -117,7 +85,7 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	if err != nil {
 		panic(err)
 	}
-	inter = mixInLength(merkleRoot, historicalRootsOutput)
+	inter := mixInLength(merkleRoot, historicalRootsOutput)
 	fieldRoots[6] = inter[:]
 
 	// Handle the eth1 data:
@@ -243,6 +211,48 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	}
 
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
+	if err != nil {
+		panic(err)
+	}
+	return root
+}
+
+func forkRoot(fork *pb.Fork) [32]byte {
+	fieldRoots := make([][]byte, 3)
+	inter := bytesutil.ToBytes32(fork.PreviousVersion)
+	fieldRoots[0] = inter[:]
+	inter = bytesutil.ToBytes32(fork.CurrentVersion)
+	fieldRoots[1] = inter[:]
+	forkEpochBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(forkEpochBuf, fork.Epoch)
+	inter = bytesutil.ToBytes32(forkEpochBuf)
+	fieldRoots[2] = inter[:]
+	root, err := bitwiseMerkleize(fieldRoots, 3, 3)
+	if err != nil {
+		panic(err)
+	}
+	return root
+}
+
+func blockHeaderRoot(header *ethpb.BeaconBlockHeader) [32]byte {
+	fieldRoots := make([][]byte, 5)
+	headerSlotBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(headerSlotBuf, header.Slot)
+	headerSlotRoot := bytesutil.ToBytes32(headerSlotBuf)
+	fieldRoots[0] = headerSlotRoot[:]
+	fieldRoots[1] = header.ParentRoot
+	fieldRoots[2] = header.StateRoot
+	fieldRoots[3] = header.BodyRoot
+	signatureChunks, err := pack([][]byte{header.Signature})
+	if err != nil {
+		panic(err)
+	}
+	sigRoot, err := bitwiseMerkleize(signatureChunks, uint64(len(signatureChunks)), uint64(len(signatureChunks)))
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[4] = sigRoot[:]
+	root, err := bitwiseMerkleize(fieldRoots, 5, 5)
 	if err != nil {
 		panic(err)
 	}
