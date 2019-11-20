@@ -20,8 +20,8 @@ func main() {
 }
 
 func stateRoot(state *pb.BeaconState) {
-	// There are 21 fields in the beacon state.
-	fieldRoots := [21][32]byte{}
+	// There are 20 fields in the beacon state.
+	fieldRoots := [20][32]byte{}
 
 	// Do the genesis time:
 	genesisBuf := make([]byte, 8)
@@ -112,6 +112,16 @@ func stateRoot(state *pb.BeaconState) {
 	fieldRoots[9] = inter
 
 	// Handle the validator registry:
+	validatorsRoots := make([][]byte, 0)
+	for i := 0; i < len(state.Validators); i++ {
+		inter = validatorRoot(state.Validators[i])
+		validatorsRoots = append(validatorsRoots, inter[:])
+	}
+	validatorsRootsRoot, err := bitwiseMerkleize(validatorsRoots, uint64(len(validatorsRoots)), uint64(1099511627776))
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[10] = validatorsRootsRoot
 
 	// Handle the validator balances:
 	balancesRoots := make([][]byte, 0)
@@ -145,15 +155,139 @@ func stateRoot(state *pb.BeaconState) {
 	fieldRoots[13] = slashingRootsRoot
 
 	// Handle the previous epoch attestations 14:
-	// Handle the current epoch attestations 15:
-	// Handle the justification bits 17:
+	prevAttsLenBuf := new(bytes.Buffer)
+	if err := binary.Write(prevAttsLenBuf, binary.LittleEndian, uint64(4096)); err != nil {
+		panic(err)
+	}
+	prevAttsLenRoot := make([]byte, 32)
+	copy(prevAttsLenRoot, prevAttsLenBuf.Bytes())
+	prevAttsRoots := make([][]byte, 0)
+	for i := 0; i < len(state.PreviousEpochAttestations); i++ {
+		inter = pendingAttestationRoot(state.PreviousEpochAttestations[i])
+		prevAttsRoots = append(prevAttsRoots, inter[:])
+	}
+	prevAttsRootsRoot, err := bitwiseMerkleize(prevAttsRoots, uint64(len(prevAttsRoots)), 4096)
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[14] = mixInLength(prevAttsRootsRoot, prevAttsLenRoot)
 
-	// Handle the previous justified checkpoint 18:
-	fieldRoots[18] = checkpointRoot(state.PreviousJustifiedCheckpoint)
-	// Handle the current justified checkpoint 19:
-	fieldRoots[19] = checkpointRoot(state.CurrentJustifiedCheckpoint)
-	// Handle the finalized checkpoint 20:
-	fieldRoots[20] = checkpointRoot(state.FinalizedCheckpoint)
+	// Handle the current epoch attestations 15:
+	currAttsLenBuf := new(bytes.Buffer)
+	if err := binary.Write(currAttsLenBuf, binary.LittleEndian, uint64(4096)); err != nil {
+		panic(err)
+	}
+	currAttsLenRoot := make([]byte, 32)
+	copy(currAttsLenRoot, currAttsLenBuf.Bytes())
+	currAttsRoots := make([][]byte, 0)
+	for i := 0; i < len(state.CurrentEpochAttestations); i++ {
+		inter = pendingAttestationRoot(state.CurrentEpochAttestations[i])
+		currAttsRoots = append(currAttsRoots, inter[:])
+	}
+	currAttsRootsRoot, err := bitwiseMerkleize(currAttsRoots, uint64(len(currAttsRoots)), 4096)
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[15] = mixInLength(currAttsRootsRoot, currAttsLenRoot)
+
+	// Handle the justification bits 16:
+
+	// Handle the previous justified checkpoint 17:
+	fieldRoots[17] = checkpointRoot(state.PreviousJustifiedCheckpoint)
+	// Handle the current justified checkpoint 18:
+	fieldRoots[18] = checkpointRoot(state.CurrentJustifiedCheckpoint)
+	// Handle the finalized checkpoint 19:
+	fieldRoots[19] = checkpointRoot(state.FinalizedCheckpoint)
+}
+
+func pendingAttestationRoot(att *pb.PendingAttestation) [32]byte {
+	fieldRoots := make([][]byte, 4)
+
+	// Bitfield.
+
+	// Attestation data.
+
+	// Inclusion delay.
+	inclusionBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(inclusionBuf, att.InclusionDelay)
+	inter := bytesutil.ToBytes32(inclusionBuf)
+	fieldRoots[2] = inter[:]
+
+	// Proposer index.
+	proposerBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(proposerBuf, att.ProposerIndex)
+	inter = bytesutil.ToBytes32(proposerBuf)
+	fieldRoots[3] = inter[:]
+
+	root, err := bitwiseMerkleize(fieldRoots, 4, 4)
+	if err != nil {
+		panic(err)
+	}
+	return root
+}
+
+func validatorRoot(validator *ethpb.Validator) [32]byte {
+	fieldRoots := make([][]byte, 8)
+
+	// Public key.
+	pubKeyChunks, err := pack([][]byte{validator.PublicKey})
+	if err != nil {
+		panic(err)
+	}
+	pubKeyRoot, err := bitwiseMerkleize(pubKeyChunks, uint64(len(pubKeyChunks)), uint64(len(pubKeyChunks)))
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[0] = pubKeyRoot[:]
+
+	// Withdrawal credentials.
+	fieldRoots[1] = validator.WithdrawalCredentials
+
+	// Effective balance.
+	effectiveBalanceBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(effectiveBalanceBuf, validator.EffectiveBalance)
+	inter := bytesutil.ToBytes32(effectiveBalanceBuf)
+	fieldRoots[2] = inter[:]
+
+	// Slashed.
+	slashBuf := make([]byte, 1)
+	if validator.Slashed {
+		slashBuf[0] = uint8(1)
+	} else {
+		slashBuf[0] = uint8(0)
+	}
+	inter = bytesutil.ToBytes32(slashBuf)
+	fieldRoots[3] = inter[:]
+
+	// Activation eligibility epoch.
+	activationEligibilityBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(activationEligibilityBuf, validator.ActivationEligibilityEpoch)
+	inter = bytesutil.ToBytes32(activationEligibilityBuf)
+	fieldRoots[4] = inter[:]
+
+	// Activation epoch.
+	activationBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(activationBuf, validator.ActivationEpoch)
+	inter = bytesutil.ToBytes32(activationBuf)
+	fieldRoots[5] = inter[:]
+
+	// Exit epoch.
+	exitBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(exitBuf, validator.ExitEpoch)
+	inter = bytesutil.ToBytes32(exitBuf)
+	fieldRoots[6] = inter[:]
+
+	// Withdrawable epoch.
+	withdrawalBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(withdrawalBuf, validator.WithdrawableEpoch)
+	inter = bytesutil.ToBytes32(withdrawalBuf)
+	fieldRoots[7] = inter[:]
+
+	root, err := bitwiseMerkleize(fieldRoots, 3, 3)
+	if err != nil {
+		panic(err)
+	}
+	return root
 }
 
 func eth1Root(eth1Data *ethpb.Eth1Data) [32]byte {
