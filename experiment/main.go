@@ -70,6 +70,27 @@ func stateRoot(state *pb.BeaconState) {
 		panic(err)
 	}
 	fieldRoots[3] = headerRoot
+
+	// Handle the block roots:
+	fieldRoots[4] = merkleize(state.BlockRoots)
+	// Handle the state roots:
+	fieldRoots[5] = merkleize(state.StateRoots)
+
+	// Handle the historical roots:
+	historicalRootsBuf := new(bytes.Buffer)
+	if err := binary.Write(historicalRootsBuf, binary.LittleEndian, uint64(len(state.HistoricalRoots))); err != nil {
+		panic(err)
+	}
+	historicalRootsOutput := make([]byte, 32)
+	copy(historicalRootsOutput, historicalRootsBuf.Bytes())
+	merkleRoot, err := bitwiseMerkleize(state.HistoricalRoots, uint64(len(state.HistoricalRoots)), 16777216)
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[6] = mixInLength(merkleRoot, historicalRootsOutput)
+
+	// Handle the eth1 data:
+
 }
 
 // Given ordered BYTES_PER_CHUNK-byte chunks, if necessary utilize zero chunks so that the
@@ -134,4 +155,51 @@ func pack(serializedItems [][]byte) ([][]byte, error) {
 	}
 	chunks[len(chunks)-1] = lastChunk
 	return chunks, nil
+}
+
+func merkleize(chunks [][]byte) [32]byte {
+	if len(chunks) == 1 {
+		var root [32]byte
+		copy(root[:], chunks[0])
+		return root
+	}
+	for !isPowerOf2(len(chunks)) {
+		chunks = append(chunks, make([]byte, BytesPerChunk))
+	}
+	hashLayer := chunks
+	// We keep track of the hash layers of a Merkle trie until we reach
+	// the top layer of length 1, which contains the single root element.
+	//        [Root]      -> Top layer has length 1.
+	//    [E]       [F]   -> This layer has length 2.
+	// [A]  [B]  [C]  [D] -> The bottom layer has length 4 (needs to be a power of two).
+	i := 1
+	for len(hashLayer) > 1 {
+		layer := [][]byte{}
+		for i := 0; i < len(hashLayer); i += 2 {
+			hashedChunk := hash(append(hashLayer[i], hashLayer[i+1]...))
+			layer = append(layer, hashedChunk[:])
+		}
+		hashLayer = layer
+		i++
+	}
+	var root [32]byte
+	copy(root[:], hashLayer[0])
+	return root
+}
+
+func isPowerOf2(n int) bool {
+	return n != 0 && (n&(n-1)) == 0
+}
+
+func mixInLength(root [32]byte, length []byte) [32]byte {
+	var hash [32]byte
+	h := sha256.New()
+	h.Write(root[:])
+	h.Write(length)
+	// The hash interface never returns an error, for that reason
+	// we are not handling the error below. For reference, it is
+	// stated here https://golang.org/pkg/hash/#Hash
+	// #nosec G104
+	h.Sum(hash[:0])
+	return hash
 }
