@@ -1,10 +1,11 @@
 package types
 
 import (
-	"github.com/dgraph-io/ristretto"
-	"github.com/minio/highwayhash"
 	"reflect"
 	"sync"
+
+	"github.com/dgraph-io/ristretto"
+	"github.com/minio/highwayhash"
 )
 
 // BasicArraySizeCache for HashTreeRoot.

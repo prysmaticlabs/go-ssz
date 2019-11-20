@@ -3,9 +3,10 @@ package types
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/dgraph-io/ristretto"
 	"reflect"
 	"sync"
+
+	"github.com/dgraph-io/ristretto"
 )
 
 // BasicTypeCacheSize for HashTreeRoot.

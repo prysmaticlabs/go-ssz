@@ -3,11 +3,12 @@ package types
 import (
 	"bytes"
 	"fmt"
+	"reflect"
+	"sync"
+
 	"github.com/dgraph-io/ristretto"
 	"github.com/minio/highwayhash"
 	"github.com/protolambda/zssz/merkle"
-	"reflect"
-	"sync"
 )
 
 // RootsArraySizeCache for hash tree root.
