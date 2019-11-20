@@ -41,7 +41,7 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 	structName := typ.Name()
 	for i := 0; i < numFields; i++ {
 		// We skip protobuf related metadata fields.
-		if strings.Contains(typ.Field(i).Name, "XXX_") {
+		if strings.HasPrefix(typ.Field(i).Name, "XXX_") {
 			continue
 		}
 		totalCountedFields++
