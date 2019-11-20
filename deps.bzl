@@ -11,13 +11,6 @@ requirements for this project.
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 
 def go_ssz_dependencies():
-    _maybe(
-        # MIT License
-        go_repository,
-        name = "com_github_karlseguin_ccache",
-        commit = "ec06cd93a07565b373789b0078ba88fe697fddd9",
-        importpath = "github.com/karlseguin/ccache",
-    )
 
     _maybe(
         # Apache License 2.0
