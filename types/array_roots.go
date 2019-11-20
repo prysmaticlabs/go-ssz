@@ -12,7 +12,7 @@ import (
 )
 
 // RootsArraySizeCache for hash tree root.
-const RootsArraySizeCache = 1e6
+const RootsArraySizeCache = 100000
 
 type rootsArraySSZ struct {
 	hashCache    *ristretto.Cache
@@ -24,7 +24,7 @@ type rootsArraySSZ struct {
 func newRootsArraySSZ() *rootsArraySSZ {
 	cache, _ := ristretto.NewCache(&ristretto.Config{
 		NumCounters: RootsArraySizeCache, // number of keys to track frequency of (1M).
-		MaxCost:     1 << 28,             // maximum cost of cache (10MB).
+		MaxCost:     1 << 23,             // maximum cost of cache (10MB).
 		BufferItems: 64,                  // number of keys per Get buffer.
 	})
 	return &rootsArraySSZ{

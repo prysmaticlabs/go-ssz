@@ -10,7 +10,7 @@ import (
 )
 
 // BasicTypeCacheSize for HashTreeRoot.
-const BasicTypeCacheSize = 1e6
+const BasicTypeCacheSize = 100000
 
 type basicSSZ struct {
 	hashCache *ristretto.Cache
@@ -20,7 +20,7 @@ type basicSSZ struct {
 func newBasicSSZ() *basicSSZ {
 	cache, _ := ristretto.NewCache(&ristretto.Config{
 		NumCounters: BasicTypeCacheSize, // number of keys to track frequency of (1M).
-		MaxCost:     1 << 28,            // maximum cost of cache (10MB).
+		MaxCost:     1 << 23,            // maximum cost of cache (10MB).
 		BufferItems: 64,                 // number of keys per Get buffer.
 	})
 	return &basicSSZ{

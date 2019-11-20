@@ -9,7 +9,7 @@ import (
 )
 
 // BasicArraySizeCache for HashTreeRoot.
-const BasicArraySizeCache = 1e6
+const BasicArraySizeCache = 100000
 
 var fastSumHashKey = toBytes32([]byte("hash_fast_sum64_key"))
 
@@ -21,7 +21,7 @@ type basicArraySSZ struct {
 func newBasicArraySSZ() *basicArraySSZ {
 	cache, _ := ristretto.NewCache(&ristretto.Config{
 		NumCounters: BasicArraySizeCache, // number of keys to track frequency of (1M).
-		MaxCost:     1 << 28,             // maximum cost of cache (10MB).
+		MaxCost:     1 << 23,             // maximum cost of cache (10MB).
 		BufferItems: 64,                  // number of keys per Get buffer.
 	})
 	return &basicArraySSZ{
