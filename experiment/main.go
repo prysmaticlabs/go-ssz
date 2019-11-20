@@ -94,6 +94,16 @@ func stateRoot(state *pb.BeaconState) {
 	fieldRoots[7] = eth1Root(state.Eth1Data)
 
 	// Handle eth1 data votes:
+	eth1VotesRoots := make([][]byte, 1024)
+	for i := 0; i < len(eth1VotesRoots); i++ {
+		inter = eth1Root(state.Eth1DataVotes[i])
+		eth1VotesRoots[i] = inter[:]
+	}
+	eth1VotesRootsRoot, err := bitwiseMerkleize(eth1VotesRoots, uint64(len(eth1VotesRoots)), uint64(len(eth1VotesRoots)))
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[8] = eth1VotesRootsRoot
 
 	// Handle eth1 deposit index:
 	eth1DepositIndexBuf := make([]byte, 8)
@@ -104,6 +114,18 @@ func stateRoot(state *pb.BeaconState) {
 	// Handle the validator registry:
 
 	// Handle the validator balances:
+	balancesRoots := make([][]byte, 0)
+	for i := 0; i < len(state.Balances); i++ {
+		balanceBuf := make([]byte, 8)
+		binary.LittleEndian.PutUint64(balanceBuf, state.Balances[i])
+		inter = bytesutil.ToBytes32(balanceBuf)
+		balancesRoots = append(balancesRoots, inter[:])
+	}
+	balancesRootsRoot, err := bitwiseMerkleize(balancesRoots, uint64(len(balancesRoots)), uint64(1099511627776))
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[11] = balancesRootsRoot
 
 	// Handle the randao mixes:
 	fieldRoots[12] = merkleize(state.RandaoMixes)
