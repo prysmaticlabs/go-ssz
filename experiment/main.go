@@ -85,18 +85,18 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	if err != nil {
 		panic(err)
 	}
-	inter := mixInLength(merkleRoot, historicalRootsOutput)
-	fieldRoots[6] = inter[:]
+	mixedLen := mixInLength(merkleRoot, historicalRootsOutput)
+	fieldRoots[6] = mixedLen[:]
 
 	// Handle the eth1 data:
-	inter = eth1Root(state.Eth1Data)
-	fieldRoots[7] = inter[:]
+	eth1HashTreeRoot := eth1Root(state.Eth1Data)
+	fieldRoots[7] = eth1HashTreeRoot[:]
 
 	// Handle eth1 data votes:
 	eth1VotesRoots := make([][]byte, 0)
 	for i := 0; i < len(state.Eth1DataVotes); i++ {
-		inter = eth1Root(state.Eth1DataVotes[i])
-		eth1VotesRoots = append(eth1VotesRoots, inter[:])
+		eth1 := eth1Root(state.Eth1DataVotes[i])
+		eth1VotesRoots = append(eth1VotesRoots, eth1[:])
 	}
 	eth1VotesRootsRoot, err := bitwiseMerkleize(eth1VotesRoots, uint64(len(eth1VotesRoots)), uint64(1024))
 	if err != nil {
@@ -107,14 +107,14 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	// Handle eth1 deposit index:
 	eth1DepositIndexBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(eth1DepositIndexBuf, state.Eth1DepositIndex)
-	inter = bytesutil.ToBytes32(eth1DepositIndexBuf)
-	fieldRoots[9] = inter[:]
+	eth1DepositBuf := bytesutil.ToBytes32(eth1DepositIndexBuf)
+	fieldRoots[9] = eth1DepositBuf[:]
 
 	// Handle the validator registry:
 	validatorsRoots := make([][]byte, 0)
 	for i := 0; i < len(state.Validators); i++ {
-		inter = validatorRoot(state.Validators[i])
-		validatorsRoots = append(validatorsRoots, inter[:])
+		val := validatorRoot(state.Validators[i])
+		validatorsRoots = append(validatorsRoots, val[:])
 	}
 	validatorsRootsRoot, err := bitwiseMerkleize(validatorsRoots, uint64(len(validatorsRoots)), uint64(1099511627776))
 	if err != nil {
@@ -127,8 +127,8 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	for i := 0; i < len(state.Balances); i++ {
 		balanceBuf := make([]byte, 8)
 		binary.LittleEndian.PutUint64(balanceBuf, state.Balances[i])
-		inter = bytesutil.ToBytes32(balanceBuf)
-		balancesRoots = append(balancesRoots, inter[:])
+		bal := bytesutil.ToBytes32(balanceBuf)
+		balancesRoots = append(balancesRoots, bal[:])
 	}
 	balancesRootsRoot, err := bitwiseMerkleize(balancesRoots, uint64(len(balancesRoots)), uint64(1099511627776))
 	if err != nil {
@@ -137,15 +137,15 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	fieldRoots[11] = balancesRootsRoot[:]
 
 	// Handle the randao mixes:
-	inter = merkleize(state.RandaoMixes)
-	fieldRoots[12] = inter[:]
+	randaoRoots := merkleize(state.RandaoMixes)
+	fieldRoots[12] = randaoRoots[:]
 
 	// Handle the slashings:
 	slashingRoots := make([][]byte, 8192)
 	for i := 0; i < len(slashingRoots); i++ {
 		slashingRoot := make([]byte, 8)
 		binary.LittleEndian.PutUint64(slashingRoot, state.Slashings[i])
-		inter = bytesutil.ToBytes32(slashingRoot)
+		inter := bytesutil.ToBytes32(slashingRoot)
 		slashingRoots[i] = inter[:]
 	}
 	slashingRootsRoot, err := bitwiseMerkleize(slashingRoots, uint64(len(slashingRoots)), uint64(len(slashingRoots)))
@@ -163,14 +163,14 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	copy(prevAttsLenRoot, prevAttsLenBuf.Bytes())
 	prevAttsRoots := make([][]byte, 0)
 	for i := 0; i < len(state.PreviousEpochAttestations); i++ {
-		inter = pendingAttestationRoot(state.PreviousEpochAttestations[i])
+		inter := pendingAttestationRoot(state.PreviousEpochAttestations[i])
 		prevAttsRoots = append(prevAttsRoots, inter[:])
 	}
 	prevAttsRootsRoot, err := bitwiseMerkleize(prevAttsRoots, uint64(len(prevAttsRoots)), 4096)
 	if err != nil {
 		panic(err)
 	}
-	inter = mixInLength(prevAttsRootsRoot, prevAttsLenRoot)
+	inter := mixInLength(prevAttsRootsRoot, prevAttsLenRoot)
 	fieldRoots[14] = inter[:]
 
 	// Handle the current epoch attestations 15:
