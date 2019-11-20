@@ -4,10 +4,15 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"time"
 
 	"github.com/minio/sha256-simd"
 	"github.com/protolambda/zssz/htr"
 	"github.com/protolambda/zssz/merkle"
+	"github.com/prysmaticlabs/go-ssz"
 	pb "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 	ethpb "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
 	"github.com/prysmaticlabs/prysm/shared/bytesutil"
@@ -16,21 +21,43 @@ import (
 const BytesPerChunk = 32
 
 func main() {
+	enc, err := ioutil.ReadFile("genesis.ssz")
+	if err != nil {
+		panic(err)
+	}
+	st := &pb.BeaconState{}
+	if err := ssz.Unmarshal(enc, st); err != nil {
+		panic(err)
+	}
 
+	start := time.Now()
+	//r1, err := ssz.HashTreeRoot(st)
+	//if err != nil {
+	//	panic(err)
+	//}
+	end := time.Now()
+	//log.Printf("Root %#x, took %v", r1, end.Sub(start))
+	//
+	start = time.Now()
+	r2 := stateRoot(st)
+	end = time.Now()
+	log.Printf("Fast root %#x, took %v", r2, end.Sub(start))
 }
 
-func stateRoot(state *pb.BeaconState) {
+func stateRoot(state *pb.BeaconState) [32]byte {
 	// There are 20 fields in the beacon state.
-	fieldRoots := [20][32]byte{}
+	fieldRoots := make([][]byte, 20)
 
 	// Do the genesis time:
 	genesisBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(genesisBuf, state.GenesisTime)
-	fieldRoots[0] = bytesutil.ToBytes32(genesisBuf)
+	genesisBufRoot := bytesutil.ToBytes32(genesisBuf)
+	fieldRoots[0] = genesisBufRoot[:]
 	// Do the slot:
 	slotBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(slotBuf, state.Slot)
-	fieldRoots[1] = bytesutil.ToBytes32(slotBuf)
+	slotBufRoot := bytesutil.ToBytes32(slotBuf)
+	fieldRoots[1] = slotBufRoot[:]
 
 	// Handle the fork data:
 	forkRoots := make([][]byte, 3)
@@ -46,7 +73,7 @@ func stateRoot(state *pb.BeaconState) {
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[2] = forkRoot
+	fieldRoots[2] = forkRoot[:]
 
 	// Handle the beacon block header:
 	blockHeaderRoots := make([][]byte, 5)
@@ -56,7 +83,7 @@ func stateRoot(state *pb.BeaconState) {
 	blockHeaderRoots[0] = inter[:]
 	blockHeaderRoots[1] = state.LatestBlockHeader.ParentRoot
 	blockHeaderRoots[2] = state.LatestBlockHeader.StateRoot
-	blockHeaderRoots[4] = state.LatestBlockHeader.BodyRoot
+	blockHeaderRoots[3] = state.LatestBlockHeader.BodyRoot
 	signatureChunks, err := pack([][]byte{state.LatestBlockHeader.Signature})
 	if err != nil {
 		panic(err)
@@ -65,17 +92,19 @@ func stateRoot(state *pb.BeaconState) {
 	if err != nil {
 		panic(err)
 	}
-	blockHeaderRoots[5] = sigRoot[:]
+	blockHeaderRoots[4] = sigRoot[:]
 	headerRoot, err := bitwiseMerkleize(blockHeaderRoots, 5, 5)
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[3] = headerRoot
+	fieldRoots[3] = headerRoot[:]
 
 	// Handle the block roots:
-	fieldRoots[4] = merkleize(state.BlockRoots)
+	inter = merkleize(state.BlockRoots)
+	fieldRoots[4] = inter[:]
 	// Handle the state roots:
-	fieldRoots[5] = merkleize(state.StateRoots)
+	inter = merkleize(state.StateRoots)
+	fieldRoots[5] = inter[:]
 
 	// Handle the historical roots:
 	historicalRootsBuf := new(bytes.Buffer)
@@ -88,28 +117,30 @@ func stateRoot(state *pb.BeaconState) {
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[6] = mixInLength(merkleRoot, historicalRootsOutput)
+	inter = mixInLength(merkleRoot, historicalRootsOutput)
+	fieldRoots[6] = inter[:]
 
 	// Handle the eth1 data:
-	fieldRoots[7] = eth1Root(state.Eth1Data)
+	inter = eth1Root(state.Eth1Data)
+	fieldRoots[7] = inter[:]
 
 	// Handle eth1 data votes:
-	eth1VotesRoots := make([][]byte, 1024)
-	for i := 0; i < len(eth1VotesRoots); i++ {
+	eth1VotesRoots := make([][]byte, 0)
+	for i := 0; i < len(state.Eth1DataVotes); i++ {
 		inter = eth1Root(state.Eth1DataVotes[i])
-		eth1VotesRoots[i] = inter[:]
+		eth1VotesRoots = append(eth1VotesRoots, inter[:])
 	}
-	eth1VotesRootsRoot, err := bitwiseMerkleize(eth1VotesRoots, uint64(len(eth1VotesRoots)), uint64(len(eth1VotesRoots)))
+	eth1VotesRootsRoot, err := bitwiseMerkleize(eth1VotesRoots, uint64(len(eth1VotesRoots)), uint64(1024))
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[8] = eth1VotesRootsRoot
+	fieldRoots[8] = eth1VotesRootsRoot[:]
 
 	// Handle eth1 deposit index:
 	eth1DepositIndexBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(eth1DepositIndexBuf, state.Eth1DepositIndex)
 	inter = bytesutil.ToBytes32(eth1DepositIndexBuf)
-	fieldRoots[9] = inter
+	fieldRoots[9] = inter[:]
 
 	// Handle the validator registry:
 	validatorsRoots := make([][]byte, 0)
@@ -121,7 +152,7 @@ func stateRoot(state *pb.BeaconState) {
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[10] = validatorsRootsRoot
+	fieldRoots[10] = validatorsRootsRoot[:]
 
 	// Handle the validator balances:
 	balancesRoots := make([][]byte, 0)
@@ -135,10 +166,11 @@ func stateRoot(state *pb.BeaconState) {
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[11] = balancesRootsRoot
+	fieldRoots[11] = balancesRootsRoot[:]
 
 	// Handle the randao mixes:
-	fieldRoots[12] = merkleize(state.RandaoMixes)
+	inter = merkleize(state.RandaoMixes)
+	fieldRoots[12] = inter[:]
 
 	// Handle the slashings:
 	slashingRoots := make([][]byte, 8192)
@@ -152,7 +184,7 @@ func stateRoot(state *pb.BeaconState) {
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[13] = slashingRootsRoot
+	fieldRoots[13] = slashingRootsRoot[:]
 
 	// Handle the previous epoch attestations 14:
 	prevAttsLenBuf := new(bytes.Buffer)
@@ -170,7 +202,8 @@ func stateRoot(state *pb.BeaconState) {
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[14] = mixInLength(prevAttsRootsRoot, prevAttsLenRoot)
+	inter = mixInLength(prevAttsRootsRoot, prevAttsLenRoot)
+	fieldRoots[14] = inter[:]
 
 	// Handle the current epoch attestations 15:
 	currAttsLenBuf := new(bytes.Buffer)
@@ -188,16 +221,32 @@ func stateRoot(state *pb.BeaconState) {
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[15] = mixInLength(currAttsRootsRoot, currAttsLenRoot)
+	inter = mixInLength(currAttsRootsRoot, currAttsLenRoot)
+	fieldRoots[15] = inter[:]
 
 	// Handle the justification bits 16:
+	inter = bytesutil.ToBytes32(state.JustificationBits)
+	fieldRoots[16] = inter[:]
 
 	// Handle the previous justified checkpoint 17:
-	fieldRoots[17] = checkpointRoot(state.PreviousJustifiedCheckpoint)
+	inter = checkpointRoot(state.PreviousJustifiedCheckpoint)
+	fieldRoots[17] = inter[:]
 	// Handle the current justified checkpoint 18:
-	fieldRoots[18] = checkpointRoot(state.CurrentJustifiedCheckpoint)
+	inter = checkpointRoot(state.CurrentJustifiedCheckpoint)
+	fieldRoots[18] = inter[:]
 	// Handle the finalized checkpoint 19:
-	fieldRoots[19] = checkpointRoot(state.FinalizedCheckpoint)
+	inter = checkpointRoot(state.FinalizedCheckpoint)
+	fieldRoots[19] = inter[:]
+
+	for i := 0; i < len(fieldRoots); i++ {
+		fmt.Printf("%#x and %d\n", fieldRoots[i], i)
+	}
+
+	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
+	if err != nil {
+		panic(err)
+	}
+	return root
 }
 
 func attestationDataRoot(data *ethpb.AttestationData) [32]byte {
