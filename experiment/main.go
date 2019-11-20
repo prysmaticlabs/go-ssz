@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 
@@ -10,6 +11,8 @@ import (
 	pb "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 	"github.com/prysmaticlabs/prysm/shared/bytesutil"
 )
+
+const BytesPerChunk = 32
 
 func main() {
 
@@ -45,6 +48,28 @@ func stateRoot(state *pb.BeaconState) {
 	fieldRoots[2] = forkRoot
 
 	// Handle the beacon block header:
+	blockHeaderRoots := make([][]byte, 5)
+	headerSlotBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(headerSlotBuf, state.LatestBlockHeader.Slot)
+	inter = bytesutil.ToBytes32(headerSlotBuf)
+	blockHeaderRoots[0] = inter[:]
+	blockHeaderRoots[1] = state.LatestBlockHeader.ParentRoot
+	blockHeaderRoots[2] = state.LatestBlockHeader.StateRoot
+	blockHeaderRoots[4] = state.LatestBlockHeader.BodyRoot
+	signatureChunks, err := pack([][]byte{state.LatestBlockHeader.Signature})
+	if err != nil {
+		panic(err)
+	}
+	sigRoot, err := bitwiseMerkleize(signatureChunks, uint64(len(signatureChunks)), uint64(len(signatureChunks)))
+	if err != nil {
+		panic(err)
+	}
+	blockHeaderRoots[5] = sigRoot[:]
+	headerRoot, err := bitwiseMerkleize(blockHeaderRoots, 5, 5)
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[3] = headerRoot
 }
 
 // Given ordered BYTES_PER_CHUNK-byte chunks, if necessary utilize zero chunks so that the
@@ -65,4 +90,48 @@ func bitwiseMerkleize(chunks [][]byte, count uint64, limit uint64) ([32]byte, er
 // hash defines a function that returns the sha256 hash of the data passed in.
 func hash(data []byte) [32]byte {
 	return sha256.Sum256(data)
+}
+
+func pack(serializedItems [][]byte) ([][]byte, error) {
+	areAllEmpty := true
+	for _, item := range serializedItems {
+		if !bytes.Equal(item, []byte{}) {
+			areAllEmpty = false
+			break
+		}
+	}
+	// If there are no items, we return an empty chunk.
+	if len(serializedItems) == 0 || areAllEmpty {
+		emptyChunk := make([]byte, BytesPerChunk)
+		return [][]byte{emptyChunk}, nil
+	} else if len(serializedItems[0]) == BytesPerChunk {
+		// If each item has exactly BYTES_PER_CHUNK length, we return the list of serialized items.
+		return serializedItems, nil
+	}
+	// We flatten the list in order to pack its items into byte chunks correctly.
+	orderedItems := []byte{}
+	for _, item := range serializedItems {
+		orderedItems = append(orderedItems, item...)
+	}
+	numItems := len(orderedItems)
+	chunks := [][]byte{}
+	for i := 0; i < numItems; i += BytesPerChunk {
+		j := i + BytesPerChunk
+		// We create our upper bound index of the chunk, if it is greater than numItems,
+		// we set it as numItems itself.
+		if j > numItems {
+			j = numItems
+		}
+		// We create chunks from the list of items based on the
+		// indices determined above.
+		chunks = append(chunks, orderedItems[i:j])
+	}
+	// Right-pad the last chunk with zero bytes if it does not
+	// have length BytesPerChunk.
+	lastChunk := chunks[len(chunks)-1]
+	for len(lastChunk) < BytesPerChunk {
+		lastChunk = append(lastChunk, 0)
+	}
+	chunks[len(chunks)-1] = lastChunk
+	return chunks, nil
 }
