@@ -1,27 +1,30 @@
 package types
 
 import (
+	"github.com/dgraph-io/ristretto"
+	"github.com/minio/highwayhash"
 	"reflect"
 	"sync"
-	"time"
-
-	"github.com/karlseguin/ccache"
-	"github.com/minio/highwayhash"
 )
 
 // BasicArraySizeCache for HashTreeRoot.
-const BasicArraySizeCache = 100000
+const BasicArraySizeCache = 1e6
 
 var fastSumHashKey = toBytes32([]byte("hash_fast_sum64_key"))
 
 type basicArraySSZ struct {
-	hashCache *ccache.Cache
+	hashCache *ristretto.Cache
 	lock      sync.Mutex
 }
 
 func newBasicArraySSZ() *basicArraySSZ {
+	cache, _ := ristretto.NewCache(&ristretto.Config{
+		NumCounters: BasicArraySizeCache, // number of keys to track frequency of (1M).
+		MaxCost:     1 << 28,             // maximum cost of cache (10MB).
+		BufferItems: 64,                  // number of keys per Get buffer.
+	})
 	return &basicArraySSZ{
-		hashCache: ccache.New(ccache.Configure().MaxSize(BasicArraySizeCache)),
+		hashCache: cache,
 	}
 }
 
@@ -50,11 +53,9 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	}
 	hashKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
 	if enableCache && hashKey != emptyKey {
-		b.lock.Lock()
-		res := b.hashCache.Get(string(hashKey[:]))
-		b.lock.Unlock()
-		if res != nil && res.Value() != nil {
-			return res.Value().([32]byte), nil
+		res, ok := b.hashCache.Get(string(hashKey[:]))
+		if res != nil && ok {
+			return res.([32]byte), nil
 		}
 	}
 	chunks, err := pack(leaves)
@@ -66,9 +67,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		return [32]byte{}, err
 	}
 	if enableCache && hashKey != emptyKey {
-		b.lock.Lock()
-		b.hashCache.Set(string(hashKey[:]), root, time.Hour)
-		b.lock.Unlock()
+		b.hashCache.Set(string(hashKey[:]), root, 0)
 	}
 	return root, nil
 }

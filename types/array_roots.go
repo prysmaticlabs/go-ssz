@@ -3,28 +3,31 @@ package types
 import (
 	"bytes"
 	"fmt"
-	"reflect"
-	"sync"
-	"time"
-
-	"github.com/karlseguin/ccache"
+	"github.com/dgraph-io/ristretto"
 	"github.com/minio/highwayhash"
 	"github.com/protolambda/zssz/merkle"
+	"reflect"
+	"sync"
 )
 
 // RootsArraySizeCache for hash tree root.
-const RootsArraySizeCache = 100000
+const RootsArraySizeCache = 1e6
 
 type rootsArraySSZ struct {
-	hashCache    *ccache.Cache
+	hashCache    *ristretto.Cache
 	lock         sync.Mutex
 	cachedLeaves map[string][][]byte
 	layers       map[string][][][]byte
 }
 
 func newRootsArraySSZ() *rootsArraySSZ {
+	cache, _ := ristretto.NewCache(&ristretto.Config{
+		NumCounters: RootsArraySizeCache, // number of keys to track frequency of (1M).
+		MaxCost:     1 << 28,             // maximum cost of cache (10MB).
+		BufferItems: 64,                  // number of keys per Get buffer.
+	})
 	return &rootsArraySSZ{
-		hashCache:    ccache.New(ccache.Configure().MaxSize(RootsArraySizeCache)),
+		hashCache:    cache,
 		cachedLeaves: make(map[string][][]byte),
 		layers:       make(map[string][][][]byte),
 	}
@@ -84,11 +87,9 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 	}
 	hashKey := highwayhash.Sum(hashKeyElements, fastSumHashKey[:])
 	if enableCache && hashKey != emptyKey {
-		a.lock.Lock()
-		res := a.hashCache.Get(string(hashKey[:]))
-		a.lock.Unlock()
-		if res != nil && res.Value() != nil {
-			return res.Value().([32]byte), nil
+		res, ok := a.hashCache.Get(string(hashKey[:]))
+		if res != nil && ok {
+			return res.([32]byte), nil
 		}
 	}
 	root := a.merkleize(chunks, fieldName)
@@ -96,9 +97,7 @@ func (a *rootsArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		a.cachedLeaves[fieldName] = leaves
 	}
 	if enableCache && hashKey != emptyKey {
-		a.lock.Lock()
-		a.hashCache.Set(string(hashKey[:]), root, time.Hour)
-		a.lock.Unlock()
+		a.hashCache.Set(string(hashKey[:]), root, 0)
 	}
 	return root, nil
 }

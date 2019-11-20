@@ -3,24 +3,27 @@ package types
 import (
 	"encoding/binary"
 	"fmt"
+	"github.com/dgraph-io/ristretto"
 	"reflect"
 	"sync"
-	"time"
-
-	"github.com/karlseguin/ccache"
 )
 
 // BasicTypeCacheSize for HashTreeRoot.
-const BasicTypeCacheSize = 100000
+const BasicTypeCacheSize = 1e6
 
 type basicSSZ struct {
-	hashCache *ccache.Cache
+	hashCache *ristretto.Cache
 	lock      sync.Mutex
 }
 
 func newBasicSSZ() *basicSSZ {
+	cache, _ := ristretto.NewCache(&ristretto.Config{
+		NumCounters: BasicTypeCacheSize, // number of keys to track frequency of (1M).
+		MaxCost:     1 << 28,            // maximum cost of cache (10MB).
+		BufferItems: 64,                 // number of keys per Get buffer.
+	})
 	return &basicSSZ{
-		hashCache: ccache.New(ccache.Configure().MaxSize(BasicTypeCacheSize)),
+		hashCache: cache,
 	}
 }
 
@@ -90,11 +93,9 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, m
 		return [32]byte{}, err
 	}
 	hashKey = string(buf)
-	b.lock.Lock()
-	res := b.hashCache.Get(string(hashKey))
-	b.lock.Unlock()
-	if res != nil && res.Value() != nil {
-		return res.Value().([32]byte), nil
+	res, ok := b.hashCache.Get(string(hashKey))
+	if res != nil && ok {
+		return res.([32]byte), nil
 	}
 
 	// In order to find the root of a basic type, we simply marshal it,
@@ -108,9 +109,7 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, m
 	if err != nil {
 		return [32]byte{}, err
 	}
-	b.lock.Lock()
-	b.hashCache.Set(string(hashKey), root, time.Hour)
-	b.lock.Unlock()
+	b.hashCache.Set(string(hashKey), root, 0)
 	return root, nil
 }
 
