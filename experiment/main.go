@@ -9,6 +9,7 @@ import (
 	"github.com/protolambda/zssz/htr"
 	"github.com/protolambda/zssz/merkle"
 	pb "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
+	ethpb "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
 	"github.com/prysmaticlabs/prysm/shared/bytesutil"
 )
 
@@ -19,8 +20,8 @@ func main() {
 }
 
 func stateRoot(state *pb.BeaconState) {
-	// There are 20 fields in the beacon state.
-	fieldRoots := [20][32]byte{}
+	// There are 21 fields in the beacon state.
+	fieldRoots := [21][32]byte{}
 
 	// Do the genesis time:
 	genesisBuf := make([]byte, 8)
@@ -90,18 +91,7 @@ func stateRoot(state *pb.BeaconState) {
 	fieldRoots[6] = mixInLength(merkleRoot, historicalRootsOutput)
 
 	// Handle the eth1 data:
-	eth1DataRoots := make([][]byte, 3)
-	eth1DataRoots[0] = state.Eth1Data.DepositRoot
-	eth1DataCountBuf := make([]byte, 8)
-	binary.LittleEndian.PutUint64(eth1DataCountBuf, state.Eth1Data.DepositCount)
-	inter = bytesutil.ToBytes32(eth1DataCountBuf)
-	eth1DataRoots[1] = inter[:]
-	eth1DataRoots[2] = state.Eth1Data.BlockHash
-	eth1DataRoot, err := bitwiseMerkleize(eth1DataRoots, 3, 3)
-	if err != nil {
-		panic(err)
-	}
-	fieldRoots[7] = eth1DataRoot
+	fieldRoots[7] = eth1Root(state.Eth1Data)
 
 	// Handle eth1 data votes:
 
@@ -128,9 +118,49 @@ func stateRoot(state *pb.BeaconState) {
 	}
 	slashingRootsRoot, err := bitwiseMerkleize(slashingRoots, uint64(len(slashingRoots)), uint64(len(slashingRoots)))
 	if err != nil {
-		return [32]byte{}, err
+		panic(err)
 	}
 	fieldRoots[13] = slashingRootsRoot
+
+	// Handle the previous epoch attestations 14:
+	// Handle the current epoch attestations 15:
+	// Handle the justification bits 17:
+
+	// Handle the previous justified checkpoint 18:
+	fieldRoots[18] = checkpointRoot(state.PreviousJustifiedCheckpoint)
+	// Handle the current justified checkpoint 19:
+	fieldRoots[19] = checkpointRoot(state.CurrentJustifiedCheckpoint)
+	// Handle the finalized checkpoint 20:
+	fieldRoots[20] = checkpointRoot(state.FinalizedCheckpoint)
+}
+
+func eth1Root(eth1Data *ethpb.Eth1Data) [32]byte {
+	fieldRoots := make([][]byte, 3)
+	fieldRoots[0] = eth1Data.DepositRoot
+	eth1DataCountBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(eth1DataCountBuf, eth1Data.DepositCount)
+	inter := bytesutil.ToBytes32(eth1DataCountBuf)
+	fieldRoots[1] = inter[:]
+	fieldRoots[2] = eth1Data.BlockHash
+	eth1DataRoot, err := bitwiseMerkleize(fieldRoots, 3, 3)
+	if err != nil {
+		panic(err)
+	}
+	return eth1DataRoot
+}
+
+func checkpointRoot(checkpoint *ethpb.Checkpoint) [32]byte {
+	fieldRoots := make([][]byte, 2)
+	epochBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(epochBuf, checkpoint.Epoch)
+	inter := bytesutil.ToBytes32(epochBuf)
+	fieldRoots[0] = inter[:]
+	fieldRoots[1] = checkpoint.Root
+	checkpointRoot, err := bitwiseMerkleize(fieldRoots, 2, 2)
+	if err != nil {
+		panic(err)
+	}
+	return checkpointRoot
 }
 
 // Given ordered BYTES_PER_CHUNK-byte chunks, if necessary utilize zero chunks so that the
