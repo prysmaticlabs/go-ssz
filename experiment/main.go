@@ -90,7 +90,47 @@ func stateRoot(state *pb.BeaconState) {
 	fieldRoots[6] = mixInLength(merkleRoot, historicalRootsOutput)
 
 	// Handle the eth1 data:
+	eth1DataRoots := make([][]byte, 3)
+	eth1DataRoots[0] = state.Eth1Data.DepositRoot
+	eth1DataCountBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(eth1DataCountBuf, state.Eth1Data.DepositCount)
+	inter = bytesutil.ToBytes32(eth1DataCountBuf)
+	eth1DataRoots[1] = inter[:]
+	eth1DataRoots[2] = state.Eth1Data.BlockHash
+	eth1DataRoot, err := bitwiseMerkleize(eth1DataRoots, 3, 3)
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[7] = eth1DataRoot
 
+	// Handle eth1 data votes:
+
+	// Handle eth1 deposit index:
+	eth1DepositIndexBuf := make([]byte, 8)
+	binary.LittleEndian.PutUint64(eth1DepositIndexBuf, state.Eth1DepositIndex)
+	inter = bytesutil.ToBytes32(eth1DepositIndexBuf)
+	fieldRoots[9] = inter
+
+	// Handle the validator registry:
+
+	// Handle the validator balances:
+
+	// Handle the randao mixes:
+	fieldRoots[12] = merkleize(state.RandaoMixes)
+
+	// Handle the slashings:
+	slashingRoots := make([][]byte, 8192)
+	for i := 0; i < len(slashingRoots); i++ {
+		slashingRoot := make([]byte, 8)
+		binary.LittleEndian.PutUint64(slashingRoot, state.Slashings[i])
+		inter = bytesutil.ToBytes32(slashingRoot)
+		slashingRoots[i] = inter[:]
+	}
+	slashingRootsRoot, err := bitwiseMerkleize(slashingRoots, uint64(len(slashingRoots)), uint64(len(slashingRoots)))
+	if err != nil {
+		return [32]byte{}, err
+	}
+	fieldRoots[13] = slashingRootsRoot
 }
 
 // Given ordered BYTES_PER_CHUNK-byte chunks, if necessary utilize zero chunks so that the
