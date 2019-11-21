@@ -20,7 +20,7 @@ type basicArraySSZ struct {
 
 func newBasicArraySSZ() *basicArraySSZ {
 	cache, _ := ristretto.NewCache(&ristretto.Config{
-		NumCounters: BasicArraySizeCache, // number of keys to track frequency of (1M).
+		NumCounters: BasicArraySizeCache, // number of keys to track.
 		MaxCost:     1 << 23,             // maximum cost of cache (10MB).
 		BufferItems: 64,                  // number of keys per Get buffer.
 	})
