@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/binary"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -39,6 +40,7 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 	var err error
 	totalCountedFields := uint64(0)
 	structName := typ.Name()
+	isState := strings.Contains(structName, "BeaconState")
 	for i := 0; i < numFields; i++ {
 		// We skip protobuf related metadata fields.
 		if strings.HasPrefix(typ.Field(i).Name, "XXX_") {
@@ -67,6 +69,9 @@ func (b *structSSZ) FieldsHasher(val reflect.Value, typ reflect.Type, numFields 
 			return [32]byte{}, err
 		}
 		roots[i] = r[:]
+		if isState {
+			fmt.Printf("%#x and %s and %d\n", r, typ.Field(i).Name, i)
+		}
 	}
 	root, err := bitwiseMerkleize(roots, totalCountedFields, totalCountedFields)
 	if err != nil {

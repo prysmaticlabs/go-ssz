@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 
 	"github.com/minio/sha256-simd"
 	"github.com/protolambda/zssz/htr"
@@ -214,6 +215,11 @@ func StateRoot(state *pb.BeaconState) [32]byte {
 	// Handle the finalized checkpoint 19:
 	finalRoot := checkpointRoot(state.FinalizedCheckpoint)
 	fieldRoots[19] = finalRoot[:]
+
+	for i := 0; i < len(fieldRoots); i++ {
+		fmt.Printf("%#x and %d\n", fieldRoots[i], i)
+	}
+	fmt.Println("------****** DONE DONE")
 
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
