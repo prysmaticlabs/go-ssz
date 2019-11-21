@@ -206,11 +206,6 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
 						rt := experiment.StateRoot(dec)
-						rt2, _ := ssz.HashTreeRoot(dec)
-						if rt2 != rt {
-							t.Errorf("Old %#x, new %#x", rt2, rt)
-
-						}
 						if fmt.Sprintf("%#x", rt) != cont.Root {
 							t.Fatalf("Wanted root %#x, got %#x", cont.Root, rt)
 						}

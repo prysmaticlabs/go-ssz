@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
 
 	"github.com/minio/sha256-simd"
 	"github.com/protolambda/zssz/htr"
@@ -216,11 +215,6 @@ func StateRoot(state *pb.BeaconState) [32]byte {
 	finalRoot := checkpointRoot(state.FinalizedCheckpoint)
 	fieldRoots[19] = finalRoot[:]
 
-	for i := 0; i < len(fieldRoots); i++ {
-		fmt.Printf("%#x and %d\n", fieldRoots[i], i)
-	}
-	fmt.Println("------****** DONE DONE")
-
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
 		panic(err)
@@ -230,14 +224,14 @@ func StateRoot(state *pb.BeaconState) [32]byte {
 
 func forkRoot(fork *pb.Fork) [32]byte {
 	fieldRoots := make([][]byte, 3)
-	inter := toBytes32(fork.PreviousVersion)
-	fieldRoots[0] = inter[:]
-	inter = toBytes32(fork.CurrentVersion)
-	fieldRoots[1] = inter[:]
+	prevRoot := toBytes32(fork.PreviousVersion)
+	fieldRoots[0] = prevRoot[:]
+	currRoot := toBytes32(fork.CurrentVersion)
+	fieldRoots[1] = currRoot[:]
 	forkEpochBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(forkEpochBuf, fork.Epoch)
-	inter = toBytes32(forkEpochBuf)
-	fieldRoots[2] = inter[:]
+	epochRoot := toBytes32(forkEpochBuf)
+	fieldRoots[2] = epochRoot[:]
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
 		panic(err)
@@ -276,25 +270,25 @@ func attestationDataRoot(data *ethpb.AttestationData) [32]byte {
 	// Slot.
 	slotBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(slotBuf, data.Slot)
-	inter := toBytes32(slotBuf)
-	fieldRoots[0] = inter[:]
+	slotRoot := toBytes32(slotBuf)
+	fieldRoots[0] = slotRoot[:]
 
 	// Index.
 	indexBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(indexBuf, data.Index)
-	inter = toBytes32(indexBuf)
-	fieldRoots[1] = inter[:]
+	interRoot := toBytes32(indexBuf)
+	fieldRoots[1] = interRoot[:]
 
 	// Beacon block root.
 	fieldRoots[2] = data.BeaconBlockRoot
 
 	// Source
-	inter = checkpointRoot(data.Source)
-	fieldRoots[3] = inter[:]
+	sourceRoot := checkpointRoot(data.Source)
+	fieldRoots[3] = sourceRoot[:]
 
 	// Target
-	inter = checkpointRoot(data.Target)
-	fieldRoots[4] = inter[:]
+	targetRoot := checkpointRoot(data.Target)
+	fieldRoots[4] = targetRoot[:]
 
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
@@ -405,8 +399,8 @@ func eth1Root(eth1Data *ethpb.Eth1Data) [32]byte {
 	fieldRoots[0] = eth1Data.DepositRoot
 	eth1DataCountBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(eth1DataCountBuf, eth1Data.DepositCount)
-	inter := toBytes32(eth1DataCountBuf)
-	fieldRoots[1] = inter[:]
+	eth1CountRoot := toBytes32(eth1DataCountBuf)
+	fieldRoots[1] = eth1CountRoot[:]
 	fieldRoots[2] = eth1Data.BlockHash
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
@@ -419,8 +413,8 @@ func checkpointRoot(checkpoint *ethpb.Checkpoint) [32]byte {
 	fieldRoots := make([][]byte, 2)
 	epochBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(epochBuf, checkpoint.Epoch)
-	inter := toBytes32(epochBuf)
-	fieldRoots[0] = inter[:]
+	epochRoot := toBytes32(epochBuf)
+	fieldRoots[0] = epochRoot[:]
 	fieldRoots[1] = checkpoint.Root
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
