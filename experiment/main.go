@@ -6,12 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
-	"time"
 
 	"github.com/minio/sha256-simd"
 	"github.com/protolambda/zssz/htr"
 	"github.com/protolambda/zssz/merkle"
+	"github.com/prysmaticlabs/go-bitfield"
 	"github.com/prysmaticlabs/go-ssz"
 	pb "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 	ethpb "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
@@ -30,18 +29,10 @@ func main() {
 		panic(err)
 	}
 
-	start := time.Now()
-	//r1, err := ssz.HashTreeRoot(st)
-	//if err != nil {
-	//	panic(err)
-	//}
-	end := time.Now()
-	//log.Printf("Root %#x, took %v", r1, end.Sub(start))
-	//
-	start = time.Now()
 	r2 := stateRoot(st)
-	end = time.Now()
-	log.Printf("Fast root %#x, took %v", r2, end.Sub(start))
+	if r1 == r2 {
+		fmt.Println("Done")
+	}
 }
 
 func stateRoot(state *pb.BeaconState) [32]byte {
@@ -102,7 +93,14 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[8] = eth1VotesRootsRoot[:]
+	eth1VotesRootBuf := new(bytes.Buffer)
+	if err := binary.Write(eth1VotesRootBuf, binary.LittleEndian, uint64(len(state.Eth1DataVotes))); err != nil {
+		panic(err)
+	}
+	eth1VotesRootBufRoot := make([]byte, 32)
+	copy(eth1VotesRootBufRoot, eth1VotesRootBuf.Bytes())
+	mixedEth1Root := mixInLength(eth1VotesRootsRoot, eth1VotesRootBufRoot)
+	fieldRoots[8] = mixedEth1Root[:]
 
 	// Handle eth1 deposit index:
 	eth1DepositIndexBuf := make([]byte, 8)
@@ -120,35 +118,65 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[10] = validatorsRootsRoot[:]
+	validatorsRootsBuf := new(bytes.Buffer)
+	if err := binary.Write(validatorsRootsBuf, binary.LittleEndian, uint64(len(state.Validators))); err != nil {
+		panic(err)
+	}
+	validatorsRootsBufRoot := make([]byte, 32)
+	copy(validatorsRootsBufRoot, validatorsRootsBuf.Bytes())
+	mixedValLen := mixInLength(validatorsRootsRoot, validatorsRootsBufRoot)
+	fieldRoots[10] = mixedValLen[:]
 
 	// Handle the validator balances:
-	balancesRoots := make([][]byte, 0)
+	balancesMarshaling := make([][]byte, 0)
 	for i := 0; i < len(state.Balances); i++ {
 		balanceBuf := make([]byte, 8)
 		binary.LittleEndian.PutUint64(balanceBuf, state.Balances[i])
-		bal := bytesutil.ToBytes32(balanceBuf)
-		balancesRoots = append(balancesRoots, bal[:])
+		balancesMarshaling = append(balancesMarshaling, balanceBuf)
 	}
-	balancesRootsRoot, err := bitwiseMerkleize(balancesRoots, uint64(len(balancesRoots)), uint64(1099511627776))
+	balancesChunks, err := pack(balancesMarshaling)
 	if err != nil {
 		panic(err)
 	}
-	fieldRoots[11] = balancesRootsRoot[:]
+	maxBalCap := uint64(1099511627776)
+	elemSize := uint64(8)
+	balLimit := (maxBalCap*elemSize + 31) / 32
+	if balLimit == 0 {
+		if len(state.Balances) == 0 {
+			balLimit = 1
+		} else {
+			balLimit = uint64(len(state.Balances))
+		}
+	}
+	balancesRootsRoot, err := bitwiseMerkleize(balancesChunks, uint64(len(balancesChunks)), balLimit)
+	if err != nil {
+		panic(err)
+	}
+	balancesRootsBuf := new(bytes.Buffer)
+	if err := binary.Write(balancesRootsBuf, binary.LittleEndian, uint64(len(state.Balances))); err != nil {
+		panic(err)
+	}
+	balancesRootsBufRoot := make([]byte, 32)
+	copy(balancesRootsBufRoot, balancesRootsBuf.Bytes())
+	mixedBalLen := mixInLength(balancesRootsRoot, balancesRootsBufRoot)
+	fieldRoots[11] = mixedBalLen[:]
 
 	// Handle the randao mixes:
 	randaoRoots := merkleize(state.RandaoMixes)
 	fieldRoots[12] = randaoRoots[:]
 
 	// Handle the slashings:
-	slashingRoots := make([][]byte, 8192)
-	for i := 0; i < len(slashingRoots); i++ {
-		slashingRoot := make([]byte, 8)
-		binary.LittleEndian.PutUint64(slashingRoot, state.Slashings[i])
-		inter := bytesutil.ToBytes32(slashingRoot)
-		slashingRoots[i] = inter[:]
+	slashingMarshaling := make([][]byte, 8192)
+	for i := 0; i < len(slashingMarshaling); i++ {
+		slashBuf := make([]byte, 8)
+		binary.LittleEndian.PutUint64(slashBuf, state.Slashings[i])
+		slashingMarshaling[i] = slashBuf
 	}
-	slashingRootsRoot, err := bitwiseMerkleize(slashingRoots, uint64(len(slashingRoots)), uint64(len(slashingRoots)))
+	slashingChunks, err := pack(slashingMarshaling)
+	if err != nil {
+		panic(err)
+	}
+	slashingRootsRoot, err := bitwiseMerkleize(slashingChunks, uint64(len(slashingChunks)), uint64(len(slashingChunks)))
 	if err != nil {
 		panic(err)
 	}
@@ -156,59 +184,55 @@ func stateRoot(state *pb.BeaconState) [32]byte {
 
 	// Handle the previous epoch attestations 14:
 	prevAttsLenBuf := new(bytes.Buffer)
-	if err := binary.Write(prevAttsLenBuf, binary.LittleEndian, uint64(4096)); err != nil {
+	if err := binary.Write(prevAttsLenBuf, binary.LittleEndian, uint64(len(state.PreviousEpochAttestations))); err != nil {
 		panic(err)
 	}
 	prevAttsLenRoot := make([]byte, 32)
 	copy(prevAttsLenRoot, prevAttsLenBuf.Bytes())
 	prevAttsRoots := make([][]byte, 0)
 	for i := 0; i < len(state.PreviousEpochAttestations); i++ {
-		inter := pendingAttestationRoot(state.PreviousEpochAttestations[i])
-		prevAttsRoots = append(prevAttsRoots, inter[:])
+		pendingPrevRoot := pendingAttestationRoot(state.PreviousEpochAttestations[i])
+		prevAttsRoots = append(prevAttsRoots, pendingPrevRoot[:])
 	}
 	prevAttsRootsRoot, err := bitwiseMerkleize(prevAttsRoots, uint64(len(prevAttsRoots)), 4096)
 	if err != nil {
 		panic(err)
 	}
-	inter := mixInLength(prevAttsRootsRoot, prevAttsLenRoot)
-	fieldRoots[14] = inter[:]
+	prevRoot := mixInLength(prevAttsRootsRoot, prevAttsLenRoot)
+	fieldRoots[14] = prevRoot[:]
 
 	// Handle the current epoch attestations 15:
 	currAttsLenBuf := new(bytes.Buffer)
-	if err := binary.Write(currAttsLenBuf, binary.LittleEndian, uint64(4096)); err != nil {
+	if err := binary.Write(currAttsLenBuf, binary.LittleEndian, uint64(len(state.CurrentEpochAttestations))); err != nil {
 		panic(err)
 	}
 	currAttsLenRoot := make([]byte, 32)
 	copy(currAttsLenRoot, currAttsLenBuf.Bytes())
 	currAttsRoots := make([][]byte, 0)
 	for i := 0; i < len(state.CurrentEpochAttestations); i++ {
-		inter = pendingAttestationRoot(state.CurrentEpochAttestations[i])
-		currAttsRoots = append(currAttsRoots, inter[:])
+		pendingRoot := pendingAttestationRoot(state.CurrentEpochAttestations[i])
+		currAttsRoots = append(currAttsRoots, pendingRoot[:])
 	}
 	currAttsRootsRoot, err := bitwiseMerkleize(currAttsRoots, uint64(len(currAttsRoots)), 4096)
 	if err != nil {
 		panic(err)
 	}
-	inter = mixInLength(currAttsRootsRoot, currAttsLenRoot)
-	fieldRoots[15] = inter[:]
+	currRoot := mixInLength(currAttsRootsRoot, currAttsLenRoot)
+	fieldRoots[15] = currRoot[:]
 
 	// Handle the justification bits 16:
-	inter = bytesutil.ToBytes32(state.JustificationBits)
-	fieldRoots[16] = inter[:]
+	justifiedBitsRoot := bytesutil.ToBytes32(state.JustificationBits)
+	fieldRoots[16] = justifiedBitsRoot[:]
 
 	// Handle the previous justified checkpoint 17:
-	inter = checkpointRoot(state.PreviousJustifiedCheckpoint)
-	fieldRoots[17] = inter[:]
+	prevCheckRoot := checkpointRoot(state.PreviousJustifiedCheckpoint)
+	fieldRoots[17] = prevCheckRoot[:]
 	// Handle the current justified checkpoint 18:
-	inter = checkpointRoot(state.CurrentJustifiedCheckpoint)
-	fieldRoots[18] = inter[:]
+	currJustRoot := checkpointRoot(state.CurrentJustifiedCheckpoint)
+	fieldRoots[18] = currJustRoot[:]
 	// Handle the finalized checkpoint 19:
-	inter = checkpointRoot(state.FinalizedCheckpoint)
-	fieldRoots[19] = inter[:]
-
-	for i := 0; i < len(fieldRoots); i++ {
-		fmt.Printf("%#x and %d\n", fieldRoots[i], i)
-	}
+	finalRoot := checkpointRoot(state.FinalizedCheckpoint)
+	fieldRoots[19] = finalRoot[:]
 
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
@@ -227,7 +251,7 @@ func forkRoot(fork *pb.Fork) [32]byte {
 	binary.LittleEndian.PutUint64(forkEpochBuf, fork.Epoch)
 	inter = bytesutil.ToBytes32(forkEpochBuf)
 	fieldRoots[2] = inter[:]
-	root, err := bitwiseMerkleize(fieldRoots, 3, 3)
+	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
 		panic(err)
 	}
@@ -252,7 +276,7 @@ func blockHeaderRoot(header *ethpb.BeaconBlockHeader) [32]byte {
 		panic(err)
 	}
 	fieldRoots[4] = sigRoot[:]
-	root, err := bitwiseMerkleize(fieldRoots, 5, 5)
+	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
 		panic(err)
 	}
@@ -285,7 +309,7 @@ func attestationDataRoot(data *ethpb.AttestationData) [32]byte {
 	inter = checkpointRoot(data.Target)
 	fieldRoots[4] = inter[:]
 
-	root, err := bitwiseMerkleize(fieldRoots, 5, 5)
+	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
 		panic(err)
 	}
@@ -296,24 +320,29 @@ func pendingAttestationRoot(att *pb.PendingAttestation) [32]byte {
 	fieldRoots := make([][]byte, 4)
 
 	// Bitfield.
+	aggregationRoot, err := bitlistRoot(att.AggregationBits, 2048)
+	if err != nil {
+		panic(err)
+	}
+	fieldRoots[0] = aggregationRoot[:]
 
 	// Attestation data.
-	inter := attestationDataRoot(att.Data)
-	fieldRoots[1] = inter[:]
+	attDataRoot := attestationDataRoot(att.Data)
+	fieldRoots[1] = attDataRoot[:]
 
 	// Inclusion delay.
 	inclusionBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(inclusionBuf, att.InclusionDelay)
-	inter = bytesutil.ToBytes32(inclusionBuf)
-	fieldRoots[2] = inter[:]
+	inclusionRoot := bytesutil.ToBytes32(inclusionBuf)
+	fieldRoots[2] = inclusionRoot[:]
 
 	// Proposer index.
 	proposerBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(proposerBuf, att.ProposerIndex)
-	inter = bytesutil.ToBytes32(proposerBuf)
-	fieldRoots[3] = inter[:]
+	proposerRoot := bytesutil.ToBytes32(proposerBuf)
+	fieldRoots[3] = proposerRoot[:]
 
-	root, err := bitwiseMerkleize(fieldRoots, 4, 4)
+	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
 		panic(err)
 	}
@@ -340,8 +369,8 @@ func validatorRoot(validator *ethpb.Validator) [32]byte {
 	// Effective balance.
 	effectiveBalanceBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(effectiveBalanceBuf, validator.EffectiveBalance)
-	inter := bytesutil.ToBytes32(effectiveBalanceBuf)
-	fieldRoots[2] = inter[:]
+	effBalRoot := bytesutil.ToBytes32(effectiveBalanceBuf)
+	fieldRoots[2] = effBalRoot[:]
 
 	// Slashed.
 	slashBuf := make([]byte, 1)
@@ -350,34 +379,34 @@ func validatorRoot(validator *ethpb.Validator) [32]byte {
 	} else {
 		slashBuf[0] = uint8(0)
 	}
-	inter = bytesutil.ToBytes32(slashBuf)
-	fieldRoots[3] = inter[:]
+	slashBufRoot := bytesutil.ToBytes32(slashBuf)
+	fieldRoots[3] = slashBufRoot[:]
 
 	// Activation eligibility epoch.
 	activationEligibilityBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(activationEligibilityBuf, validator.ActivationEligibilityEpoch)
-	inter = bytesutil.ToBytes32(activationEligibilityBuf)
-	fieldRoots[4] = inter[:]
+	activationEligibilityRoot := bytesutil.ToBytes32(activationEligibilityBuf)
+	fieldRoots[4] = activationEligibilityRoot[:]
 
 	// Activation epoch.
 	activationBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(activationBuf, validator.ActivationEpoch)
-	inter = bytesutil.ToBytes32(activationBuf)
-	fieldRoots[5] = inter[:]
+	activationRoot := bytesutil.ToBytes32(activationBuf)
+	fieldRoots[5] = activationRoot[:]
 
 	// Exit epoch.
 	exitBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(exitBuf, validator.ExitEpoch)
-	inter = bytesutil.ToBytes32(exitBuf)
-	fieldRoots[6] = inter[:]
+	exitBufRoot := bytesutil.ToBytes32(exitBuf)
+	fieldRoots[6] = exitBufRoot[:]
 
 	// Withdrawable epoch.
 	withdrawalBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(withdrawalBuf, validator.WithdrawableEpoch)
-	inter = bytesutil.ToBytes32(withdrawalBuf)
-	fieldRoots[7] = inter[:]
+	withdrawalBufRoot := bytesutil.ToBytes32(withdrawalBuf)
+	fieldRoots[7] = withdrawalBufRoot[:]
 
-	root, err := bitwiseMerkleize(fieldRoots, 3, 3)
+	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
 		panic(err)
 	}
@@ -392,11 +421,11 @@ func eth1Root(eth1Data *ethpb.Eth1Data) [32]byte {
 	inter := bytesutil.ToBytes32(eth1DataCountBuf)
 	fieldRoots[1] = inter[:]
 	fieldRoots[2] = eth1Data.BlockHash
-	eth1DataRoot, err := bitwiseMerkleize(fieldRoots, 3, 3)
+	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
 		panic(err)
 	}
-	return eth1DataRoot
+	return root
 }
 
 func checkpointRoot(checkpoint *ethpb.Checkpoint) [32]byte {
@@ -406,11 +435,38 @@ func checkpointRoot(checkpoint *ethpb.Checkpoint) [32]byte {
 	inter := bytesutil.ToBytes32(epochBuf)
 	fieldRoots[0] = inter[:]
 	fieldRoots[1] = checkpoint.Root
-	checkpointRoot, err := bitwiseMerkleize(fieldRoots, 2, 2)
+	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
 		panic(err)
 	}
-	return checkpointRoot
+	return root
+}
+
+func bitlistRoot(bfield bitfield.Bitfield, maxCapacity uint64) ([32]byte, error) {
+	limit := (maxCapacity + 255) / 256
+	if bfield == nil || bfield.Len() == 0 {
+		length := make([]byte, 32)
+		root, err := bitwiseMerkleize([][]byte{}, 0, limit)
+		if err != nil {
+			return [32]byte{}, err
+		}
+		return mixInLength(root, length), nil
+	}
+	chunks, err := pack([][]byte{bfield.Bytes()})
+	if err != nil {
+		return [32]byte{}, err
+	}
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.LittleEndian, bfield.Len()); err != nil {
+		return [32]byte{}, err
+	}
+	output := make([]byte, 32)
+	copy(output, buf.Bytes())
+	root, err := bitwiseMerkleize(chunks, uint64(len(chunks)), limit)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	return mixInLength(root, output), nil
 }
 
 // Given ordered BYTES_PER_CHUNK-byte chunks, if necessary utilize zero chunks so that the
