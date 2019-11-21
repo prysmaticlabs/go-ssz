@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/prysmaticlabs/go-ssz"
+	pb "github.com/prysmaticlabs/go-ssz/experiment/beacon/p2p/v1"
 	"github.com/prysmaticlabs/go-ssz/types"
-	pb "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
 )
 
 func BenchmarkHashTreeRoot_Old(b *testing.B) {

@@ -9,9 +9,8 @@ import (
 	"github.com/protolambda/zssz/htr"
 	"github.com/protolambda/zssz/merkle"
 	"github.com/prysmaticlabs/go-bitfield"
-	pb "github.com/prysmaticlabs/prysm/proto/beacon/p2p/v1"
-	ethpb "github.com/prysmaticlabs/prysm/proto/eth/v1alpha1"
-	"github.com/prysmaticlabs/prysm/shared/bytesutil"
+	pb "github.com/prysmaticlabs/go-ssz/experiment/beacon/p2p/v1"
+	ethpb "github.com/prysmaticlabs/go-ssz/experiment/eth/v1alpha1"
 )
 
 const BytesPerChunk = 32
@@ -24,12 +23,12 @@ func StateRoot(state *pb.BeaconState) [32]byte {
 	// Do the genesis time:
 	genesisBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(genesisBuf, state.GenesisTime)
-	genesisBufRoot := bytesutil.ToBytes32(genesisBuf)
+	genesisBufRoot := toBytes32(genesisBuf)
 	fieldRoots[0] = genesisBufRoot[:]
 	// Do the slot:
 	slotBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(slotBuf, state.Slot)
-	slotBufRoot := bytesutil.ToBytes32(slotBuf)
+	slotBufRoot := toBytes32(slotBuf)
 	fieldRoots[1] = slotBufRoot[:]
 
 	// Handle the fork data:
@@ -87,7 +86,7 @@ func StateRoot(state *pb.BeaconState) [32]byte {
 	// Handle eth1 deposit index:
 	eth1DepositIndexBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(eth1DepositIndexBuf, state.Eth1DepositIndex)
-	eth1DepositBuf := bytesutil.ToBytes32(eth1DepositIndexBuf)
+	eth1DepositBuf := toBytes32(eth1DepositIndexBuf)
 	fieldRoots[9] = eth1DepositBuf[:]
 
 	// Handle the validator registry:
@@ -203,7 +202,7 @@ func StateRoot(state *pb.BeaconState) [32]byte {
 	fieldRoots[15] = currRoot[:]
 
 	// Handle the justification bits 16:
-	justifiedBitsRoot := bytesutil.ToBytes32(state.JustificationBits)
+	justifiedBitsRoot := toBytes32(state.JustificationBits)
 	fieldRoots[16] = justifiedBitsRoot[:]
 
 	// Handle the previous justified checkpoint 17:
@@ -225,13 +224,13 @@ func StateRoot(state *pb.BeaconState) [32]byte {
 
 func forkRoot(fork *pb.Fork) [32]byte {
 	fieldRoots := make([][]byte, 3)
-	inter := bytesutil.ToBytes32(fork.PreviousVersion)
+	inter := toBytes32(fork.PreviousVersion)
 	fieldRoots[0] = inter[:]
-	inter = bytesutil.ToBytes32(fork.CurrentVersion)
+	inter = toBytes32(fork.CurrentVersion)
 	fieldRoots[1] = inter[:]
 	forkEpochBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(forkEpochBuf, fork.Epoch)
-	inter = bytesutil.ToBytes32(forkEpochBuf)
+	inter = toBytes32(forkEpochBuf)
 	fieldRoots[2] = inter[:]
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
 	if err != nil {
@@ -244,7 +243,7 @@ func blockHeaderRoot(header *ethpb.BeaconBlockHeader) [32]byte {
 	fieldRoots := make([][]byte, 5)
 	headerSlotBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(headerSlotBuf, header.Slot)
-	headerSlotRoot := bytesutil.ToBytes32(headerSlotBuf)
+	headerSlotRoot := toBytes32(headerSlotBuf)
 	fieldRoots[0] = headerSlotRoot[:]
 	fieldRoots[1] = header.ParentRoot
 	fieldRoots[2] = header.StateRoot
@@ -271,13 +270,13 @@ func attestationDataRoot(data *ethpb.AttestationData) [32]byte {
 	// Slot.
 	slotBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(slotBuf, data.Slot)
-	inter := bytesutil.ToBytes32(slotBuf)
+	inter := toBytes32(slotBuf)
 	fieldRoots[0] = inter[:]
 
 	// Index.
 	indexBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(indexBuf, data.Index)
-	inter = bytesutil.ToBytes32(indexBuf)
+	inter = toBytes32(indexBuf)
 	fieldRoots[1] = inter[:]
 
 	// Beacon block root.
@@ -315,13 +314,13 @@ func pendingAttestationRoot(att *pb.PendingAttestation) [32]byte {
 	// Inclusion delay.
 	inclusionBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(inclusionBuf, att.InclusionDelay)
-	inclusionRoot := bytesutil.ToBytes32(inclusionBuf)
+	inclusionRoot := toBytes32(inclusionBuf)
 	fieldRoots[2] = inclusionRoot[:]
 
 	// Proposer index.
 	proposerBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(proposerBuf, att.ProposerIndex)
-	proposerRoot := bytesutil.ToBytes32(proposerBuf)
+	proposerRoot := toBytes32(proposerBuf)
 	fieldRoots[3] = proposerRoot[:]
 
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
@@ -351,7 +350,7 @@ func validatorRoot(validator *ethpb.Validator) [32]byte {
 	// Effective balance.
 	effectiveBalanceBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(effectiveBalanceBuf, validator.EffectiveBalance)
-	effBalRoot := bytesutil.ToBytes32(effectiveBalanceBuf)
+	effBalRoot := toBytes32(effectiveBalanceBuf)
 	fieldRoots[2] = effBalRoot[:]
 
 	// Slashed.
@@ -361,31 +360,31 @@ func validatorRoot(validator *ethpb.Validator) [32]byte {
 	} else {
 		slashBuf[0] = uint8(0)
 	}
-	slashBufRoot := bytesutil.ToBytes32(slashBuf)
+	slashBufRoot := toBytes32(slashBuf)
 	fieldRoots[3] = slashBufRoot[:]
 
 	// Activation eligibility epoch.
 	activationEligibilityBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(activationEligibilityBuf, validator.ActivationEligibilityEpoch)
-	activationEligibilityRoot := bytesutil.ToBytes32(activationEligibilityBuf)
+	activationEligibilityRoot := toBytes32(activationEligibilityBuf)
 	fieldRoots[4] = activationEligibilityRoot[:]
 
 	// Activation epoch.
 	activationBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(activationBuf, validator.ActivationEpoch)
-	activationRoot := bytesutil.ToBytes32(activationBuf)
+	activationRoot := toBytes32(activationBuf)
 	fieldRoots[5] = activationRoot[:]
 
 	// Exit epoch.
 	exitBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(exitBuf, validator.ExitEpoch)
-	exitBufRoot := bytesutil.ToBytes32(exitBuf)
+	exitBufRoot := toBytes32(exitBuf)
 	fieldRoots[6] = exitBufRoot[:]
 
 	// Withdrawable epoch.
 	withdrawalBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(withdrawalBuf, validator.WithdrawableEpoch)
-	withdrawalBufRoot := bytesutil.ToBytes32(withdrawalBuf)
+	withdrawalBufRoot := toBytes32(withdrawalBuf)
 	fieldRoots[7] = withdrawalBufRoot[:]
 
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
@@ -400,7 +399,7 @@ func eth1Root(eth1Data *ethpb.Eth1Data) [32]byte {
 	fieldRoots[0] = eth1Data.DepositRoot
 	eth1DataCountBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(eth1DataCountBuf, eth1Data.DepositCount)
-	inter := bytesutil.ToBytes32(eth1DataCountBuf)
+	inter := toBytes32(eth1DataCountBuf)
 	fieldRoots[1] = inter[:]
 	fieldRoots[2] = eth1Data.BlockHash
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
@@ -414,7 +413,7 @@ func checkpointRoot(checkpoint *ethpb.Checkpoint) [32]byte {
 	fieldRoots := make([][]byte, 2)
 	epochBuf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(epochBuf, checkpoint.Epoch)
-	inter := bytesutil.ToBytes32(epochBuf)
+	inter := toBytes32(epochBuf)
 	fieldRoots[0] = inter[:]
 	fieldRoots[1] = checkpoint.Root
 	root, err := bitwiseMerkleize(fieldRoots, uint64(len(fieldRoots)), uint64(len(fieldRoots)))
@@ -560,4 +559,10 @@ func mixInLength(root [32]byte, length []byte) [32]byte {
 	// #nosec G104
 	h.Sum(hash[:0])
 	return hash
+}
+
+func toBytes32(x []byte) [32]byte {
+	var y [32]byte
+	copy(y[:], x)
+	return y
 }

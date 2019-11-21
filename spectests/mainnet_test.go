@@ -9,6 +9,8 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/tools/bazel"
 	"github.com/prysmaticlabs/go-ssz"
+	experiment "github.com/prysmaticlabs/go-ssz/experiment"
+	pb "github.com/prysmaticlabs/go-ssz/experiment/beacon/p2p/v1"
 )
 
 func TestSSZStatic_Mainnet(t *testing.T) {
@@ -192,7 +194,7 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
 						}
 					case "BeaconState":
-						dec := &mainnetBeaconState{}
+						dec := &pb.BeaconState{}
 						if err := ssz.Unmarshal(serialized, dec); err != nil {
 							t.Fatal(err)
 						}
@@ -203,12 +205,10 @@ func TestSSZStatic_Mainnet(t *testing.T) {
 						if !bytes.Equal(serialized, enc) {
 							t.Errorf("Wanted %v, received %v", serialized, enc)
 						}
-						rt, err := ssz.HashTreeRoot(dec)
-						if err != nil {
-							t.Fatal(err)
-						}
+						rt := experiment.StateRoot(dec)
+						t.Logf("Len root %d", len(cont.Root))
 						if fmt.Sprintf("%#x", rt) != cont.Root {
-							t.Errorf("Wanted %#x, received %#x", cont.Root, rt)
+							t.Errorf("Wanted root %#x, received %#x", cont.Root, rt)
 						}
 					case "Checkpoint":
 						dec := &mainnetCheckpoint{}

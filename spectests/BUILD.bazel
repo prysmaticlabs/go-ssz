@@ -18,6 +18,8 @@ go_test(
     embed = [":go_default_library"],
     deps = [
         "//:go_default_library",
+        "//experiment:go_default_library",
+        "//experiment/beacon/p2p/v1:go_default_library",
         "@com_github_ghodss_yaml//:go_default_library",
         "@com_github_prysmaticlabs_go_bitfield//:go_default_library",
         "@io_bazel_rules_go//go/tools/bazel:go_default_library",
