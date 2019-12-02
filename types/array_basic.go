@@ -21,8 +21,9 @@ type basicArraySSZ struct {
 func newBasicArraySSZ() *basicArraySSZ {
 	cache, _ := ristretto.NewCache(&ristretto.Config{
 		NumCounters: BasicArraySizeCache, // number of keys to track frequency of (1M).
-		MaxCost:     1 << 23,             // maximum cost of cache (10MB).
-		BufferItems: 64,                  // number of keys per Get buffer.
+		MaxCost:     1 << 22,             // maximum cost of cache (3MB).
+		// 100,000 roots will take up approximately 3 MB in memory.
+		BufferItems: 64, // number of keys per Get buffer.
 	})
 	return &basicArraySSZ{
 		hashCache: cache,
@@ -68,7 +69,7 @@ func (b *basicArraySSZ) Root(val reflect.Value, typ reflect.Type, fieldName stri
 		return [32]byte{}, err
 	}
 	if enableCache && hashKey != emptyKey {
-		b.hashCache.Set(string(hashKey[:]), root, 0)
+		b.hashCache.Set(string(hashKey[:]), root, 32)
 	}
 	return root, nil
 }

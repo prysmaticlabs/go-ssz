@@ -19,9 +19,10 @@ type basicSSZ struct {
 
 func newBasicSSZ() *basicSSZ {
 	cache, _ := ristretto.NewCache(&ristretto.Config{
-		NumCounters: BasicTypeCacheSize, // number of keys to track frequency of (1M).
-		MaxCost:     1 << 23,            // maximum cost of cache (10MB).
-		BufferItems: 64,                 // number of keys per Get buffer.
+		NumCounters: BasicTypeCacheSize, // number of keys to track frequency of (100K).
+		MaxCost:     1 << 23,            // maximum cost of cache (3MB).
+		// 100,000 roots will take up approximately 3 MB in memory.
+		BufferItems: 64, // number of keys per Get buffer.
 	})
 	return &basicSSZ{
 		hashCache: cache,
@@ -110,7 +111,7 @@ func (b *basicSSZ) Root(val reflect.Value, typ reflect.Type, fieldName string, m
 	if err != nil {
 		return [32]byte{}, err
 	}
-	b.hashCache.Set(string(hashKey), root, 0)
+	b.hashCache.Set(string(hashKey), root, 32)
 	return root, nil
 }
 
