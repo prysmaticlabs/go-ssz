@@ -7,16 +7,10 @@ bazel projects' go_repository take precidence over the commits specified here.
 Add the license comment to each dependency for quick analysis of the licensing
 requirements for this project.
 """
+
 load("@bazel_gazelle//:deps.bzl", "go_repository")
 
 def go_ssz_dependencies():
-    _maybe(
-        # MIT License
-        go_repository,
-        name = "com_github_karlseguin_ccache",
-        commit = "ec06cd93a07565b373789b0078ba88fe697fddd9",
-        importpath = "github.com/karlseguin/ccache",
-    )
 
     _maybe(
         # Apache License 2.0
@@ -54,7 +48,7 @@ def go_ssz_dependencies():
         # Apache License 2.0
         go_repository,
         name = "com_github_matttproud_golang_protobuf_extensions",
-        commit = "c12348ce28de40eed0136aa2b644d0ee0650e56c", 
+        commit = "c12348ce28de40eed0136aa2b644d0ee0650e56c",
         importpath = "github.com/matttproud/golang_protobuf_extensions",
     )
 
@@ -125,6 +119,20 @@ def go_ssz_dependencies():
         name = "com_github_minio_highwayhash",
         importpath = "github.com/minio/highwayhash",
         commit = "02ca4b43caa3297fbb615700d8800acc7933be98",
+    )
+
+    _maybe(
+        go_repository,
+        name = "com_github_dgraph_io_ristretto",
+        importpath = "github.com/dgraph-io/ristretto",
+        commit = "99d1bbbf28e64530eb246be0568fc7709a35ebdd",
+    )
+
+    _maybe(
+        go_repository,
+        name = "com_github_cespare_xxhash",
+        commit = "d7df74196a9e781ede915320c11c378c1b2f3a1f",
+        importpath = "github.com/cespare/xxhash",
     )
 
 def _maybe(repo_rule, name, **kwargs):
