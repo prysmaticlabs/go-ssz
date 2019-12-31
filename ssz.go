@@ -3,6 +3,7 @@ package ssz
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/go-bitfield"
@@ -175,4 +176,39 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 		return [32]byte{}, errors.Wrapf(err, "could not generate tree hasher for type: %v", rval.Type())
 	}
 	return factory.Root(rval, rval.Type(), "", maxCapacity)
+}
+
+// SigningRoot truncates the last property of the struct passed in
+// and returns its tree hash. This is done because the last property
+// usually contains the signature that which this data is the root for.
+func SigningRoot(val interface{}) ([32]byte, error) {
+	if val == nil {
+		return [32]byte{}, errors.New("value cannot be nil")
+	}
+	valObj := reflect.ValueOf(val)
+	if valObj.Type().Kind() == reflect.Ptr {
+		if valObj.IsNil() {
+			return [32]byte{}, errors.New("nil pointer given")
+		}
+		elem := valObj.Elem()
+		elemType := valObj.Elem().Type()
+		totalFields := 0
+		for i := 0; i < elemType.NumField(); i++ {
+			// We skip protobuf related metadata fields.
+			if strings.Contains(elemType.Field(i).Name, "XXX_") {
+				continue
+			}
+			totalFields++
+		}
+		return types.StructFactory.FieldsHasher(elem, elemType, totalFields-1)
+	}
+	totalFields := 0
+	for i := 0; i < valObj.Type().NumField(); i++ {
+		// We skip protobuf related metadata fields.
+		if strings.Contains(valObj.Type().Field(i).Name, "XXX_") {
+			continue
+		}
+		totalFields++
+	}
+	return types.StructFactory.FieldsHasher(valObj, valObj.Type(), totalFields-1)
 }
