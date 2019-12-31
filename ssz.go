@@ -181,6 +181,8 @@ func HashTreeRootWithCapacity(val interface{}, maxCapacity uint64) ([32]byte, er
 // SigningRoot truncates the last property of the struct passed in
 // and returns its tree hash. This is done because the last property
 // usually contains the signature that which this data is the root for.
+//
+// Deprecated: Prefer signed container objects rather than using signing root.
 func SigningRoot(val interface{}) ([32]byte, error) {
 	if val == nil {
 		return [32]byte{}, errors.New("value cannot be nil")
