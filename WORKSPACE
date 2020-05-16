@@ -40,6 +40,10 @@ filegroup(
     visibility = ["//visibility:public"],
 )
     """,
+    sha256 = "1d978d482cd680f99dfc808ccfd59c88e33089450ffc1e283041cbf6dc8982db",
+    url = "https://github.com/ethereum/eth2.0-spec-tests/releases/download/v0.11.2/minimal.tar.gz",
+)
+    """,
     sha256 = "3b5f0168af4331d09da52bebc26609def9d11be3e6c784ce7c3df3596617808d",
     url = "https://github.com/ethereum/eth2.0-spec-tests/releases/download/v0.9.0/minimal.tar.gz",
 )
