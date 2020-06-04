@@ -116,3 +116,9 @@ go_repository(
 # Do not add go dependencies here. They must be added in deps.bzl to provide
 # dependencies to downstream bazel projects. Only test related dependencies
 # are allowed in this WORKSPACE.
+
+go_repository(
+    name = "com_github_ferranbt_fastssz",
+    commit = "99fccaf9347271d8daad22406ae2c718e3be01c9",
+    importpath = "github.com/ferranbt/fastssz",
+)
