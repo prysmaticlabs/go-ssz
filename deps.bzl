@@ -135,6 +135,13 @@ def go_ssz_dependencies():
         importpath = "github.com/cespare/xxhash",
     )
 
+    _maybe(
+        go_repository,
+        name = "com_github_ferranbt_fastssz",
+        commit = "99fccaf9347271d8daad22406ae2c718e3be01c9",
+        importpath = "github.com/ferranbt/fastssz",
+    )
+
 def _maybe(repo_rule, name, **kwargs):
     if name not in native.existing_rules():
         repo_rule(name = name, **kwargs)

@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	fssz "github.com/ferranbt/fastssz"
 	"github.com/pkg/errors"
 	"github.com/prysmaticlabs/go-bitfield"
 	"github.com/prysmaticlabs/go-ssz/types"
@@ -48,6 +49,11 @@ func Marshal(val interface{}) ([]byte, error) {
 	if val == nil {
 		return nil, errors.New("untyped-value nil cannot be marshaled")
 	}
+
+	if v, ok := val.(fssz.Marshaler); ok {
+		return v.MarshalSSZ()
+	}
+
 	rval := reflect.ValueOf(val)
 
 	// We pre-allocate a buffer-size depending on the value's calculated total byte size.
@@ -86,6 +92,9 @@ func Marshal(val interface{}) ([]byte, error) {
 func Unmarshal(input []byte, val interface{}) error {
 	if val == nil {
 		return errors.New("cannot unmarshal into untyped, nil value")
+	}
+	if v, ok := val.(fssz.Unmarshaler); ok {
+		return v.UnmarshalSSZ(input)
 	}
 	if len(input) == 0 {
 		return errors.New("no data to unmarshal from, input is an empty byte slice []byte{}")
