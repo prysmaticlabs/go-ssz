@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/binary"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -240,6 +241,9 @@ func (b *structSSZ) Unmarshal(val reflect.Value, typ reflect.Type, input []byte,
 				continue
 			}
 			nextOff := offsets[offsetIndex+1]
+			if nextOff > uint64(len(input)) {
+				return 0, fmt.Errorf("slice bounds out of range [%d:%d]", firstOff, nextOff)
+			}
 			if _, err := factory.Unmarshal(val.Field(i), fType, input[firstOff:nextOff], 0); err != nil {
 				return 0, err
 			}
